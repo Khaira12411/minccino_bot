@@ -1,0 +1,300 @@
+# ╭────────────────────────────────────────────╮
+# │           🤎 Minccino Bot Imports 🤍       │
+# ╰────────────────────────────────────────────╯
+
+# ── 🐭 Standard Library Imports 🐭 ──
+import asyncio
+import glob
+import logging
+import os
+import random
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+# ── 🎀 Third-Party Imports 🎀 ──
+import discord
+from discord.ext import commands, tasks
+from dotenv import load_dotenv
+
+# ── 🧸 Project-Specific Imports 🧸 ──
+from config.current_setup import *
+from utils.cache.centralized_cache import load_all_caches
+from utils.essentials.get_pg_pool import get_pg_pool
+from utils.loggers.pretty_logs import pretty_log, set_minccino_bot
+from utils.loggers.rate_limit_logger import setup_rate_limit_logging
+
+# ╭───────────────────────────────╮
+# │   🤎  Suppress Logs  🤍        │
+# ╰───────────────────────────────╯
+logging.basicConfig(level=logging.CRITICAL)
+for logger_name in [
+    "discord",
+    "discord.gateway",
+    "discord.http",
+    "discord.voice_client",
+    "asyncio",
+]:
+    logging.getLogger(logger_name).setLevel(logging.CRITICAL)
+logging.getLogger("discord.client").setLevel(logging.CRITICAL)
+
+# ╭───────────────────────────────╮
+# │   🤎  Constants / Helpers  🤍  │
+# ╰───────────────────────────────╯
+ASIA_MANILA = ZoneInfo("Asia/Manila")
+
+MINCCINO_MORNING_STATUSES = [
+    (discord.ActivityType.playing, "tidying timers for the morning rush ⏰🐭"),
+    (discord.ActivityType.playing, "chasing commands and cleaning up delays 🧹🐭"),
+    (discord.ActivityType.listening, "listening for your next Pokemon call 🎶🐭"),
+    (discord.ActivityType.watching, "making sure no timers are missed 👀🐭"),
+]
+MINCCINO_NIGHT_STATUSES = [
+    (discord.ActivityType.playing, "tidying up timers before bed 🌙🐭"),
+    (discord.ActivityType.listening, "tracking night-time Pokemon commands 🌌🐭"),
+    (discord.ActivityType.watching, "watching over sleepy timers 👀🐭"),
+]
+MINCCINO_DEFAULT_STATUSES = [
+    (discord.ActivityType.playing, "bouncing between timers and commands 🐭⏰"),
+    (discord.ActivityType.listening, "keeping an ear on every timer ⏱️🐭"),
+]
+
+
+def pick_status_tuple():
+    now = datetime.now(ASIA_MANILA)
+    pool = MINCCINO_MORNING_STATUSES if 6 <= now.hour < 18 else MINCCINO_NIGHT_STATUSES
+    return random.choice(pool)
+
+
+# ╭───────────────────────────────╮
+# │      🤎  Bot Factory  🤍      │
+# ╰───────────────────────────────╯
+# ── 🐾 Create & Configure Bot 🐾 ──
+intents = discord.Intents.default()
+intents.messages = True
+intents.guilds = True
+intents.message_content = True
+intents.members = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
+set_minccino_bot(bot)
+setup_rate_limit_logging(bot)
+
+# ╭────────────────────────────────────────────────╮
+# │      🤎  Minccino Guild Join Handler  🤍      │
+# ╰────────────────────────────────────────────────╯
+# ──────────── 🐾 Stay or Leave 🐾 ────────────────
+from utils.loggers.pretty_logs import pretty_log
+
+ALLOWED_GUILD_IDS = [OKA_SERVER_ID, STRAYMONS_GUILD_ID]  # Fill with allowed guild IDs
+
+
+@bot.event
+async def on_guild_join(guild: discord.Guild):
+    try:
+        # Fetch Khy
+        khy_user = await bot.fetch_user(KHY_USER_ID)
+
+        # Fetch guild owner
+        guild_owner = guild.owner or await bot.fetch_user(guild.owner_id)
+        owner_name = guild_owner.name if guild_owner else "Unknown"
+        owner_id = guild_owner.id if guild_owner else "Unknown"
+
+        # 🐁 DM Khy about the new guild
+        try:
+            await khy_user.send(
+                f"Minccino joined a guild:\n"
+                f"Name: {guild.name}\n"
+                f"ID: {guild.id}\n"
+                f"Owner: {owner_name} (ID: {owner_id})"
+            )
+        except Exception:
+            pretty_log(
+                tag="warn",
+                message=f"Could not DM Khy about guild join for {guild.name}.",
+                label="MINCCINO",
+            )
+
+        # ✅ Authorized guild?
+        if guild.id in ALLOWED_GUILD_IDS:
+            pretty_log(
+                tag="ready",
+                message=f"Minccino joined authorized guild:\n"
+                f"Name: {guild.name}\n"
+                f"ID: {guild.id}\n"
+                f"Owner: {owner_name} (ID: {owner_id})",
+                label="MINCCINO",
+            )
+        else:
+            pretty_log(
+                tag="warn",
+                message=f"Minccino joined unauthorized guild and will leave:\n"
+                f"Name: {guild.name}\n"
+                f"ID: {guild.id}\n"
+                f"Owner: {owner_name} (ID: {owner_id})",
+                label="MINCCINO",
+            )
+
+            # ⚠️ DM guild owner
+            if guild_owner:
+                try:
+                    await guild_owner.send(
+                        f"Hello {owner_name}!\n\n"
+                        "Minccino can only function in authorized servers under Khy's supervision.\n"
+                        "This server is not authorized, so Minccino will be leaving. Thank you for understanding!"
+                    )
+                except Exception:
+                    pretty_log(
+                        tag="warn",
+                        message=f"Could not DM the owner of {guild.name}.",
+                        label="MINCCINO",
+                    )
+
+            # Leave unauthorized guild
+            await guild.leave()
+
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Error in on_guild_join for guild {guild.name}: {e}",
+            label="MINCCINO",
+            include_trace=True,
+        )
+
+
+# ╭───────────────────────────────╮
+# │     🤎  Background Tasks  🤍   │
+# ╰───────────────────────────────╯
+# ── 🌤️🐭 Status Rotator 🐭🌤️ ──
+@tasks.loop(minutes=5)
+async def status_rotator():
+    activity_type, message = pick_status_tuple()
+    pretty_log(
+        "", "🌤️  STATUS ROTATOR", f"Switching status → {activity_type.name}: {message}"
+    )
+    await bot.change_presence(
+        activity=discord.Activity(type=activity_type, name=message)
+    )
+
+
+# ── 🖌️🌼 Startup Tasks 🌼🖌️ ──
+@tasks.loop(count=1)
+async def startup_tasks():
+    await bot.wait_until_ready()
+    await load_all_caches(bot)
+    if not refresh_all_caches.is_running():
+        refresh_all_caches.start()
+
+    # ── 🤎🐾 Status Rotator 🐾🤎 ──
+    if not status_rotator.is_running():
+        status_rotator.start()
+    activity_type, message = pick_status_tuple()
+    await bot.change_presence(
+        activity=discord.Activity(type=activity_type, name=message)
+    )
+    pretty_log(
+        tag="",
+        message=f"Initial presence set: {activity_type} {message}",
+        label="🍵 Status Rotator",
+    )
+    await startup_checklist(bot)
+
+
+# ── ⏱️🧸 Refresh All Caches 🧸⏱️ ──
+@tasks.loop(hours=1)
+async def refresh_all_caches():
+    await load_all_caches(bot)
+
+
+# ╭───────────────────────────────╮
+# │      🤎  Event Hooks  🤍       │
+# ╰───────────────────────────────╯
+# ── 🤎🐾 On Ready 🐾🤎 ──
+@bot.event
+async def on_ready():
+    pretty_log("ready", f"Minccino bot awake as {bot.user}")
+
+    # ── 🤎🐾 Tree Synced🐾🤎 ──
+    await bot.tree.sync()
+
+    # ── 🤎🐾 On Ready 🐾🤎 ──
+    if not startup_tasks.is_running():
+        startup_tasks.start()
+
+
+# ── 🐭✨ Command Error Handler ✨🐭 ──
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        return
+    pretty_log("error", f"Command error: {error}", include_trace=True)
+
+
+# ── 🧸🍂 Setup Hook 🍂🧸 ──
+@bot.event
+async def setup_hook():
+    # 🥛 PostgreSQL connection
+    try:
+        bot.pg_pool = await get_pg_pool()
+    except Exception as e:
+        pretty_log("critical", f"Postgres connection failed: {e}", include_trace=True)
+
+    # 🍪 Load all cogs
+    for cog_path in glob.glob("cogs/**/*.py", recursive=True):
+        relative_path = os.path.relpath(cog_path, "cogs")
+        module_name = relative_path[:-3].replace(os.sep, ".")
+        cog_name = f"cogs.{module_name}"
+        try:
+            await bot.load_extension(cog_name)
+        except Exception as e:
+            pretty_log("error", f"Failed to load {cog_name}: {e}", include_trace=True)
+
+
+# ╭───────────────────────────────╮
+# │     🤎  Startup Checklist  🤍  │
+# ╰───────────────────────────────╯
+
+
+async def startup_checklist(bot: commands.Bot):
+    from utils.cache.ball_reco_cache import ball_reco_cache
+    from utils.cache.held_item_cache import held_item_cache
+    from utils.cache.timers_cache import timer_cache
+    from utils.cache.water_state_cache import get_water_state
+
+    print("\n★━━━━━━━━━━━━━━━━━━━━★")
+    print(f"✅ {len(bot.cogs)} 🌼 Cogs Loaded")
+    print(f"✅ 🌊 {get_water_state()} Waterstate")  # use getter
+    print(f"✅ {len(timer_cache)} ⌚ Pokemon Timer Users")
+    print(f"✅ {len(held_item_cache)} 🍄 Held Item Ping Users")
+    print(f"✅ {len(ball_reco_cache)} 🍀 Ball Recommendation Users")
+    print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
+    print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
+    pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"
+    print(f"✅ {pg_status} 🧀  PostgreSQL Pool")
+    total_slash_commands = sum(1 for _ in bot.tree.walk_commands())
+    print(f"✅ {total_slash_commands} 🍞 Slash Commands Synced")
+    print("★━━━━━━━━━━━━━━━━━━━━★\n")
+
+
+# ╭───────────────────────────────╮
+# │  🤎  Main Async Runner  🤍      │
+# ╰───────────────────────────────╯
+async def main():
+    load_dotenv()
+    pretty_log("ready", "MinccinoBot is starting...")
+
+    retry_delay = 5
+    while True:
+        try:
+            await bot.start(os.getenv("DISCORD_TOKEN"))
+        except KeyboardInterrupt:
+            pretty_log("ready", "Shutting down MinccinoBot...")
+            break
+        except Exception as e:
+            pretty_log("error", f"Bot crashed: {e}", include_trace=True)
+            pretty_log("ready", f"Restarting MinccinoBot in {retry_delay} seconds...")
+            await asyncio.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, 60)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

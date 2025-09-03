@@ -1,0 +1,49 @@
+class Emojis:
+    gray_check = "<:gray_check:1411314640868216873>"
+    timer = "<:timer:1411502684430929991>"
+    Minccino_Heart = "<:Minccino_Heart:1411506086980354118>"
+    Minccino_Hug = "<:Minccino_Hug:1411506683141816436>"
+    heart_loading = "<a:heart_loading:1411761555267256342>"
+    held_item = "<:held_item:1411776714559979571>"
+    brown_ribbon = "<a:brown_ribbon:1412331097051758632>"
+    brown_four_leaf = "<:brown_four_leaf:1412331079901118515>"
+    brown_heart_message = "<a:brown_heart_message:1412331060393676800>"
+    brown_clock = "<:brown_clock:1412352491856728064>"
+    fishing_rod = "<:fishing_rod:1412352473875611688>"
+    magnifying_glass = "<:magnifying_glass:1412352458138587247>"
+    brown_pokeball = "<:brown_pokeball:1412351027948290049>"
+    backpack = "<:backpack:1412352968162017280>"
+    flowerbasket = "<:flowerbasket:1412597627735904466>"
+    cheese = "<:cheese:1412599700347162779>"
+    brown_bear = "<:brown_bear:1412600967228166274>"
+
+class Emojis_Rarity:
+    common = "<:common:1412000858329321482>"
+    uncommon = "<:uncommon:1412000832161054770>"
+    rare = "<:rare:1412000815882829864>"
+    superrare = "<:superrare:1412000776439595110>"
+    legendary = "<:legendary:1412000748660850779>"
+    shiny = "<:shiny:1412000714804170803>"
+    golden = "<:golden:1412000647666073670>"
+
+class Emojis_Balls:
+    small_pokeball = "<:small_pokeball:1412231157063483422>"
+    beastball = "<:beastball:1412000353645236245>"
+    masterball = "<:masterball:1412000094223339601>"
+    premierball = "<:premierball:1412000053459161138>"
+    ultraball = "<:ultraball:1411999983409958972>"
+    greatball = "<:greatball:1411999846835159081>"
+    pokeball = "<:pokeball:1411999795110744145>"
+    diveball = "<:diveball:1412001883639517275>"
+
+class MINC_Thumbnails:
+    brown_backpack = "https://media.discordapp.net/attachments/1394913073520967680/1412353518634930207/80927aac6f19fb9e38ee378e2f74e3fb-removebg-preview.png?ex=68b7fc37&is=68b6aab7&hm=1795978172f4cf61a10e83176c14dd73d8bb6eb28843c2cf70b7c4dea3ba9f4e&=&format=webp&quality=lossless&width=625&height=625"
+    pink_coffee = "https://media.discordapp.net/attachments/1394913073520967680/1412353667557756949/f7963e5e13cb2768fe2f7554446c34fa-removebg-preview.png?ex=68b7fc5a&is=68b6aada&hm=17a49c9e5b7f088e6c04bf03d94dcb3aacb79e1c73c4a23b9c9cd875d5302bf1&=&format=webp&quality=lossless&width=625&height=625"
+    brown_clock = "https://media.discordapp.net/attachments/1394913073520967680/1412354316186157137/5f524f3104e91cf6ef664d184db62e38-removebg-preview.png?ex=68b7fcf5&is=68b6ab75&hm=9681e56c0e37d0d63c6b991e295ff4ed9af2497cb9d2f340f0ba9a79128d51bd&=&format=webp&quality=lossless&width=625&height=625"
+    cow_book = "https://media.discordapp.net/attachments/1394913073520967680/1412594062854328392/119977455b03e0f3544d731a53a1814b-removebg-preview_1.png?ex=68b8dc3d&is=68b78abd&hm=7fe2438aa780fc735b623a495528b84241943a6c186ae4f05b62189825a41f23&=&format=webp&quality=lossless&width=451&height=362"
+    rabbit_log = "https://media.discordapp.net/attachments/1394913073520967680/1412594081204277350/f93d25deb63f1a42ff3743f45985ac26-removebg-preview_2.png?ex=68b8dc41&is=68b78ac1&hm=ee97c7935f819e79e7147ef29f0779ae53ef633e9127f297164668e40beaf806&=&format=webp&quality=lossless&width=450&height=341"
+    sunflower_bear = "https://media.discordapp.net/attachments/1394913073520967680/1412594109151051886/ed24412de3132345037f6871a550540f-removebg-preview_1.png?ex=68b8dc48&is=68b78ac8&hm=dc932f09d1cbfcc400e2f9d521787fc22d28ef5f4675824c1e3e295f6992b4a8&=&format=webp&quality=lossless&width=422&height=749"
+
+class MINC_DIVIDER:
+    brown_stars = "https://media.discordapp.net/attachments/1393740397905313912/1412595875360014376/image.png?ex=68b8dded&is=68b78c6d&hm=1562907ed9097b683e921ce2f8790e23ea6d8c7dacc51a2587cff87882b9f4ff&=&format=webp&quality=lossless&width=1215&height=54"
+    tulips = "https://media.discordapp.net/attachments/1393740397905313912/1412599439968964689/image.png?ex=68b8e13f&is=68b78fbf&hm=d6750e5a1ddc1a3c7a208efc86938938185e0f979b23c8ed53f3c2d4e358689f&=&format=webp&quality=lossless&width=1646&height=191"
