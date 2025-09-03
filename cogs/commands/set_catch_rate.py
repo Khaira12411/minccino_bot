@@ -8,7 +8,35 @@ from group_func.toggle.ball_recon.ball_recon_db_func import (
     upsert_user_rec,
 )
 from utils.essentials.role_checks import *
-import json  # <-- needed for decoding JSON strings
+import json
+
+
+# ✅ Default schemas for all categories
+DEFAULT_HELD_ITEMS = {
+    "rare": False,
+    "shiny": False,
+    "common": False,
+    "uncommon": False,
+    "legendary": False,
+    "superrare": False,
+}
+DEFAULT_POKEMON = {
+    "rare": False,
+    "shiny": False,
+    "common": False,
+    "uncommon": False,
+    "legendary": False,
+    "superrare": False,
+}
+DEFAULT_FISHING = {
+    "rare": False,
+    "shiny": False,
+    "common": False,
+    "golden": False,
+    "uncommon": False,
+    "legendary": False,
+    "superrare": False,
+}
 
 
 class BallSettings(commands.Cog):
@@ -30,7 +58,6 @@ class BallSettings(commands.Cog):
     ):
         from utils.cache.ball_reco_cache import load_ball_reco_cache
 
-        # Validate catch rate
         if catch_boost < 0 or catch_boost > 100:
             await interaction.response.send_message(
                 "❌ Catch rate must be between 0 and 100.", ephemeral=True
@@ -42,25 +69,27 @@ class BallSettings(commands.Cog):
         try:
             existing = await fetch_user_rec(self.bot, interaction.user.id)
 
-            # Ensure JSON fields are proper dicts
-            held_items = {}
-            pokemon = {}
-            fishing = {}
+            def normalize(data, defaults):
+                """Merge stored data with defaults (fill missing with False)."""
+                if isinstance(data, str):
+                    try:
+                        data = json.loads(data)
+                    except json.JSONDecodeError:
+                        data = {}
+                if not isinstance(data, dict):
+                    data = {}
+                return {key: bool(data.get(key, False)) for key in defaults.keys()}
 
-            if existing:
-                for field_name, container in [
-                    ("held_items", held_items),
-                    ("pokemon", pokemon),
-                    ("fishing", fishing),
-                ]:
-                    field_data = existing.get(field_name, {})
-                    if isinstance(field_data, str):
-                        try:
-                            container.update(json.loads(field_data))
-                        except json.JSONDecodeError:
-                            container.update({})
-                    else:
-                        container.update(field_data)
+            # ✅ Ensure every schema is fully populated
+            held_items = normalize(
+                existing.get("held_items") if existing else {}, DEFAULT_HELD_ITEMS
+            )
+            pokemon = normalize(
+                existing.get("pokemon") if existing else {}, DEFAULT_POKEMON
+            )
+            fishing = normalize(
+                existing.get("fishing") if existing else {}, DEFAULT_FISHING
+            )
 
             # Save/update user record
             await upsert_user_rec(
@@ -69,9 +98,9 @@ class BallSettings(commands.Cog):
                 user_name=str(interaction.user),
                 catch_rate_bonus=catch_boost,
                 is_patreon=False,
-                held_items=held_items if existing else None,
-                pokemon=pokemon if existing else None,
-                fishing=fishing if existing else None,
+                held_items=held_items,
+                pokemon=pokemon,
+                fishing=fishing,
             )
 
             # Reload cache
@@ -79,7 +108,7 @@ class BallSettings(commands.Cog):
 
             embed = discord.Embed(
                 title="🎯 Catch Rate Settings Saved! 🎯",
-                color=0xA78BFA,  # Cute purple
+                color=0xA78BFA,
             )
             embed.add_field(name="Catch Boost", value=f"{catch_boost}%", inline=True)
             embed.set_footer(

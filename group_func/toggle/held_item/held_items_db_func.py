@@ -64,6 +64,21 @@ async def set_user_item_subscription(
             label="MINCCINO",
             bot=bot,
         )
+# utils/group_func/held_item_db_func.py  (example location)
+
+
+async def update_user_name(bot, user_id: int, new_user_name: str):
+    """
+    Update the user_name column only if it's different from the current value.
+    """
+    query = """
+    UPDATE user_item_pings
+    SET user_name = $2
+    WHERE user_id = $1
+      AND (user_name IS DISTINCT FROM $2);
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(query, user_id, new_user_name)
 
 
 # ────────────────────────────────────────────

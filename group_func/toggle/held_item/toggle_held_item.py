@@ -9,6 +9,7 @@ from config.held_items import *
 from group_func.toggle.held_item.held_items_db_func import (
     fetch_all_user_item_pings,
     set_user_item_subscription,
+    update_user_name,
 )
 from utils.embeds.embed_settings_summary import build_summary_settings_embed
 from utils.essentials.loader.loader import *
@@ -206,6 +207,9 @@ class ItemSelectView(discord.ui.View):
                 await handle.stop(content="⚠️ No changes detected.")
                 return
 
+            # ✅ Keep user_name in sync (only if there are actual changes)
+            await update_user_name(self.bot, self.user_id, str(interaction.user))
+
             sub_changes = []
             for item in changed_items:
                 old_state = item in self.user_subs
@@ -362,8 +366,6 @@ class AllHeldItemsView(discord.ui.View):
     #
 
     async def save_selection(self, interaction: discord.Interaction):
-        #
-
         async def process_save():
             all_held = "all_held_items" in self.selection_changed
             pretty_log(
@@ -377,6 +379,7 @@ class AllHeldItemsView(discord.ui.View):
                 (row for row in all_rows if row["user_id"] == self.user_id), None
             )
 
+            await update_user_name(self.bot, self.user_id, str(interaction.user))
             # Ensure we have the JSON object
             held_items_raw = user_row["held_item_pings"] if user_row else "{}"
 
