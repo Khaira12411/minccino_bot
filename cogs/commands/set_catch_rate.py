@@ -8,6 +8,7 @@ from group_func.toggle.ball_recon.ball_recon_db_func import (
     upsert_user_rec,
 )
 from utils.essentials.role_checks import *
+import json  # <-- needed for decoding JSON strings
 
 
 class BallSettings(commands.Cog):
@@ -15,24 +16,22 @@ class BallSettings(commands.Cog):
         self.bot = bot
 
     @app_commands.command(
-        name="set-catch-rate",
-        description="Set your catch rate bonus and Patreon status",
+        name="set-catch-boost",
+        description="Set your catch boost",
     )
     @app_commands.describe(
-        catch_rate="Enter a number between 0 and 100",
-        is_patreon="Are you a Patreon member?",
+        catch_boost="Enter a number between 0 and 100 (Check ;perks for catch rate, if the channel is boosted add 5 more)",
     )
     @espeon_roles_only()
     async def set_catch_rate(
         self,
         interaction: discord.Interaction,
-        catch_rate: float,
-        is_patreon: bool,
+        catch_boost: float,
     ):
         from utils.cache.ball_reco_cache import load_ball_reco_cache
 
         # Validate catch rate
-        if catch_rate < 0 or catch_rate > 100:
+        if catch_boost < 0 or catch_boost > 100:
             await interaction.response.send_message(
                 "❌ Catch rate must be between 0 and 100.", ephemeral=True
             )
@@ -42,38 +41,47 @@ class BallSettings(commands.Cog):
 
         try:
             existing = await fetch_user_rec(self.bot, interaction.user.id)
+
+            # Ensure JSON fields are proper dicts
+            held_items = {}
+            pokemon = {}
+            fishing = {}
+
             if existing:
-                await upsert_user_rec(
-                    self.bot,
-                    user_id=interaction.user.id,
-                    user_name=str(interaction.user),
-                    catch_rate_bonus=catch_rate,
-                    is_patreon=is_patreon,
-                    held_items=existing.get("held_items", {}),
-                    pokemon=existing.get("pokemon", {}),
-                    fishing=existing.get("fishing", {}),
-                )
-            else:
-                await upsert_user_rec(
-                    self.bot,
-                    user_id=interaction.user.id,
-                    user_name=str(interaction.user),
-                    catch_rate_bonus=catch_rate,
-                    is_patreon=is_patreon,
-                )
+                for field_name, container in [
+                    ("held_items", held_items),
+                    ("pokemon", pokemon),
+                    ("fishing", fishing),
+                ]:
+                    field_data = existing.get(field_name, {})
+                    if isinstance(field_data, str):
+                        try:
+                            container.update(json.loads(field_data))
+                        except json.JSONDecodeError:
+                            container.update({})
+                    else:
+                        container.update(field_data)
+
+            # Save/update user record
+            await upsert_user_rec(
+                self.bot,
+                user_id=interaction.user.id,
+                user_name=str(interaction.user),
+                catch_rate_bonus=catch_boost,
+                is_patreon=False,
+                held_items=held_items if existing else None,
+                pokemon=pokemon if existing else None,
+                fishing=fishing if existing else None,
+            )
+
+            # Reload cache
             await load_ball_reco_cache(self.bot)
+
             embed = discord.Embed(
                 title="🎯 Catch Rate Settings Saved! 🎯",
                 color=0xA78BFA,  # Cute purple
             )
-            embed.add_field(
-                name="Catch Rate Bonus", value=f"{catch_rate}%", inline=True
-            )
-            embed.add_field(
-                name="Patreon Status",
-                value="💜 Yes" if is_patreon else "💛 No",
-                inline=True,
-            )
+            embed.add_field(name="Catch Boost", value=f"{catch_boost}%", inline=True)
             embed.set_footer(
                 text=f"Saved for {interaction.user}",
                 icon_url=interaction.user.display_avatar.url,

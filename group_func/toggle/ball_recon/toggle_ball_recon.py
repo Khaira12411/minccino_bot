@@ -476,7 +476,7 @@ async def toggle_ball_rec_func(bot: commands.Bot, interaction: discord.Interacti
         if not row:
             await safe_respond(
                 interaction,
-                content="Please set your catch rate first using the /set-catch-rate command!",
+                content="Please set your catch rate first using the /set-catch-boost command!",
                 ephemeral=True,
                 method="auto",
             )
@@ -487,7 +487,7 @@ async def toggle_ball_rec_func(bot: commands.Bot, interaction: discord.Interacti
 
         await safe_respond(
             interaction,
-            content="Pick a category to manage your ball recommendation settings:",
+            content="Pick a category to manage your ball recommendation settings:\n (If you are new, select the enabled/disabled first!)",
             view=RarityDropdownView(bot, interaction.user.id),
             ephemeral=True,
             method="edit",

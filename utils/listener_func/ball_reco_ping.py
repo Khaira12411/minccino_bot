@@ -105,13 +105,13 @@ async def recommend_ball(message: discord.Message, bot):
             return None
 
         user_id = spawn_info["user_id"]
+
+        # --- EARLY EXIT: user not in cache or disabled ---
         if not user_id or user_id not in ball_reco_cache:
             return None
 
         user_settings = ball_reco_cache[user_id]
-
-        # --- Early exit if user disabled recommendations ---
-        if not user_settings.get("enabled", True):
+        if not user_settings.get("enabled", False):
             return None
 
         # --- Masterball bypass ---
@@ -170,7 +170,7 @@ async def recommend_ball(message: discord.Message, bot):
                 "golden": "event_shiny_0",
             }
         else:
-            pretty_log("error", f"Unknown spawn type: {spawn_type}")
+            #pretty_log("error", f"Unknown spawn type: {spawn_type}")
             return None
 
         if not enabled or rarity not in rarity_key_map:
@@ -181,7 +181,7 @@ async def recommend_ball(message: discord.Message, bot):
         is_patreon = user_settings.get("is_patreon", False)
 
         ball, rate, all_rates = best_ball(
-            category, rarity_key, boost=boost, is_patreon=is_patreon
+            category, rarity_key, boost=boost, is_patreon=False
         )
 
         # --- Build recommendation message ---

@@ -4,6 +4,7 @@ import discord
 from discord import PartialEmoji, app_commands
 from discord.ext import commands
 
+from config.aesthetic import Emojis
 from config.held_items import *
 from group_func.toggle.held_item.held_items_db_func import (
     fetch_all_user_item_pings,
@@ -12,7 +13,6 @@ from group_func.toggle.held_item.held_items_db_func import (
 from utils.embeds.embed_settings_summary import build_summary_settings_embed
 from utils.essentials.loader.loader import *
 from utils.loggers.pretty_logs import pretty_log
-from config.aesthetic import Emojis
 
 
 # ----------------- Helper: build buttons -----------------
@@ -329,6 +329,9 @@ class HeldItemDropdown(discord.ui.Select):
                 )
 
 
+import json
+
+
 # ----------------- All Held Items View -----------------
 class AllHeldItemsView(discord.ui.View):
     def __init__(self, bot, user_id: int, is_subscribed: bool):
@@ -359,6 +362,8 @@ class AllHeldItemsView(discord.ui.View):
     #
 
     async def save_selection(self, interaction: discord.Interaction):
+        #
+
         async def process_save():
             all_held = "all_held_items" in self.selection_changed
             pretty_log(
@@ -366,11 +371,29 @@ class AllHeldItemsView(discord.ui.View):
                 f"Setting 'All Held Items' -> {all_held} for user {self.user_id}",
             )
 
+            # Fetch all user rows
+            all_rows = await fetch_all_user_item_pings(self.bot)
+            user_row = next(
+                (row for row in all_rows if row["user_id"] == self.user_id), None
+            )
+
+            # Ensure we have the JSON object
+            held_items_raw = user_row["held_item_pings"] if user_row else "{}"
+
+            try:
+                held_items = (
+                    json.loads(held_items_raw)
+                    if isinstance(held_items_raw, str)
+                    else held_items_raw
+                )
+            except Exception:
+                held_items = {}  # fallback if parsing fails
+
             sub_changes = []
             for item in HELD_ITEMS_DICT.keys():
-                # ✅ Fetch previous subscription state instead of assuming False
-                old_sub = await fetch_all_user_item_pings(self.bot, self.user_id, item)
+                old_sub = held_items.get(item, False)
                 new_sub = all_held
+
                 if old_sub != new_sub:
                     sub_changes.append((item, old_sub, new_sub))
 
@@ -378,11 +401,12 @@ class AllHeldItemsView(discord.ui.View):
                     self.bot, self.user_id, item, subscribed=new_sub
                 )
 
+            # Update the 'all_held_items' flag
             await set_user_item_subscription(
                 self.bot, self.user_id, "all_held_items", subscribed=all_held
             )
 
-            # ✅ Reset baseline after saving
+            # Reset baseline after saving
             self.user_subs = set(self.selection_changed)
 
             return sub_changes
@@ -415,6 +439,7 @@ class AllHeldItemsView(discord.ui.View):
                 from utils.cache.held_item_cache import load_held_item_cache
 
                 await load_held_item_cache(self.bot)
+
         except Exception as e:
             pretty_log(
                 "error",
@@ -455,7 +480,7 @@ class AllHeldItemsView(discord.ui.View):
             await handle.stop(content="✅ All Held Items removed!")
             await interaction.edit_original_response(view=self)
             embed = build_summary_settings_embed(
-                f"{Emojis.brown_heart_message} All Held Items Removed",
+                title=f"{Emojis.brown_heart_message} All Held Items Removed",
                 changes=sub_changes,
                 mode="held_items_ping",
                 simple=True,

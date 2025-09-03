@@ -388,7 +388,7 @@ def best_ball(category, rarity, boost=0, is_patreon=False, ultra_beast=False):
             rarity,
             ball,
             boost=boost,
-            is_patreon=is_patreon,
+            is_patreon=False,
             ultra_beast=ultra_beast,
         )
 

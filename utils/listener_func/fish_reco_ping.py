@@ -111,6 +111,13 @@ async def recommend_fishing_ball(message: discord.Message, bot):
     if not embed.color or embed.color.value != FISHING_COLOR:
         return None
 
+    trainer_name = embed.author.name if embed.author else None
+
+    # --- EARLY EXIT: user not in cache or disabled ---
+    user_settings = ball_reco_cache.get(trainer_name)
+    if not user_settings or not user_settings.get("enabled", True):
+        return None
+
     water_state = get_water_state()
     if "cast a " in embed_desc:
         current_state = extract_water_state_from_author(embed.author.name)
@@ -123,11 +130,11 @@ async def recommend_fishing_ball(message: discord.Message, bot):
     if "You caught a" in embed_desc:
         return None
 
+    # --- Proceed with spawn detection and recommendation ---
     match = WILD_SPAWN_PATTERN.search(embed_desc)
     if not match:
         return None
 
-    trainer_name = match.group("trainer")
     form = match.group("form")
     pokemon_name = match.group("pokemon").lower()
 
@@ -141,25 +148,12 @@ async def recommend_fishing_ball(message: discord.Message, bot):
     if not valid_fish:
         return None
 
-    user_settings = ball_reco_cache.get(
-        trainer_name,
-        {
-            "user_name": trainer_name,
-            "catch_rate_bonus": 0,
-            "is_patreon": False,
-            "enabled": True,
-        },
-    )
-
-    if not user_settings.get("enabled", True):
-        return None
-
     try:
         ball, rate, all_rates = best_ball_fishing(
             rarity=rarity,
             state=water_state,
             boost=int(user_settings.get("catch_rate_bonus", 0)),
-            is_patreon=user_settings.get("is_patreon", False),
+            is_patreon=False,
             form=form.lower() if form else None,
         )
 

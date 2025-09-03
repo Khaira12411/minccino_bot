@@ -14,9 +14,9 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
     """
     from utils.cache.held_item_cache import held_item_cache
 
-    pretty_log(
+    """pretty_log(
         "info", f"Processing message {message.id}", label="🐭 HELD ITEM PING", bot=bot
-    )
+    )"""
 
     if not message.reference or not message.reference.resolved:
         """pretty_log(
@@ -34,9 +34,20 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
         )"""
         return
 
-    pretty_log(
+    # ✅ Skip if user is not in held_item_cache
+    if target_user.id not in held_item_cache:
+        """pretty_log(
+            "skip",
+            f"User {target_user.id} not in held_item_cache, skipping",
+            label="🐭 HELD ITEM PING",
+            bot=bot,
+        )"""
+        return
+
+    user_sub = held_item_cache[target_user.id]
+    """pretty_log(
         "info", f"Target user: {target_user.id}", label="🐭 HELD ITEM PING", bot=bot
-    )
+    )"""
 
     user_sub = held_item_cache.get(target_user.id, {})
 
@@ -84,12 +95,12 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
 
             msg = held_item_message(pokemon_name, user_sub)
             if not msg:
-                pretty_log(
+                """pretty_log(
                     "skip",
                     f"User {target_user.id} not subscribed for {pokemon_name}'s items",
                     label="🐭 HELD ITEM PING",
                     bot=bot,
-                )
+                )"""
                 continue
 
             try:
