@@ -118,11 +118,13 @@ async def recommend_ball(message: discord.Message, bot):
         embed = message.embeds[0]
         if embed.color and embed.color.value == 15345163:
             user_name = user_settings.get("user_name")
-            rarity = spawn_info.get("rarity", "legendary")
+            rarity = spawn_info.get("rarity")  # can be None
 
             ball = "masterball"
             rate = 100
-            rarity_emoji = rarity_emojis.get(rarity.lower(), "")
+
+            # ✅ Safely get emojis
+            rarity_emoji = rarity_emojis.get(rarity.lower(), "") if rarity else ""
             ball_emoji = ball_emojis.get("masterball")
 
             msg = f"{user_name} {Emojis_Balls.small_pokeball} {rarity_emoji} __Event Exclusive__ → {ball_emoji} ({rate}%)"
@@ -137,12 +139,12 @@ async def recommend_ball(message: discord.Message, bot):
                 "rate": rate,
             }
 
-        spawn_type = spawn_info["type"]
-        rarity = spawn_info["rarity"]
+        spawn_type = spawn_info.get("type")
+        rarity = spawn_info.get("rarity")  # can be None
 
         # --- Determine category and rarity key map ---
         if spawn_type == "pokemon":
-            enabled = user_settings["pokemon"].get(rarity, False)
+            enabled = user_settings["pokemon"].get(rarity, False) if rarity else False
             category = (
                 "patron_gen_1_8"
                 if user_settings.get("is_patreon", False)
@@ -158,7 +160,9 @@ async def recommend_ball(message: discord.Message, bot):
                 "golden": "event_shiny_0",
             }
         elif spawn_type == "held_item":
-            enabled = user_settings["held_items"].get(rarity, False)
+            enabled = (
+                user_settings["held_items"].get(rarity, False) if rarity else False
+            )
             category = "held_item_pokemon"
             rarity_key_map = {
                 "common": "common_25",
@@ -170,10 +174,9 @@ async def recommend_ball(message: discord.Message, bot):
                 "golden": "event_shiny_0",
             }
         else:
-            #pretty_log("error", f"Unknown spawn type: {spawn_type}")
             return None
 
-        if not enabled or rarity not in rarity_key_map:
+        if not enabled or not rarity or rarity not in rarity_key_map:
             return None
 
         rarity_key = rarity_key_map[rarity]
@@ -185,8 +188,8 @@ async def recommend_ball(message: discord.Message, bot):
         )
 
         # --- Build recommendation message ---
-        rarity_emoji = rarity_emojis.get(rarity.lower(), "")
-        ball_emoji = ball_emojis.get(ball.lower(), "")
+        rarity_emoji = rarity_emojis.get(rarity.lower(), "") if rarity else ""
+        ball_emoji = ball_emojis.get(ball.lower(), "") if ball else ""
         user_name = user_settings["user_name"]
 
         msg = f"{user_name} {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
