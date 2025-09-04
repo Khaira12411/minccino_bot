@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-
+from utils.essentials.role_checks import *
 # ── 🧸 Project-Specific Imports 🧸 ──
 from config.current_setup import *
 from utils.cache.centralized_cache import load_all_caches
@@ -222,11 +222,35 @@ async def on_ready():
 
 
 # ── 🐭✨ Command Error Handler ✨🐭 ──
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
+async def on_app_command_error(
+    interaction: discord.Interaction, error: app_commands.AppCommandError
+):
+    # Handle your custom role-check failures
+    if isinstance(
+        error,
+        (
+            ClanStaffCheckFailure,
+            VIPCheckFailure,
+            ClanMemberCheckFailure,
+            OwnerCheckFailure,
+            OwnerCoownerCheckFailure,
+            KhyCheckFailure,  # include this one too
+        ),
+    ):
+        await interaction.response.send_message(error.args[0], ephemeral=True)
         return
-    pretty_log("error", f"Command error: {error}", include_trace=True)
+
+    # Optional: fallback for other errors
+    await interaction.response.send_message("❌ Something went wrong.", ephemeral=True)
+    pretty_log(
+        tag="error",
+        message=f"Slash command error: {error}",
+        include_trace=True,
+    )
+
+
+# Register the error handler
+bot.tree.error(on_app_command_error)
 
 
 # ── 🧸🍂 Setup Hook 🍂🧸 ──
