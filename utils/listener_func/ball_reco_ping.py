@@ -37,6 +37,13 @@ def parse_pokemeow_spawn(message: discord.Message):
             return None
         embed = message.embeds[0]
 
+        # --- Ignore captcha messages ---
+        title_text = embed.title or ""
+        description_text = embed.description or ""
+        if "captcha" in title_text.lower() or "captcha" in description_text.lower():
+            return None
+        
+
         footer_text = embed.footer.text if embed.footer else None
 
         # -------------------- Rarity by color --------------------

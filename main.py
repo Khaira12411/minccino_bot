@@ -221,10 +221,14 @@ async def on_ready():
         startup_tasks.start()
 
 
-# ── 🐭✨ Command Error Handler ✨🐭 ──
+# ── 🐭✨ Slash Command Error Handler ✨🐭 ──
 async def on_app_command_error(
     interaction: discord.Interaction, error: app_commands.AppCommandError
 ):
+    # Ignore slash command not found
+    if isinstance(error, app_commands.CommandNotFound):
+        return
+
     # Handle your custom role-check failures
     if isinstance(
         error,
@@ -234,13 +238,13 @@ async def on_app_command_error(
             ClanMemberCheckFailure,
             OwnerCheckFailure,
             OwnerCoownerCheckFailure,
-            KhyCheckFailure,  # include this one too
+            KhyCheckFailure,
         ),
     ):
         await interaction.response.send_message(error.args[0], ephemeral=True)
         return
 
-    # Optional: fallback for other errors
+    # Fallback for other slash errors
     await interaction.response.send_message("❌ Something went wrong.", ephemeral=True)
     pretty_log(
         tag="error",
@@ -249,8 +253,24 @@ async def on_app_command_error(
     )
 
 
-# Register the error handler
+# Register the slash command handler
 bot.tree.error(on_app_command_error)
+
+
+# ── 🐭✨ Prefix Command Error Handler ✨🐭 ──
+@bot.event
+async def on_command_error(ctx, error):
+    # Ignore prefix command not found
+    if isinstance(error, commands.CommandNotFound):
+        return
+
+    # You can handle other prefix errors here if needed
+    await ctx.send("❌ Something went wrong.")
+    pretty_log(
+        tag="error",
+        message=f"Prefix command error: {error}",
+        include_trace=True,
+    )
 
 
 # ── 🧸🍂 Setup Hook 🍂🧸 ──

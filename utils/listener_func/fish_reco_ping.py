@@ -108,6 +108,12 @@ async def recommend_fishing_ball(message: discord.Message, bot):
     embed = message.embeds[0]
     embed_desc = embed.description or ""
 
+    # --- Ignore captcha messages ---
+    title_text = embed.title or ""
+    description_text = embed.description or ""
+    if "captcha" in title_text.lower() or "captcha" in description_text.lower():
+        return None
+    
     if not embed.color or embed.color.value != FISHING_COLOR:
         return None
 
