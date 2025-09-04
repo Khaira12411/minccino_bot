@@ -7,11 +7,16 @@ from utils.loggers.pretty_logs import pretty_log
 # ────────────────────────────────────────────
 async def fetch_all_user_item_pings(bot) -> list[dict]:
     """
-    Returns all rows in user_item_pings table as a list of dicts.
+    Returns all rows in user_item_pings table including relic columns.
     """
     try:
         async with bot.pg_pool.acquire() as conn:
-            rows = await conn.fetch("SELECT * FROM user_item_pings")
+            rows = await conn.fetch(
+                """
+                SELECT user_id, user_name, held_item_pings, has_exchanged_relics, relics_reminder
+                FROM user_item_pings
+                """
+            )
             return [dict(row) for row in rows]
     except Exception as e:
         pretty_log(
@@ -166,3 +171,27 @@ async def ping_users_for_mon(bot, channel, pokemon_name: str, held_item_name: st
     await channel.send(
         f"{emoji} {mentions} {pokemon_name.title()} may have a {held_item_name}!"
     )
+
+
+# ────────────────────────────────────────────
+#       🐭 Set has_exchanged_relics Flag 🐭
+# ────────────────────────────────────────────
+async def set_has_exchanged_relics(bot, user_id: int, exchanged: bool):
+    """
+    Update the has_exchanged_relics column for a user.
+    """
+    query = "UPDATE user_item_pings SET has_exchanged_relics = $1 WHERE user_id = $2"
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(query, exchanged, user_id)
+
+
+# ────────────────────────────────────────────
+#       🐭 Set relics_reminder Flag 🐭
+# ────────────────────────────────────────────
+async def set_relics_reminder(bot, user_id: int, reminder: bool):
+    """
+    Update the relics_reminder column for a user.
+    """
+    query = "UPDATE user_item_pings SET relics_reminder = $1 WHERE user_id = $2"
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(query, reminder, user_id)

@@ -41,6 +41,37 @@ class OwnerGroup(commands.Cog):
     #     💜 Owner Top level Command Group 💜
     # ─────────────────────────────────────────────
     # 🟣────────────────────────────────────────────
+    #      💜 /owner fetch-message 💜
+    # 🟣────────────────────────────────────────────
+    @owner_group.command(
+        name="fetch-message",
+        description="Extracts and Updates rarities.py from a message link",
+    )
+    @app_commands.describe(
+        message_link="Message link to fetch the message contents from",
+        save_to_file="Save to text file?",
+    )
+    @khy_only()
+    async def fetch_message_from_link(
+        self,
+        interaction: discord.Interaction,
+        message_link: str,
+        save_to_file: bool,
+    ):
+        slash_cmd_name = "owner fetch-message"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=fetch_message_from_link_func,
+            message_link=message_link,
+            save_to_file=save_to_file,
+        )
+
+    fetch_message_from_link.extras = {"category": "Owner"}
+
+    # 🟣────────────────────────────────────────────
     #      💜 /owner extract-rarities 💜
     # 🟣────────────────────────────────────────────
     @owner_group.command(
@@ -133,7 +164,6 @@ class OwnerGroup(commands.Cog):
         name="held-item-ping",
         description="Mocks a pokemeow catch embed to test held item ping",
     )
-
     @app_commands.describe(
         pokemon="Pokemon name",
     )
