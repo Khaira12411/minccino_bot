@@ -147,3 +147,79 @@ def build_summary_settings_embed(
     )
 
     return embed
+
+
+def build_reminders_settings_embed(
+    user: discord.Member,
+    title: str,
+    changes: list[tuple],
+    description: str | None = None,
+) -> discord.Embed:
+    """
+    Build a clean embed for reminder settings updates.
+    """
+
+    def fmt(val):
+        if isinstance(val, str):
+            match val.lower():
+                case "dms":
+                    return "📩 DMs"
+                case "channel":
+                    return "📢 Channel"
+                case "off" | "":
+                    return "🚫 Off"
+                case _:
+                    return val.title()
+        if isinstance(val, bool):
+            return "✅ On" if val else "🚫 Off"
+        if val is None:
+            return "🚫 Off"
+        return str(val)
+
+    # Notes per category
+    desc_notes = ""
+    if "Relics" in title:
+        desc_notes = (
+            "💡 **Tip:** How to auto-schedule your Relic expiration reminder:\n"
+            "Use either `;res ex relics` or simply `;res` after exchanging your relics."
+        )
+    elif "Catchbot" in title:
+        desc_notes = (
+            "💡 **Tip:** How to auto-schedule your Catchbot reminder:\n"
+            "Use either `;cb` or `;cl`."
+        )
+
+    # Build change lines
+    desc_lines = []
+    for item_name, old, new in changes:
+        desc_lines.append(
+            f"🐭 {item_name.replace('_',' ').title()}: {fmt(old)} → {fmt(new)}"
+        )
+
+    # Assemble description
+    full_desc = description.strip() if description else ""
+    if desc_lines:
+        if full_desc:
+            full_desc += "\n\n" + "\n".join(desc_lines)
+        else:
+            full_desc = "\n".join(desc_lines)
+
+    # Add notes at the bottom
+    if desc_notes:
+        if full_desc:
+            full_desc += f"\n\n{desc_notes}"
+        else:
+            full_desc = desc_notes
+
+    embed = discord.Embed(
+        title=title,
+        description=full_desc or "No changes detected.",
+    )
+
+    return design_embed(
+        user=user,
+        embed=embed,
+        thumbnail_url=thumbnail_url,
+        footer_text="Your subscription settings have been updated ✨",
+        color="brown",
+    )

@@ -7,13 +7,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from group_func.toggle import *
 from group_func.toggle.ball_recon.toggle_ball_recon import toggle_ball_rec_func
 from group_func.toggle.held_item import *
 
 # from utils.essentials.command_group_counter import *
 from utils.essentials.command_safe import run_command_safe
 from utils.essentials.role_checks import *
-from group_func.toggle import *
 
 
 # 🟣────────────────────────────────────────────
@@ -38,6 +38,7 @@ class ToggleGroup(commands.Cog):
 
     # attach subgroup to parent group
     toggle_group.add_command(ping_group)
+
     # 🟣────────────────────────────────────────────
     #     💜 Toggle Top level Command Group 💜
     # ─────────────────────────────────────────────
@@ -62,6 +63,29 @@ class ToggleGroup(commands.Cog):
         )
 
     timer_pokemon_set.extras = {"category": "Public"}
+
+    # 🟣────────────────────────────────────────────
+    #     💜 /toggle reminders 💜
+    # 🟣────────────────────────────────────────────
+    @toggle_group.command(
+        name="reminders",
+        description="Modifies your reminders' settings",
+    )
+    @khy_only()
+    async def toggle_reminders(
+        self,
+        interaction: discord.Interaction,
+    ):
+        slash_cmd_name = "toggle reminders"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=toggle_reminders_func,
+        )
+
+    toggle_reminders.extras = {"category": "Owner"}
 
     # 🟣────────────────────────────────────────────
     #     💜 Toggle Ping Command Group 💜
@@ -111,6 +135,7 @@ class ToggleGroup(commands.Cog):
         )
 
     toggle_ball_recon.extras = {"category": "Public"}
+
 
 # 🟣────────────────────────────────────────────
 #           💜 Cog Setup Function 💜

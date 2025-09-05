@@ -71,9 +71,10 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
         pattern = (
             r"(?:<:[^:]+:\d+>\s*)?"  # optional leading NPC emoji
             r"\*\*.+?\*\*\s*found a wild\s*"
+            r"(?P<teamlogo><:team_logo:\d+>)?\s*"  # optional team logo emoji
             r"(?P<held><:held_item:\d+>)?\s*"  # optional held item emoji
             r"(?:<:[^:]+:\d+>\s*)+"  # Pokemon emoji (+ optional dexCaught)
-            r"\*\*(?P<pokemon>[A-Za-z_]+)\*\*"
+            r"\*\*(?P<pokemon>[A-Za-z_]+)\*\*"  # pokemon name
         )
         matches = re.finditer(pattern, desc)
 

@@ -70,7 +70,7 @@ async def load_held_item_cache(bot):
 
     pretty_log(
         message=f"Loaded {len(held_item_cache)} users' held item subscriptions into cache",
-        label="🐭 HELD ITEM CACHE",
+        label="🍄 HELD ITEM CACHE",
         bot=bot,
     )
 

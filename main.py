@@ -15,11 +15,12 @@ from zoneinfo import ZoneInfo
 import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-from utils.essentials.role_checks import *
+
 # ── 🧸 Project-Specific Imports 🧸 ──
 from config.current_setup import *
 from utils.cache.centralized_cache import load_all_caches
 from utils.essentials.get_pg_pool import get_pg_pool
+from utils.essentials.role_checks import *
 from utils.loggers.pretty_logs import pretty_log, set_minccino_bot
 from utils.loggers.rate_limit_logger import setup_rate_limit_logging
 
@@ -85,7 +86,11 @@ setup_rate_limit_logging(bot)
 # ──────────── 🐾 Stay or Leave 🐾 ────────────────
 from utils.loggers.pretty_logs import pretty_log
 
-ALLOWED_GUILD_IDS = [OKA_SERVER_ID, STRAYMONS_GUILD_ID]  # Fill with allowed guild IDs
+ALLOWED_GUILD_IDS = [
+    OKA_SERVER_ID,
+    STRAYMONS_GUILD_ID,
+    CC_GUILD_ID,
+]  
 
 
 @bot.event
@@ -299,10 +304,14 @@ async def setup_hook():
 
 
 async def startup_checklist(bot: commands.Bot):
-    from utils.cache.ball_reco_cache import ball_reco_cache
-    from utils.cache.held_item_cache import held_item_cache
-    from utils.cache.timers_cache import timer_cache
-    from utils.cache.water_state_cache import get_water_state
+
+    from utils.cache import (
+        ball_reco_cache,
+        get_water_state,
+        held_item_cache,
+        timer_cache,
+        user_reminders_cache,
+    )
 
     print("\n★━━━━━━━━━━━━━━━━━━━━★")
     print(f"✅ {len(bot.cogs)} 🌼 Cogs Loaded")
@@ -310,6 +319,7 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {len(timer_cache)} ⌚ Pokemon Timer Users")
     print(f"✅ {len(held_item_cache)} 🍄 Held Item Ping Users")
     print(f"✅ {len(ball_reco_cache)} 🍀 Ball Recommendation Users")
+    print(f"✅ {len(user_reminders_cache)} ⚾ User Remidners")
     print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
     print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
     pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"

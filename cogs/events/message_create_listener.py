@@ -18,15 +18,21 @@ from config.current_setup import (
 from utils.listener_func.ball_reco_ping import recommend_ball
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
+from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.loggers.pretty_logs import pretty_log
-
+from utils.listener_func.catchbot_listener import handle_catchbot_message
 
 class MessageCreateListener(commands.Cog):
+    # 💜────────────────────────────────────────────
+    # [🟣 INIT] Cog Initialization
+    # ─────────────────────────────────────────────
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # 💜 Helper: Retry Discord calls on 503
+    # 💜────────────────────────────────────────────
+    # [🟣 HELPER] Retry Discord calls on 503
+    # ─────────────────────────────────────────────
     async def retry_discord_call(self, func, *args, retries=3, delay=2, **kwargs):
         for attempt in range(1, retries + 1):
             try:
@@ -46,8 +52,8 @@ class MessageCreateListener(commands.Cog):
                     raise
 
     # 💜────────────────────────────────────────────
-    #           👂 Message Listener Event
-    # 💜────────────────────────────────────────────
+    # [🟣 LISTENER] on_message Event
+    # ─────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         try:
@@ -58,20 +64,32 @@ class MessageCreateListener(commands.Cog):
                 and not message.webhook_id
             ):
                 return
-            # if message.guild and message.guild.id == ACTIVE_GUILD_ID:
 
-            # --- Weakness chart processing (Active + Staff Guilds) ---
+            # --- Weakness chart + general processing ---
             if message.guild and message.guild.id in (
                 ACTIVE_GUILD_ID,
                 STAFF_SERVER_GUILD_ID,
                 STRAYMONS_GUILD_ID,
             ):
+                # ⌚ detect PokéMeow replies
                 await detect_pokemeow_reply(message)
+
+                # 🐚 Held item ping
                 await held_item_ping_handler(self.bot, message)
-                # 🔹 Call recommend_ball directly
+
+                # 🥎 Recommend ball
                 await recommend_ball(message, self.bot)
+
+                # 🧪 Debug: Relics processing
+                await handle_relics_message(bot=self.bot, message=message)
+
+                # 🧪 Debug: Catchbot processing
+                await handle_catchbot_message(bot=self.bot, message=message)
+
+            # 🌊 Waterstate channel processing ---
             if message.channel.id == WATERSTATE_CHANNEL_ID:
-                current_state = await on_waterstate_message(message)
+                await on_waterstate_message(message)
+
         except Exception as e:
             pretty_log(
                 tag="critical",
@@ -80,8 +98,8 @@ class MessageCreateListener(commands.Cog):
 
 
 # 💜────────────────────────────────────────────
-#        🛠️ Setup function to add cog to bot
-# 💜────────────────────────────────────────────
+# [🟣 SETUP] Add Cog to Bot
+# ─────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     await bot.add_cog(MessageCreateListener(bot))
     # espeon_log("ready", "MessageCreateListener cog loaded successfully!")

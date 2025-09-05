@@ -1,9 +1,10 @@
 import re
+
 import discord
 
 from config.fish_rarity import FISH_RARITY
 from utils.listener_func.catch_rate import *
-
+DEBUG = False
 FISHING_COLOR = 0x87CEFA  # sky blue
 
 NAME_PATTERN = re.compile(r"\*\*(?:(Shiny|Golden)\s+)?([A-Za-z_]+)\*\*", re.IGNORECASE)
@@ -97,72 +98,116 @@ def parse_pokemeow_fishing_spawn(message: discord.Message):
     }
 
 
+import inspect
+
+import discord
+
+from config.fish_rarity import FISH_RARITY
+from utils.cache.ball_reco_cache import ball_reco_cache
+from utils.cache.water_state_cache import get_water_state, update_water_state
+from utils.listener_func.catch_rate import ball_emojis, best_ball_fishing, rarity_emojis
+from utils.loggers.debug_log import debug_log
+from utils.loggers.pretty_logs import pretty_log
+
+
 async def recommend_fishing_ball(message: discord.Message, bot):
-    from utils.cache.ball_reco_cache import ball_reco_cache
-    from utils.cache.water_state_cache import get_water_state, update_water_state
-    from utils.loggers.pretty_logs import pretty_log
+    func_name = inspect.currentframe().f_code.co_name
 
-    if not message.embeds:
+    # --- Parse spawn info using dedicated parser ---
+    spawn_info = parse_pokemeow_fishing_spawn(message)
+    if not spawn_info:
+        await debug_log(func_name, f"No valid spawn info in message {message.id}")
         return None
 
-    embed = message.embeds[0]
-    embed_desc = embed.description or ""
+    trainer_id = spawn_info["user_id"]
+    trainer_name = spawn_info["trainer_name"]
+    water_state = spawn_info["water_state"]
+    pokemon_name = spawn_info["pokemon"]
+    form = spawn_info["form"]
+    rarity = spawn_info["rarity"]
+    embed_desc = message.embeds[0].description or ""
 
-    # --- Ignore captcha messages ---
-    title_text = embed.title or ""
-    description_text = embed.description or ""
-    if "captcha" in title_text.lower() or "captcha" in description_text.lower():
+    await debug_log(func_name, f"Parsed spawn info: {spawn_info}")
+    await debug_log(func_name, f"Current cache keys: {list(ball_reco_cache.keys())}")
+
+    # --- Lookup user in cache ---
+    user_settings = None
+
+    # 1️⃣ Lookup by ID first
+    if trainer_id:
+        raw = ball_reco_cache.get(trainer_id)
+        if isinstance(raw, dict):
+            user_settings = raw
+        elif isinstance(raw, str):
+            user_settings = {"user_name": raw, "enabled": True, "catch_rate_bonus": 0}
+
+    # 2️⃣ Fallback: lookup by user_name
+    if not user_settings and trainer_name:
+        for uid, raw in ball_reco_cache.items():
+            uname = raw if isinstance(raw, str) else raw.get("user_name", "")
+            if uname.strip().lower() == trainer_name.strip().lower():
+                user_settings = (
+                    {"user_name": raw, "enabled": True, "catch_rate_bonus": 0}
+                    if isinstance(raw, str)
+                    else raw
+                )
+                trainer_id = uid
+                break
+
+    # --- Check if user is enabled ---
+    enabled_val = user_settings.get("enabled", True) if user_settings else True
+    if isinstance(enabled_val, str):
+        is_enabled = enabled_val.strip().lower() in ("true", "yes", "1", "on")
+    else:
+        is_enabled = bool(enabled_val)
+
+    if not user_settings or not is_enabled:
+        await debug_log(
+            func_name,
+            f"User {trainer_name or trainer_id} is_enabled: {is_enabled} | In Cache: {bool(user_settings)}",
+        )
         return None
-    
-    if not embed.color or embed.color.value != FISHING_COLOR:
-        return None
 
-    trainer_name = embed.author.name if embed.author else None
-
-    # --- EARLY EXIT: user not in cache or disabled ---
-    user_settings = ball_reco_cache.get(trainer_name)
-    if not user_settings or not user_settings.get("enabled", True):
-        return None
-
-    water_state = get_water_state()
+    # --- Update water state if message contains cast info ---
     if "cast a " in embed_desc:
-        current_state = extract_water_state_from_author(embed.author.name)
-        if current_state:
-            current_state = current_state.lower()
-            if current_state != water_state.lower():
-                update_water_state(new_state=current_state)
-                water_state = current_state
+        current_state = extract_water_state_from_author(trainer_name)
+        await debug_log(func_name, f"Detected cast: {current_state}")
+        if current_state and current_state.lower() != water_state.lower():
+            update_water_state(new_state=current_state.lower())
+            water_state = current_state.lower()
+            await debug_log(func_name, f"Updated water state to: {water_state}")
 
+    # Ignore caught messages
     if "You caught a" in embed_desc:
+        await debug_log(func_name, f"Ignored caught message {message.id}")
         return None
 
-    # --- Proceed with spawn detection and recommendation ---
-    match = WILD_SPAWN_PATTERN.search(embed_desc)
-    if not match:
-        return None
-
-    form = match.group("form")
-    pokemon_name = match.group("pokemon").lower()
-
-    rarity = None
-    valid_fish = False
-    for r, pokes in FISH_RARITY.items():
-        if pokemon_name in pokes:
-            rarity = r
-            valid_fish = True
-            break
-    if not valid_fish:
-        return None
-
+    # --- Calculate best ball ---
     try:
+        # Determine Patreon status from cache
+        is_patreon = bool(user_settings.get("is_patreon", False))
+
+        # 🌊 Print all inputs before computation
+        print(f"[DEBUG] Calling best_ball_fishing with:")
+        print(f"         rarity = {rarity}")
+        print(f"         state = {water_state}")
+        print(f"         boost = 0 (ignoring catch_rate_bonus)")
+        print(f"         is_patreon = {is_patreon}")
+        print(f"         form = {form.lower() if form else None}")
+
         ball, rate, all_rates = best_ball_fishing(
             rarity=rarity,
             state=water_state,
-            boost=int(user_settings.get("catch_rate_bonus", 0)),
-            is_patreon=False,
+            is_patreon=is_patreon,
             form=form.lower() if form else None,
         )
 
+        # 🌊 Print all computed rates
+        print(f"[DEBUG] Computed rates for all balls:")
+        for b, r in all_rates.items():
+            print(f"         {b}: {r}%")
+
+        # --- Build display ---
         rarity_display_map = {
             "common": "Common",
             "uncommon": "Uncommon",
@@ -182,6 +227,7 @@ async def recommend_fishing_ball(message: discord.Message, bot):
 
         msg = f"{user_settings['user_name']} 🎣 {rarity_emoji} → {ball_emoji} ({rate}%)"
         await message.channel.send(msg)
+        await debug_log(func_name, f"Sent recommendation: {msg}")
 
         return {
             "user_name": user_settings["user_name"],
@@ -191,6 +237,7 @@ async def recommend_fishing_ball(message: discord.Message, bot):
             "ball": ball,
             "rate": rate,
             "water_state": water_state,
+            "is_patreon": is_patreon,
         }
 
     except Exception as e:
@@ -200,4 +247,5 @@ async def recommend_fishing_ball(message: discord.Message, bot):
             label="STRAYMONS",
             bot=bot,
         )
+        await debug_log(func_name, f"Exception occurred: {e}")
         return None

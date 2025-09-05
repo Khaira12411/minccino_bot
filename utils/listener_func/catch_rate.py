@@ -1,8 +1,6 @@
 rarity = ["common", "uncommon", "rare", "superrare", "legendary", "shiny", "golden"]
 
 
-
-
 balls = [
     "pokeball",
     "greatball",
@@ -237,40 +235,42 @@ WS_MAP = {
 }
 
 
-def compute_fishing_rate(rarity, ball, state=None, boost=0, is_patreon=False):
+def compute_fishing_rate(
+    rarity, ball, state=None, is_patreon=False, channel_boost=False
+):
     """
-    Compute fishing catch rate.
-    - rarity: e.g. "common_45", "rare_25", "shiny_0", "golden_0"
-    - ball: e.g. "pokeball", "ultraball", "diveball", etc.
-    - state: string water state ("calm", "strong", etc.) or None
-    - boost: flat % boost
-    - is_patreon: True/False → adds +5%
+    Compute fishing catch rate with optional Patreon and channel boost.
     """
     base_rate = fishing_catch_rates["non_patron"][rarity][ball]
-    state = state.lower()
-    if state and state in fishing_catch_rates["states"]:
-        state_mod = fishing_catch_rates["states"][state]
-        # Dive & Master Ball cannot drop below 100%
-        if ball in ["diveball", "masterball"] and base_rate >= 100:
-            state_mod = max(0, state_mod)
-        base_rate += state_mod
 
-    if is_patreon:
-        base_rate += 5
+    if state:
+        state = state.lower()
+        if state in fishing_catch_rates["states"]:
+            state_mod = fishing_catch_rates["states"][state]
+            if ball in ["diveball", "masterball"] and base_rate >= 100:
+                state_mod = max(0, state_mod)
+            base_rate += state_mod
 
-    base_rate += boost
-    return max(0, min(100, base_rate))
+    # Bonuses
+    patron_bonus = 5 if is_patreon else 0
+    channel_bonus = 5 if channel_boost else 0
+    total_rate = base_rate + patron_bonus + channel_bonus
+
+    print(
+        f"[DEBUG] compute_fishing_rate: {ball=} base={base_rate}% "
+        f"(patron={patron_bonus}, channel_boost={channel_bonus}) total={total_rate}%"
+    )
+
+    return max(0, min(100, total_rate))
 
 
-def best_ball_fishing(rarity, state=None, boost=0, is_patreon=False, form=None):
-    """
-    Recommend the most optimal fishing ball for a given rarity and form.
-    - Uses cached water state if `state` is None.
-    """
-    # Use cached water state if not provided
+def best_ball_fishing(
+    rarity, state=None, is_patreon=False, channel_boost=False, form=None
+):
     from utils.cache.water_state_cache import get_water_state
+
     if state is None:
-        state = get_water_state()  # returns "strong", "calm", etc.
+        state = get_water_state()
 
     state = state.lower()
 
@@ -299,43 +299,53 @@ def best_ball_fishing(rarity, state=None, boost=0, is_patreon=False, form=None):
         "diveball",
         "masterball",
     ]
-    results = {}
 
-    # Compute catch rate for each ball
+    # --- Compute “what-if” scenarios for logging only ---
+    results_base = {}
+    results_patron = {}
+    results_channel = {}
     for ball in ball_priority:
-        rate = compute_fishing_rate(
-            key, ball, state=state, boost=boost, is_patreon=is_patreon
+        results_base[ball] = compute_fishing_rate(key, ball, state=state)
+        results_patron[ball] = compute_fishing_rate(
+            key, ball, state=state, is_patreon=True
         )
-        results[ball] = rate
+        results_channel[ball] = compute_fishing_rate(
+            key, ball, state=state, is_patreon=True, channel_boost=True
+        )
+
+    print(f"[DEBUG] Base rates (no bonus): {results_base}")
+    print(f"[DEBUG] Patreon rates (+5%): {results_patron}")
+    print(f"[DEBUG] Patron + Channel rates (+10%): {results_channel}")
+
+    # --- Compute actual results respecting input ---
+    actual_results = {}
+    for ball in ball_priority:
+        actual_results[ball] = compute_fishing_rate(
+            key, ball, state=state, is_patreon=is_patreon, channel_boost=channel_boost
+        )
 
     # Filter expensive balls for superrare and below
     superrare_and_below = {"common", "uncommon", "rare", "superrare"}
     form_is_special = form in {"shiny", "golden"}
 
-    filtered_results = {}
-    for ball, rate in results.items():
-        if rarity in superrare_and_below and ball in {
-            "premierball",
-            "diveball",
-            "masterball",
-        }:
-            continue
-        if ball == "diveball" and (not form_is_special or rate < 100):
-            continue
-        filtered_results[ball] = rate
-
-    # fallback for special forms
-    if not filtered_results and form_is_special:
-        for ball, rate in results.items():
-            if ball in {"diveball", "masterball", "premierball"}:
-                filtered_results[ball] = rate
+    filtered_results = {
+        b: r
+        for b, r in actual_results.items()
+        if not (
+            rarity in superrare_and_below
+            and b in {"premierball", "diveball", "masterball"}
+        )
+    }
 
     max_rate = max(filtered_results.values())
     for ball in ball_priority:
         if ball in filtered_results and filtered_results[ball] == max_rate:
-            return ball, filtered_results[ball], results
+            print(
+                f"[DEBUG] Chosen best ball: {ball} with rate {max_rate}% (actual user values)"
+            )
+            return ball, filtered_results[ball], actual_results
 
-    return None, 0, results
+    return None, 0, actual_results
 
 
 def compute_catch_rate(

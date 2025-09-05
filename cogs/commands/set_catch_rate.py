@@ -1,15 +1,16 @@
+import json
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-from utils.loggers.pretty_logs import pretty_log
-from utils.essentials.loader.loader import *
+
 from group_func.toggle.ball_recon.ball_recon_db_func import (
     fetch_user_rec,
     upsert_user_rec,
 )
+from utils.essentials.loader.loader import *
 from utils.essentials.role_checks import *
-import json
-
+from utils.loggers.pretty_logs import pretty_log
 
 # ✅ Default schemas for all categories
 DEFAULT_HELD_ITEMS = {
@@ -49,12 +50,14 @@ class BallSettings(commands.Cog):
     )
     @app_commands.describe(
         catch_boost="Enter a number between 0 and 100 (Check ;perks for catch rate, if the channel is boosted add 5 more)",
+        is_patreon="Are you a Pokemeow Patreon?",
     )
     @espeon_roles_only()
     async def set_catch_rate(
         self,
         interaction: discord.Interaction,
         catch_boost: float,
+        is_patreon: bool,
     ):
         from utils.cache.ball_reco_cache import load_ball_reco_cache
 
@@ -97,7 +100,7 @@ class BallSettings(commands.Cog):
                 user_id=interaction.user.id,
                 user_name=str(interaction.user),
                 catch_rate_bonus=catch_boost,
-                is_patreon=False,
+                is_patreon=is_patreon,
                 held_items=held_items,
                 pokemon=pokemon,
                 fishing=fishing,

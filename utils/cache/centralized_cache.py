@@ -8,6 +8,7 @@ from utils.cache.held_item_cache import load_held_item_cache, held_item_cache
 from utils.loggers.pretty_logs import pretty_log
 from utils.cache.ball_reco_cache import load_ball_reco_cache, ball_reco_cache
 from utils.cache.water_state_cache import get_water_state, fetch_latest_water_state
+from utils.cache.reminders_cache import *
 # 🐾────────────────────────────────────────────
 #     💜 Load Everything in One Go
 # 🐾────────────────────────────────────────────
@@ -26,15 +27,20 @@ async def load_all_caches(bot):
     # 🍀 Held Item Users Ping cache
     await load_ball_reco_cache(bot)
 
+    # ⚾ User Reminders cache
+    await load_user_reminders_cache(bot)
+
     # 🌊 Fetch latest waterstate
     await fetch_latest_water_state(bot)
 
-    # 🎀 Unified single-line log with both caches
+    # 🎀 Unified single-line log with all caches
     pretty_log(
         tag="",
         message=(
             f"All caches refreshed and loaded "
-            f"(Waterstate: {get_water_state()}, Timers: {len(timer_cache)}, Held Items: {len(held_item_cache)}, Ball Recon: {len(ball_reco_cache)})"
+            f"(Waterstate: {get_water_state()}, Timers: {len(timer_cache)}, "
+            f"Held Items: {len(held_item_cache)}, Ball Recon: {len(ball_reco_cache)}, "
+            f"Reminders: {len(user_reminders_cache)})"
         ),
         label="🥨 CENTRAL CACHE",
         bot=bot,

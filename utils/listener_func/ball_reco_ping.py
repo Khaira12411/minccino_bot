@@ -32,7 +32,15 @@ embed_rarity_color = {
 # -------------------- Parser --------------------
 def parse_pokemeow_spawn(message: discord.Message):
     """Parses a PokeMeow spawn embed and returns dict with rarity/type, trainer_id, and water_state for fishing."""
+
     try:
+        # --- Ignore "robot return" messages by content ---
+        if (
+            message.content
+            and "i have returned with some pokemon for you!" in message.content.lower()
+        ):
+            return None
+
         if not message.embeds:
             return None
         embed = message.embeds[0]
@@ -42,7 +50,11 @@ def parse_pokemeow_spawn(message: discord.Message):
         description_text = embed.description or ""
         if "captcha" in title_text.lower() or "captcha" in description_text.lower():
             return None
-        
+
+        # --- Ignore Research Lab messages ---
+        if embed.author and getattr(embed.author, "name", None):
+            if "pokemeow research lab" in embed.author.name.lower():
+                return None
 
         footer_text = embed.footer.text if embed.footer else None
 
@@ -118,7 +130,14 @@ async def recommend_ball(message: discord.Message, bot):
             return None
 
         user_settings = ball_reco_cache[user_id]
-        if not user_settings.get("enabled", False):
+        enabled_val = user_settings.get("enabled", False)
+
+        if isinstance(enabled_val, str):
+            is_enabled = enabled_val.strip().lower() in ("true", "yes", "1", "on")
+        else:
+            is_enabled = bool(enabled_val)
+
+        if not is_enabled:
             return None
 
         # --- Masterball bypass ---

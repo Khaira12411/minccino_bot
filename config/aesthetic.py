@@ -16,6 +16,9 @@ class Emojis:
     flowerbasket = "<:flowerbasket:1412597627735904466>"
     cheese = "<:cheese:1412599700347162779>"
     brown_bear = "<:brown_bear:1412600967228166274>"
+    relic = "<:relic:1413346989516652606>"
+    robot = "<:robot:1413347429775970314>"
+    notifs = "<:notification:1413380632402333706>"
 
 class Emojis_Rarity:
     common = "<:common:1412000858329321482>"
@@ -43,6 +46,8 @@ class MINC_Thumbnails:
     cow_book = "https://media.discordapp.net/attachments/1394913073520967680/1412594062854328392/119977455b03e0f3544d731a53a1814b-removebg-preview_1.png?ex=68b8dc3d&is=68b78abd&hm=7fe2438aa780fc735b623a495528b84241943a6c186ae4f05b62189825a41f23&=&format=webp&quality=lossless&width=451&height=362"
     rabbit_log = "https://media.discordapp.net/attachments/1394913073520967680/1412594081204277350/f93d25deb63f1a42ff3743f45985ac26-removebg-preview_2.png?ex=68b8dc41&is=68b78ac1&hm=ee97c7935f819e79e7147ef29f0779ae53ef633e9127f297164668e40beaf806&=&format=webp&quality=lossless&width=450&height=341"
     sunflower_bear = "https://media.discordapp.net/attachments/1394913073520967680/1412594109151051886/ed24412de3132345037f6871a550540f-removebg-preview_1.png?ex=68b8dc48&is=68b78ac8&hm=dc932f09d1cbfcc400e2f9d521787fc22d28ef5f4675824c1e3e295f6992b4a8&=&format=webp&quality=lossless&width=422&height=749"
+    bell = "https://media.discordapp.net/attachments/1394913073520967680/1413355689757118605/bell.png?ex=68bba18f&is=68ba500f&hm=fa8f943e71f74bba34121517ffc3bd2c748b6054c1e03c555557181900d5ea6f&=&format=webp&quality=lossless&width=560&height=842"
+
 
 class MINC_DIVIDER:
     brown_stars = "https://media.discordapp.net/attachments/1393740397905313912/1412595875360014376/image.png?ex=68b8dded&is=68b78c6d&hm=1562907ed9097b683e921ce2f8790e23ea6d8c7dacc51a2587cff87882b9f4ff&=&format=webp&quality=lossless&width=1215&height=54"

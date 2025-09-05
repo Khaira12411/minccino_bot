@@ -1,10 +1,12 @@
 # utils/ui/embeds/user_settings_embed.py
 
 import discord
-from utils.listener_func.catch_rate import rarity_emojis
+
+from config.aesthetic import *
 from config.held_items import HELD_ITEM_EMOJI
 from utils.embeds.design_embed import design_embed
-from config.aesthetic import *
+from utils.listener_func.catch_rate import rarity_emojis
+
 # Rarity order
 RARITY_ORDER = [
     "common",
@@ -15,7 +17,15 @@ RARITY_ORDER = [
     "shiny",
     "golden",
 ]
-
+REMINDER_MODE_EMOJIS = {
+    "dms": "📩",
+    "channel": "📢",
+    "off": "🚫",
+}
+REMINDER_EMOJIS = {
+    "relics": Emojis.relic,  # relic emoji
+    "catchbot": Emojis.robot,  # catchbot emoji
+}
 # Per-category embed configuration
 EMBED_CONFIG = {
     "timer": {
@@ -37,6 +47,13 @@ EMBED_CONFIG = {
         "footer_text": "👜 Completing your set, one treasure at a time!",
         "color": "brown",
         "thumbnail_url": MINC_Thumbnails.brown_backpack,
+        "image_url": None,
+    },
+    "reminders": {
+        "title": f"{Emojis.notifs} Reminder Settings",
+        "footer_text": "🔔 Stay on top of your relics and catchbot reminders!",
+        "color": "brown",
+        "thumbnail_url": MINC_Thumbnails.bell,
         "image_url": None,
     },
 }
@@ -70,8 +87,8 @@ def build_user_settings_embed(
     if category == "timer":
         desc_lines = [
             f"{Emojis.timer} Pokémon Timer: {data.get('pokemon_setting','Not Set')}",
-            #f"🎣 Fishing Timer: {data.get('fish_setting','Not Set')}",
-            #f"⚔️ Battle Timer: {data.get('battle_setting','Not Set')}",
+            # f"🎣 Fishing Timer: {data.get('fish_setting','Not Set')}",
+            # f"⚔️ Battle Timer: {data.get('battle_setting','Not Set')}",
         ]
 
     elif category == "ball_reco":
@@ -115,13 +132,50 @@ def build_user_settings_embed(
         else:
             desc_lines.append("No held item subscriptions.")
 
+    elif category == "reminders":
+        if not data:  # no reminders set
+            desc_lines.append("❌ No reminders set.")
+        else:
+            for cat, settings in data.items():
+                emoji = REMINDER_EMOJIS.get(cat, "❔")
+
+                mode = settings.get("mode", "off")
+                mode_emoji = REMINDER_MODE_EMOJIS.get(mode.lower(), "❔")
+                mode_display = f"{mode_emoji} {mode.title() if mode else 'Off'}"
+
+                lines = [f"Mode: {mode_display}"]
+
+                # Relics-specific
+                if cat == "relics":
+                    has_exchanged = settings.get("has_exchanged", False)
+                    lines.append(f"Has Exchanged: {'✅' if has_exchanged else '🚫'}")
+
+                    expires_on = settings.get("expires_on")
+                    if expires_on and has_exchanged:
+                        lines.append(f"Expiration: <t:{expires_on}:f>")
+
+                # Catchbot-specific
+                if cat == "catchbot":
+                    repeating = settings.get("repeating", 0)
+                    returns_on = settings.get("returns_on")
+                    reminds_next_on = settings.get("reminds_next_on")
+
+                    if repeating > 0:
+                        lines.append(f"⏱️ Repeating: Every {repeating} mins")
+                        if reminds_next_on:
+                            lines.append(f"Reminds Next On: <t:{reminds_next_on}:f>")
+
+                    if mode.lower() != "off" and returns_on:
+                        lines.append(f"Returns On: <t:{returns_on}:f>")
+
+                desc_lines.append(f"{emoji} **{cat.title()}**\n" + "\n".join(lines))
+
     else:
         desc_lines.append("No data available.")
 
     embed = discord.Embed(
         title=config["title"],
         description="\n\n".join(desc_lines),
-
     )
 
     embed = design_embed(

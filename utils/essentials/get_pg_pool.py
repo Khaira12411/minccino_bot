@@ -39,6 +39,7 @@ class SafePool:
             raise RuntimeError("SafePool not connected. Call connect() first.")
         return SafeConnection(self._pool)
 
+
     async def _retry(self, method, *args, **kwargs):
         last_exc = None
         for attempt in range(1, self.retry_count + 2):
@@ -49,12 +50,13 @@ class SafePool:
                 asyncpg.exceptions.ConnectionDoesNotExistError,
                 ConnectionResetError,
                 OSError,
+                asyncio.TimeoutError,  # <— added
             ) as e:
                 last_exc = e
                 pretty_log(
                     tag="warn",
-                    message=f"[Retry {attempt}/{self.retry_count + 1}] Connection lost, reconnecting...",
-                    include_trace=True,
+                    message=f"[Retry {attempt}/{self.retry_count + 1}] {method.__name__} failed: {e}. Reconnecting...",
+                    include_trace=False,
                 )
                 await asyncio.sleep(0.5)
                 await self._reconnect()
@@ -128,7 +130,7 @@ async def get_pg_pool():
         return pool
     except Exception as e:
         pretty_log(
-            tag="warn",
+            tag="info",
             message=f"Internal URL failed to connect: {e}",
             include_trace=True,
         )

@@ -9,13 +9,14 @@ from utils.cache.ball_reco_cache import ball_reco_cache
 from utils.loggers.pretty_logs import pretty_log
 from utils.embeds.user_settings_embed import build_user_settings_embed
 from utils.essentials.role_checks import *
-
+from utils.cache.reminders_cache import user_reminders_cache
 class SettingsDropdown(discord.ui.Select):
     def __init__(self, user_id: int):
         options = [
             discord.SelectOption(label="Timer", value="timer"),
             discord.SelectOption(label="Ball Recommendation", value="ball_reco"),
             discord.SelectOption(label="Held Item Pings", value="held_items"),
+            discord.SelectOption(label="Reminders", value="reminders"),
         ]
         super().__init__(
             placeholder="Choose a category...",
@@ -37,6 +38,8 @@ class SettingsDropdown(discord.ui.Select):
                 data = ball_reco_cache.get(user_id)
             elif category == "held_items":
                 data = held_item_cache.get(user_id)
+            elif category == "reminders":
+                data = user_reminders_cache.get(user_id)
             else:
                 data = None
 

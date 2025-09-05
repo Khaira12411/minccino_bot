@@ -7,13 +7,13 @@ from utils.loggers.pretty_logs import pretty_log
 # ────────────────────────────────────────────
 async def fetch_all_user_item_pings(bot) -> list[dict]:
     """
-    Returns all rows in user_item_pings table including relic columns.
+    Returns all rows in user_item_pings table including held_item_pings.
     """
     try:
         async with bot.pg_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT user_id, user_name, held_item_pings, has_exchanged_relics, relics_reminder
+                SELECT user_id, user_name, held_item_pings
                 FROM user_item_pings
                 """
             )
@@ -69,9 +69,11 @@ async def set_user_item_subscription(
             label="MINCCINO",
             bot=bot,
         )
-# utils/group_func/held_item_db_func.py  (example location)
 
 
+# ────────────────────────────────────────────
+#        🐭 Update user name 🐭
+# ────────────────────────────────────────────
 async def update_user_name(bot, user_id: int, new_user_name: str):
     """
     Update the user_name column only if it's different from the current value.
@@ -171,27 +173,3 @@ async def ping_users_for_mon(bot, channel, pokemon_name: str, held_item_name: st
     await channel.send(
         f"{emoji} {mentions} {pokemon_name.title()} may have a {held_item_name}!"
     )
-
-
-# ────────────────────────────────────────────
-#       🐭 Set has_exchanged_relics Flag 🐭
-# ────────────────────────────────────────────
-async def set_has_exchanged_relics(bot, user_id: int, exchanged: bool):
-    """
-    Update the has_exchanged_relics column for a user.
-    """
-    query = "UPDATE user_item_pings SET has_exchanged_relics = $1 WHERE user_id = $2"
-    async with bot.pg_pool.acquire() as conn:
-        await conn.execute(query, exchanged, user_id)
-
-
-# ────────────────────────────────────────────
-#       🐭 Set relics_reminder Flag 🐭
-# ────────────────────────────────────────────
-async def set_relics_reminder(bot, user_id: int, reminder: bool):
-    """
-    Update the relics_reminder column for a user.
-    """
-    query = "UPDATE user_item_pings SET relics_reminder = $1 WHERE user_id = $2"
-    async with bot.pg_pool.acquire() as conn:
-        await conn.execute(query, reminder, user_id)
