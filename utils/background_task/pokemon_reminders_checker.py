@@ -7,6 +7,7 @@ import discord
 from config.aesthetic import *
 from config.current_setup import MINCCINO_COLOR, STRAYMONS_GUILD_ID
 from group_func.toggle.reminders.reminders_sched_db_func import (
+    delete_reminder,
     fetch_all_schedules,
     mark_reminder_sent,
     update_catchbot_reminds_next_on,
@@ -165,52 +166,79 @@ async def pokemon_reminder_checker(bot: discord.Client):
                 continue
 
             # --- Handle relics & other standard reminders ---
-            if (
-                now >= ends_on_ts
-                and reminder_type not in ["catchbot"]
-                and not reminder_sent
-            ):
-                try:
-                    embed = build_reminder_embed(user, reminder_type)
-                    await target_channel.send(embed=embed)
-                    await mark_reminder_sent(bot, reminder_id)
-                    pretty_log(
-                        "info",
-                        f"Sent {reminder_type} reminder {reminder_id} to {user_id}",
-                    )
-                except Exception as e:
-                    pretty_log(
-                        "error",
-                        f"Failed to send {reminder_type} reminder for user {user_id}: {e}",
-                        bot=bot,
-                    )
+            if reminder_type not in ["catchbot"]:
+                if now >= ends_on_ts and not reminder_sent:
+                    try:
+                        embed = build_reminder_embed(user, reminder_type)
+                        await target_channel.send(embed=embed)
+
+                        # 🔹 Delete immediately since relics never repeat
+                        await delete_reminder(bot, reminder_id)
+
+                        pretty_log(
+                            "info",
+                            f"Sent {reminder_type} reminder {reminder_id} to {user_id}",
+                        )
+                    except Exception as e:
+                        pretty_log(
+                            "error",
+                            f"Failed to send {reminder_type} reminder for {user_id}: {e}",
+                            bot=bot,
+                        )
 
             # --- Catchbot reminder ---
-            elif reminder_type == "catchbot" and not reminder_sent:
+            elif reminder_type == "catchbot":
                 try:
                     reminders_cache = user_reminders_cache.get(user_id, {}).get(
                         "catchbot", {}
                     )
                     repeating = reminders_cache.get("repeating", 0)
 
-                    embed = build_reminder_embed(
-                        user,
-                        "catchbot",
-                        remind_next_on=remind_next_on_ts if remind_next_on_ts else None,
-                    )
-                    await target_channel.send(embed=embed)
+                    # only act if ends_on has passed
+                    if now >= ends_on_ts:
+                        # 🔹 First fire
+                        if not reminder_sent:
+                            embed = build_reminder_embed(
+                                user,
+                                "catchbot",
+                                remind_next_on=(
+                                    remind_next_on_ts if remind_next_on_ts else None
+                                ),
+                            )
+                            await target_channel.send(embed=embed)
 
-                    if remind_next_on_ts and repeating:
-                        await update_catchbot_reminds_next_on(
-                            bot, user_id, minutes=repeating, ends_on=ends_on_ts
-                        )
-                    else:
-                        await mark_reminder_sent(bot, reminder_id)
+                            if repeating:
+                                await update_catchbot_reminds_next_on(
+                                    bot, user_id, minutes=repeating, ends_on=ends_on_ts
+                                )
+                            else:
+                                await delete_reminder(bot, reminder_id)
 
-                    pretty_log(
-                        "info",
-                        f"Processed catchbot reminder {reminder_id} for {user_id}",
-                    )
+                            pretty_log(
+                                "info",
+                                f"Sent catchbot reminder {reminder_id} to {user_id}",
+                            )
+
+                        # 🔹 Repeating reminders
+                        elif (
+                            repeating and remind_next_on_ts and now >= remind_next_on_ts
+                        ):
+                            embed = build_reminder_embed(
+                                user,
+                                "catchbot",
+                                remind_next_on=remind_next_on_ts,
+                            )
+                            await target_channel.send(embed=embed)
+
+                            await update_catchbot_reminds_next_on(
+                                bot, user_id, minutes=repeating, ends_on=ends_on_ts
+                            )
+
+                            pretty_log(
+                                "info",
+                                f"Sent repeating catchbot reminder {reminder_id} to {user_id}",
+                            )
+
                 except Exception as e:
                     pretty_log(
                         "error",

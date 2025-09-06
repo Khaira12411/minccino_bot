@@ -52,6 +52,11 @@ def parse_pokemeow_spawn(message: discord.Message):
         if "captcha" in title_text.lower() or "captcha" in description_text.lower():
             return None
 
+        # -------------------- MUST BE A SPAWN --------------------
+        # require "found a wild" phrase in description for normal spawns
+        if description_text and "found a wild" not in description_text.lower():
+            return None
+
         # --- Ignore Research Lab messages ---
         if embed.author and getattr(embed.author, "name", None):
             if "pokemeow research lab" in embed.author.name.lower():

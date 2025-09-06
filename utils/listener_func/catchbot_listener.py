@@ -1,22 +1,23 @@
-import re
 import inspect
+import re
 from datetime import datetime
-import discord
-from group_func.toggle.reminders.user_reminders_db_func import *
 
-from group_func.toggle.reminders.reminders_sched_db_func import (
-    upsert_user_schedule,
-    delete_user_schedule,
-)
-from utils.loggers.debug_log import debug_log
-from utils.loggers.pretty_logs import pretty_log
-from utils.cache.reminders_cache import user_reminders_cache
+import discord
 
 from config.current_setup import POKEMEOW_APPLICATION_ID  # replace with actual ID
+from group_func.toggle.reminders.reminders_sched_db_func import (
+    delete_user_schedule,
+    upsert_user_schedule,
+)
+from group_func.toggle.reminders.user_reminders_db_func import *
+from utils.cache.reminders_cache import user_reminders_cache
+from utils.loggers.debug_log import debug_log
+from utils.loggers.pretty_logs import pretty_log
 
 # Patterns
 CATCHBOT_RUN_PATTERN = re.compile(
-    r"to run your catch bot.*?It will be back with.*?in (\d+)([hHmM])", re.IGNORECASE
+    r"to run your catch bot.*?It will be back with.*?in (\d+)([hHmM])",
+    re.IGNORECASE | re.DOTALL,  # <- allows .*? to match newlines
 )
 CATCHBOT_EMBED_PATTERN = re.compile(
     r"It will be back on [^<]*<t:(\d+):f>", re.IGNORECASE
@@ -199,7 +200,6 @@ async def extract_and_save_catchbot_schedule(
             user.name,
             updates=updates,
         )
-
 
         await debug_log(
             func_name,

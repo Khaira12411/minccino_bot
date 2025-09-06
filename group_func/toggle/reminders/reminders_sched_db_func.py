@@ -126,16 +126,7 @@ async def get_catchbot_reminds_next_on(bot, user_id: int) -> Optional[dict]:
 async def update_catchbot_reminds_next_on(
     bot, user_id: int, minutes: int | None, ends_on: int | None = None
 ):
-    """
-    Update `remind_next_on` for catchbot reminders and reset `reminder_sent` to FALSE.
-
-    Behavior:
-    - If minutes is None or <= 0, or ends_on is None, clears `remind_next_on` (NULL).
-    - If minutes > 0, calculates the next remind time based on ends_on.
-    - Resets `reminder_sent` to FALSE so the reminder can trigger again.
-    """
     try:
-        # Calculate next reminder timestamp
         if not minutes or minutes <= 0 or not ends_on:
             next_on = None
         else:
@@ -143,13 +134,11 @@ async def update_catchbot_reminds_next_on(
                 {"repeating": minutes, "mode": "dms"}, ends_on
             )
 
-        # Update the database
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
                 UPDATE pokemeow_reminders_schedule
-                SET remind_next_on = $1,
-                    reminder_sent = FALSE
+                SET remind_next_on = $1
                 WHERE user_id = $2 AND type = 'catchbot'
                 """,
                 next_on,
@@ -158,7 +147,7 @@ async def update_catchbot_reminds_next_on(
 
         pretty_log(
             "info",
-            f"Updated catchbot remind_next_on for user {user_id} -> {next_on} (reminder_sent reset)",
+            f"Updated catchbot remind_next_on for user {user_id} -> {next_on}",
             bot=bot,
         )
     except Exception as e:
@@ -188,3 +177,16 @@ async def mark_reminder_sent(bot, reminder_id: int):
     query = "UPDATE pokemeow_reminders_schedule SET reminder_sent = TRUE WHERE reminder_id = $1"
     async with bot.pg_pool.acquire() as conn:
         await conn.execute(query, reminder_id)
+
+
+# 🗑️ Delete reminder by ID
+async def delete_reminder(bot, reminder_id: int):
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                "DELETE FROM pokemeow_reminders_schedule WHERE reminder_id = $1",
+                reminder_id,
+            )
+        pretty_log("db", f"Deleted reminder {reminder_id}", bot=bot)
+    except Exception as e:
+        pretty_log("error", f"Failed to delete reminder {reminder_id}: {e}", bot=bot)

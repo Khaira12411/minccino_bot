@@ -71,7 +71,7 @@ class ToggleGroup(commands.Cog):
         name="reminders",
         description="Modifies your reminders' settings",
     )
-    @khy_only()
+    @espeon_roles_only()
     async def toggle_reminders(
         self,
         interaction: discord.Interaction,
