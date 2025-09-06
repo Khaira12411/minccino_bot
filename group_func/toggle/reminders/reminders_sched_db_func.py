@@ -6,7 +6,6 @@ from utils.loggers.pretty_logs import pretty_log
 #     🐱 Pokemeow Reminders Schedule DB 🐱
 # ────────────────────────────────────────────
 
-
 async def fetch_all_schedules(bot) -> list[dict]:
     try:
         async with bot.pg_pool.acquire() as conn:

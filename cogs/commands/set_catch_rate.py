@@ -20,6 +20,7 @@ DEFAULT_HELD_ITEMS = {
     "uncommon": False,
     "legendary": False,
     "superrare": False,
+    "display_mode": "Best Ball"
 }
 DEFAULT_POKEMON = {
     "rare": False,
@@ -28,6 +29,7 @@ DEFAULT_POKEMON = {
     "uncommon": False,
     "legendary": False,
     "superrare": False,
+    "display_mode": "Best Ball",
 }
 DEFAULT_FISHING = {
     "rare": False,
@@ -37,6 +39,7 @@ DEFAULT_FISHING = {
     "uncommon": False,
     "legendary": False,
     "superrare": False,
+    "display_mode": "Best Ball",
 }
 
 

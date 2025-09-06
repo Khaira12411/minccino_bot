@@ -16,7 +16,6 @@ async def fetch_message_from_link_func(
     bot: discord.Client,
     interaction: discord.Interaction,
     message_link: str,
-    save_to_file: bool = False,
     ephemeral: bool = True,
 ) -> None:
     """
@@ -27,6 +26,7 @@ async def fetch_message_from_link_func(
       - sends inline if short, otherwise as .txt file (or if save_to_file=True)
       - cleans up any temp file
     """
+    save_to_file = True
     loader = None
     temp_file: Optional[Path] = None
 
@@ -188,27 +188,48 @@ async def fetch_message_from_link_func(
         if embeds:
             parts.append("🖼 Embeds:")
             for idx, emb in enumerate(embeds, start=1):
-                title = emb.get("title") or ""
-                desc = emb.get("description") or ""
-                fields = emb.get("fields") or []
-                footer = (emb.get("footer") or {}).get("text") or ""
-                author_line = ""
-                if emb.get("author") and emb["author"].get("name"):
-                    author_line = f"   • Author: {emb['author']['name']}"
                 parts.append(f"- Embed {idx}")
-                if title:
-                    parts.append(f"   • Title: {title}")
-                if author_line:
-                    parts.append(author_line)
-                if desc:
-                    parts.append(f"   • Description: {desc}")
-                for f in fields:
-                    name = f.get("name", "Field")
-                    val = f.get("value", "")
-                    parts.append(f"   • {name}: {val}")
-                if footer:
-                    parts.append(f"   • Footer: {footer}")
+
+                if emb.get("title"):
+                    parts.append(f"   • Title: {emb['title']}")
+
+                if emb.get("url"):
+                    parts.append(f"   • URL: {emb['url']}")
+
+                if emb.get("author") and emb["author"].get("name"):
+                    author_line = emb["author"]["name"]
+                    if emb["author"].get("url"):
+                        author_line += f" ({emb['author']['url']})"
+                    parts.append(f"   • Author: {author_line}")
+
+                if emb.get("description"):
+                    parts.append("   • Description:")
+                    for line in emb["description"].splitlines():
+                        parts.append(f"     {line}")
+
+                if emb.get("fields"):
+                    for f in emb["fields"]:
+                        name = f.get("name", "Field")
+                        val = f.get("value", "")
+                        inline = f.get("inline", False)
+                        parts.append(f"   • {name} [{'inline' if inline else 'block'}]:")
+                        for line in val.splitlines():
+                            parts.append(f"     {line}")
+
+                if emb.get("footer") and emb["footer"].get("text"):
+                    parts.append("   • Footer:")
+                    for line in emb["footer"]["text"].splitlines():
+                        parts.append(f"     {line}")
+
+                if emb.get("image") and emb["image"].get("url"):
+                    parts.append(f"   • Image: {emb['image']['url']}")
+
+                if emb.get("thumbnail") and emb["thumbnail"].get("url"):
+                    parts.append(f"   • Thumbnail: {emb['thumbnail']['url']}")
+
                 parts.append("")
+
+
         result_text = "\n".join(parts).strip()
     except Exception as e:
         pretty_log(

@@ -10,11 +10,12 @@ from discord.ext import commands
 from config.current_setup import (
     ACTIVE_GUILD_ID,
     MINCCINO_APP_ID,
+    OKA_SERVER_ID,
     POKEMEOW_APPLICATION_ID,
     STAFF_SERVER_GUILD_ID,
     STRAYMONS_GUILD_ID,
-    OKA_SERVER_ID
 )
+from utils.listener_func.boosted_channel_listener import handle_boosted_channel_on_edit
 from utils.listener_func.fish_reco_ping import recommend_fishing_ball
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
@@ -66,11 +67,13 @@ class MessageEditListener(commands.Cog):
                 ACTIVE_GUILD_ID,
                 STAFF_SERVER_GUILD_ID,
                 STRAYMONS_GUILD_ID,
-                OKA_SERVER_ID
-
+                OKA_SERVER_ID,
             ):
-                # 🔹 Call recommend_ball directly
+                # 🔹 Fishing reco ball
                 await recommend_fishing_ball(message=after, bot=self.bot)
+
+                # Boosted Channel Listener
+                await handle_boosted_channel_on_edit(bot=self.bot, message=after)
 
         except Exception as e:
             pretty_log(

@@ -299,3 +299,35 @@ async def fetch_enabled(bot, user_id: int) -> bool:
             bot=bot,
         )
         return True
+
+
+
+async def update_display_mode(bot, user_id: int, category: str, mode: str):
+    """
+    Update the 'display_mode' key inside the JSONB column for a user/category.
+    """
+    column_name = category  # e.g., "pokemon", "held_items", "fishing"
+
+    query = f"""
+        UPDATE user_ball_recommendations
+        SET {column_name} = jsonb_set(
+            coalesce({column_name}, '{{}}')::jsonb,
+            '{{display_mode}}',
+            to_jsonb($1::text),
+            true
+        )
+        WHERE user_id = $2
+    """
+
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(query, mode, user_id)
+    except Exception as e:
+        from utils.loggers.pretty_logs import pretty_log
+
+        pretty_log(
+            "error",
+            f"Failed to update display_mode for user {user_id}, category {category}: {e}",
+            label="STRAYMONS",
+            bot=bot,
+        )

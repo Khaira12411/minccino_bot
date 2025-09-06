@@ -233,7 +233,17 @@ WS_MAP = {
     5: "calm",
     10: "special",
 }
-
+from config.aesthetic import *
+# Map ball names to unlocked emojis
+UNLOCKED_BALL_EMOJIS = {
+    "pokeball": Emojis.pokeball_unlocked,
+    "greatball": Emojis.greatball_unlocked,
+    "ultraball": Emojis.ultraball_unlocked,
+    "premierball": Emojis.premierball_unlocked,
+    "masterball": Emojis.masterball_unlocked,
+    "beastball": Emojis.beastball_unlocked,
+    "diveball": Emojis.diveball_unlocked,
+}
 
 def compute_fishing_rate(
     rarity, ball, state=None, is_patreon=False, channel_boost=False
@@ -265,16 +275,19 @@ def compute_fishing_rate(
 
 
 def best_ball_fishing(
-    rarity, state=None, is_patreon=False, channel_boost=False, form=None
+    rarity,
+    state=None,
+    is_patreon=False,
+    channel_boost=False,
+    form=None,
+    display_all: bool = False,
 ):
     from utils.cache.water_state_cache import get_water_state
 
     if state is None:
         state = get_water_state()
-
     state = state.lower()
 
-    # Map form + rarity to proper key
     key = rarity
     if form == "shiny":
         key = "shiny_0"
@@ -300,34 +313,13 @@ def best_ball_fishing(
         "masterball",
     ]
 
-    # --- Compute “what-if” scenarios for logging only ---
-    results_base = {}
-    results_patron = {}
-    results_channel = {}
-    for ball in ball_priority:
-        results_base[ball] = compute_fishing_rate(key, ball, state=state)
-        results_patron[ball] = compute_fishing_rate(
-            key, ball, state=state, is_patreon=True
-        )
-        results_channel[ball] = compute_fishing_rate(
-            key, ball, state=state, is_patreon=True, channel_boost=True
-        )
-
-    print(f"[DEBUG] Base rates (no bonus): {results_base}")
-    print(f"[DEBUG] Patreon rates (+5%): {results_patron}")
-    print(f"[DEBUG] Patron + Channel rates (+10%): {results_channel}")
-
-    # --- Compute actual results respecting input ---
     actual_results = {}
     for ball in ball_priority:
         actual_results[ball] = compute_fishing_rate(
             key, ball, state=state, is_patreon=is_patreon, channel_boost=channel_boost
         )
 
-    # Filter expensive balls for superrare and below
     superrare_and_below = {"common", "uncommon", "rare", "superrare"}
-    form_is_special = form in {"shiny", "golden"}
-
     filtered_results = {
         b: r
         for b, r in actual_results.items()
@@ -340,16 +332,30 @@ def best_ball_fishing(
     max_rate = max(filtered_results.values())
     for ball in ball_priority:
         if ball in filtered_results and filtered_results[ball] == max_rate:
-            print(
-                f"[DEBUG] Chosen best ball: {ball} with rate {max_rate}% (actual user values)"
-            )
-            return ball, filtered_results[ball], actual_results
+            best = ball
+            break
 
-    return None, 0, actual_results
+    # Display string using unlocked emojis
+    all_balls_str = " | ".join(
+        f"{UNLOCKED_BALL_EMOJIS[b]} ({actual_results[b]}%)" for b in ball_priority
+    )
+
+    return (
+        best,
+        filtered_results[best],
+        actual_results,
+        all_balls_str if display_all else None,
+    )
 
 
 def compute_catch_rate(
-    category, rarity, ball, boost=0, is_patreon=False, ultra_beast=False
+    category,
+    rarity,
+    ball,
+    boost=0,
+    is_patreon=False,
+    channel_boost=False,
+    ultra_beast=False,
 ):
     """
     Compute final catch rate.
@@ -358,6 +364,7 @@ def compute_catch_rate(
     - ball: e.g. "greatball"
     - boost: flat % boost (default 0)
     - is_patreon: True/False → adds +5% if True
+    - channel_boost: True/False → adds +5% if True
     - ultra_beast: True/False → Beast Ball auto 80% if True
     """
     base_rate = catch_rates[category][rarity][ball]
@@ -366,8 +373,10 @@ def compute_catch_rate(
     if ball == "beastball" and ultra_beast:
         base_rate = 80
 
-    # Apply Patreon boost
+    # Apply boosts
     if is_patreon:
+        base_rate += 5
+    if channel_boost:
         base_rate += 5
     base_rate += boost
 
@@ -375,12 +384,15 @@ def compute_catch_rate(
     return min(100, base_rate)
 
 
-def best_ball(category, rarity, boost=0, is_patreon=False, ultra_beast=False):
-    """
-    Find the most optimal ball to use for a given rarity.
-    Masterball → only 'shiny' or 'golden'.
-    Premier Ball → only 'shiny', 'golden', or 'legendary'.
-    """
+def best_ball(
+    category,
+    rarity,
+    boost=0,
+    is_patreon=False,
+    channel_boost=False,
+    ultra_beast=False,
+    display_all: bool = False,
+):
     ball_priority = [
         "pokeball",
         "greatball",
@@ -391,39 +403,38 @@ def best_ball(category, rarity, boost=0, is_patreon=False, ultra_beast=False):
     ]
     results = {}
 
-    # Compute catch rate for every ball
     for ball in ball_priority:
         results[ball] = compute_catch_rate(
             category,
             rarity,
             ball,
             boost=boost,
-            is_patreon=False,
+            is_patreon=is_patreon,
+            channel_boost=channel_boost,
             ultra_beast=ultra_beast,
         )
 
-    # Determine which balls to consider
+    # Determine allowed balls
     allowed_balls = ball_priority.copy()
-
-    # Masterball restriction
     if rarity not in ["full_odds_shiny_64", "event_shiny_0"]:
-        if "masterball" in allowed_balls:
-            allowed_balls.remove("masterball")
-
-    # Premier Ball restriction
+        allowed_balls = [b for b in allowed_balls if b != "masterball"]
     if rarity not in [
         "full_odds_shiny_64",
         "event_shiny_0",
         "legendary_5",
         "legendary_0",
     ]:
-        if "premierball" in allowed_balls:
-            allowed_balls.remove("premierball")
+        allowed_balls = [b for b in allowed_balls if b != "premierball"]
 
-    # Find max rate among allowed balls
     max_rate = max(results[ball] for ball in allowed_balls)
-
-    # Pick the cheapest (lowest priority) ball that gives max_rate
     for ball in allowed_balls:
         if results[ball] == max_rate:
-            return ball, results[ball], results
+            best = ball
+            break
+
+    # Display string using unlocked emojis
+    all_balls_str = " | ".join(
+        f"{UNLOCKED_BALL_EMOJIS[b]} ({results[b]}%)" for b in ball_priority
+    )
+
+    return best, results[best], results, all_balls_str if display_all else None

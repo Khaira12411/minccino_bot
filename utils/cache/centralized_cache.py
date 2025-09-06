@@ -9,6 +9,7 @@ from utils.loggers.pretty_logs import pretty_log
 from utils.cache.ball_reco_cache import load_ball_reco_cache, ball_reco_cache
 from utils.cache.water_state_cache import get_water_state, fetch_latest_water_state
 from utils.cache.reminders_cache import *
+from utils.cache.boosted_channels_cache import boosted_channels_cache, load_boosted_channels_cache
 # 🐾────────────────────────────────────────────
 #     💜 Load Everything in One Go
 # 🐾────────────────────────────────────────────
@@ -30,6 +31,9 @@ async def load_all_caches(bot):
     # ⚾ User Reminders cache
     await load_user_reminders_cache(bot)
 
+    # 💒 Boosted Channels cache
+    await load_boosted_channels_cache(bot)
+
     # 🌊 Fetch latest waterstate
     await fetch_latest_water_state(bot)
 
@@ -40,7 +44,8 @@ async def load_all_caches(bot):
             f"All caches refreshed and loaded "
             f"(Waterstate: {get_water_state()}, Timers: {len(timer_cache)}, "
             f"Held Items: {len(held_item_cache)}, Ball Recon: {len(ball_reco_cache)}, "
-            f"Reminders: {len(user_reminders_cache)})"
+            f"Reminders: {len(user_reminders_cache)},"
+            f"Boosted Channels: {len(boosted_channels_cache)})"
         ),
         label="🥨 CENTRAL CACHE",
         bot=bot,

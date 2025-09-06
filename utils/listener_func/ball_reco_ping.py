@@ -6,6 +6,7 @@ from config.aesthetic import Emojis_Balls
 from config.fish_rarity import FISH_RARITY
 from utils.listener_func.catch_rate import *
 from utils.loggers.pretty_logs import pretty_log
+from utils.cache.boosted_channels_cache import boosted_channels_cache
 
 # -------------------- Regex + constants --------------------
 HELD_ITEM_PATTERN = re.compile(
@@ -64,6 +65,14 @@ def parse_pokemeow_spawn(message: discord.Message):
             for r, c in embed_rarity_color.items():
                 if embed.color.value == c:
                     rarity = r
+                    break
+
+        # --- Fallback: parse rarity from footer if color not recognized ---
+        if not rarity and footer_text:
+            footer_lower = footer_text.lower()
+            for r_key in embed_rarity_color.keys():
+                if r_key in footer_lower:
+                    rarity = r_key
                     break
 
         # Special case: Shiny embeds
@@ -205,20 +214,44 @@ async def recommend_ball(message: discord.Message, bot):
         if not enabled or not rarity or rarity not in rarity_key_map:
             return None
 
+        # --- Determine if channel has boost ---
+        channel_boost = False
+        if message.channel.id in boosted_channels_cache:
+            channel_boost = True  # % boost from PokéMeow
+
         rarity_key = rarity_key_map[rarity]
         boost = int(user_settings.get("catch_rate_bonus", 0))
         is_patreon = user_settings.get("is_patreon", False)
 
-        ball, rate, all_rates = best_ball(
-            category, rarity_key, boost=boost, is_patreon=False
+        # --- Get display mode and determine if we should show all balls ---
+        display_mode = user_settings.get("fishing", {}).get("display_mode", "Best Ball")
+        display_all = display_mode.strip().lower() == "all balls"
+
+        ball, rate, all_rates, all_balls_str = best_ball(
+            category,
+            rarity_key,
+            boost=boost,
+            is_patreon=is_patreon,
+            channel_boost=channel_boost,
+            display_all=display_all,  # <-- pass display preference
         )
 
         # --- Build recommendation message ---
         rarity_emoji = rarity_emojis.get(rarity.lower(), "") if rarity else ""
         ball_emoji = ball_emojis.get(ball.lower(), "") if ball else ""
         user_name = user_settings["user_name"]
+        # {Emojis.held_item}
+        if spawn_type == "held_item":
+            if display_all and all_balls_str:
+                msg = f"{user_name} {Emojis.held_item} {Emojis_Balls.small_pokeball} {rarity_emoji} → {all_balls_str}"
+            else:
+                msg = f"{user_name} {Emojis.held_item} {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
+        else:
+            if display_all and all_balls_str:
+                msg = f"{user_name} {Emojis_Balls.small_pokeball} {rarity_emoji} → {all_balls_str}"
+            else:
+                msg = f"{user_name} {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
 
-        msg = f"{user_name} {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
         await message.channel.send(msg)
 
         return {
@@ -228,6 +261,7 @@ async def recommend_ball(message: discord.Message, bot):
             "spawn_type": spawn_type,
             "ball": ball,
             "rate": rate,
+            "display_mode": display_mode,
         }
 
     except Exception as e:

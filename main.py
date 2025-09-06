@@ -90,7 +90,7 @@ ALLOWED_GUILD_IDS = [
     OKA_SERVER_ID,
     STRAYMONS_GUILD_ID,
     CC_GUILD_ID,
-]  
+]
 
 
 @bot.event
@@ -207,6 +207,11 @@ async def startup_tasks():
 # ── ⏱️🧸 Refresh All Caches 🧸⏱️ ──
 @tasks.loop(hours=1)
 async def refresh_all_caches():
+    # Skip the very first run
+    if not hasattr(refresh_all_caches, "has_run"):
+        refresh_all_caches.has_run = True
+        return
+
     await load_all_caches(bot)
 
 
@@ -307,6 +312,7 @@ async def startup_checklist(bot: commands.Bot):
 
     from utils.cache import (
         ball_reco_cache,
+        boosted_channels_cache,
         get_water_state,
         held_item_cache,
         timer_cache,
@@ -320,6 +326,7 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {len(held_item_cache)} 🍄 Held Item Ping Users")
     print(f"✅ {len(ball_reco_cache)} 🍀 Ball Recommendation Users")
     print(f"✅ {len(user_reminders_cache)} ⚾ User Remidners")
+    print(f"✅ {len(boosted_channels_cache)} 💒 Boosted Channels")
     print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
     print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
     pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"

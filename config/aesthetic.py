@@ -19,7 +19,14 @@ class Emojis:
     relic = "<:relic:1413346989516652606>"
     robot = "<:robot:1413347429775970314>"
     notifs = "<:notification:1413380632402333706>"
-
+    beastball_unlocked = "<:beastball_unlocked:1413697576565477436>"
+    diveball_unlocked = "<:diveball_unlocked:1413697561503465482>"
+    masterball_unlocked = "<:masterball_unlocked:1413697549302366208>"
+    premierball_unlocked = "<:premierball_unlocked:1413697537189085234>"
+    ultraball_unlocked = "<:ultraball_unlocked:1413697521691398304>"
+    greatball_unlocked = "<:greatball_unlocked:1413697507870900224>"
+    pokeball_unlocked = "<:pokeball_unlocked:1413697494155526195>"
+    
 class Emojis_Rarity:
     common = "<:common:1412000858329321482>"
     uncommon = "<:uncommon:1412000832161054770>"

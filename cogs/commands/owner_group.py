@@ -49,14 +49,12 @@ class OwnerGroup(commands.Cog):
     )
     @app_commands.describe(
         message_link="Message link to fetch the message contents from",
-        save_to_file="Save to text file?",
     )
     @khy_only()
     async def fetch_message_from_link(
         self,
         interaction: discord.Interaction,
         message_link: str,
-        save_to_file: bool,
     ):
         slash_cmd_name = "owner fetch-message"
 
@@ -66,7 +64,6 @@ class OwnerGroup(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=fetch_message_from_link_func,
             message_link=message_link,
-            save_to_file=save_to_file,
         )
 
     fetch_message_from_link.extras = {"category": "Owner"}

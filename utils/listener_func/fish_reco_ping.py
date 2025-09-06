@@ -1,9 +1,17 @@
+import inspect
 import re
 
 import discord
 
 from config.fish_rarity import FISH_RARITY
+from utils.cache.ball_reco_cache import ball_reco_cache
+from utils.cache.boosted_channels_cache import boosted_channels_cache
+from utils.cache.water_state_cache import get_water_state, update_water_state
 from utils.listener_func.catch_rate import *
+from utils.listener_func.catch_rate import ball_emojis, best_ball_fishing, rarity_emojis
+from utils.loggers.debug_log import debug_log
+from utils.loggers.pretty_logs import pretty_log
+
 DEBUG = False
 FISHING_COLOR = 0x87CEFA  # sky blue
 
@@ -98,18 +106,6 @@ def parse_pokemeow_fishing_spawn(message: discord.Message):
     }
 
 
-import inspect
-
-import discord
-
-from config.fish_rarity import FISH_RARITY
-from utils.cache.ball_reco_cache import ball_reco_cache
-from utils.cache.water_state_cache import get_water_state, update_water_state
-from utils.listener_func.catch_rate import ball_emojis, best_ball_fishing, rarity_emojis
-from utils.loggers.debug_log import debug_log
-from utils.loggers.pretty_logs import pretty_log
-
-
 async def recommend_fishing_ball(message: discord.Message, bot):
     func_name = inspect.currentframe().f_code.co_name
 
@@ -132,8 +128,6 @@ async def recommend_fishing_ball(message: discord.Message, bot):
 
     # --- Lookup user in cache ---
     user_settings = None
-
-    # 1️⃣ Lookup by ID first
     if trainer_id:
         raw = ball_reco_cache.get(trainer_id)
         if isinstance(raw, dict):
@@ -141,7 +135,6 @@ async def recommend_fishing_ball(message: discord.Message, bot):
         elif isinstance(raw, str):
             user_settings = {"user_name": raw, "enabled": True, "catch_rate_bonus": 0}
 
-    # 2️⃣ Fallback: lookup by user_name
     if not user_settings and trainer_name:
         for uid, raw in ball_reco_cache.items():
             uname = raw if isinstance(raw, str) else raw.get("user_name", "")
@@ -156,10 +149,11 @@ async def recommend_fishing_ball(message: discord.Message, bot):
 
     # --- Check if user is enabled ---
     enabled_val = user_settings.get("enabled", True) if user_settings else True
-    if isinstance(enabled_val, str):
-        is_enabled = enabled_val.strip().lower() in ("true", "yes", "1", "on")
-    else:
-        is_enabled = bool(enabled_val)
+    is_enabled = (
+        enabled_val.strip().lower() in ("true", "yes", "1", "on")
+        if isinstance(enabled_val, str)
+        else bool(enabled_val)
+    )
 
     if not user_settings or not is_enabled:
         await debug_log(
@@ -182,50 +176,45 @@ async def recommend_fishing_ball(message: discord.Message, bot):
         await debug_log(func_name, f"Ignored caught message {message.id}")
         return None
 
+    # --- Determine if channel has boost ---
+    channel_boost = False
+    if message.channel.id in boosted_channels_cache:
+        channel_boost = True  # % boost from PokéMeow
+
+    # --- Calculate best ball ---
     # --- Calculate best ball ---
     try:
-        # Determine Patreon status from cache
         is_patreon = bool(user_settings.get("is_patreon", False))
 
-        # 🌊 Print all inputs before computation
-        print(f"[DEBUG] Calling best_ball_fishing with:")
-        print(f"         rarity = {rarity}")
-        print(f"         state = {water_state}")
-        print(f"         boost = 0 (ignoring catch_rate_bonus)")
-        print(f"         is_patreon = {is_patreon}")
-        print(f"         form = {form.lower() if form else None}")
+        # Get display mode and determine if we should show all balls
+        display_mode = user_settings.get("fishing", {}).get("display_mode", "Best Ball")
+        display_all = display_mode.strip().lower() == "all balls"
 
-        ball, rate, all_rates = best_ball_fishing(
+
+        ball, rate, all_rates, all_balls_str = best_ball_fishing(
             rarity=rarity,
             state=water_state,
             is_patreon=is_patreon,
             form=form.lower() if form else None,
+            channel_boost=channel_boost,
+            display_all=display_all,  # <-- pass display preference
         )
 
-        # 🌊 Print all computed rates
-        print(f"[DEBUG] Computed rates for all balls:")
-        for b, r in all_rates.items():
-            print(f"         {b}: {r}%")
-
         # --- Build display ---
-        rarity_display_map = {
-            "common": "Common",
-            "uncommon": "Uncommon",
-            "rare": "Rare",
-            "superrare": "Super Rare",
-            "legendary": "Legendary",
-            "full_odds_shiny_0": "Full Odds Shiny",
-            "event_shiny_0": "Event Shiny",
-        }
-        rarity_label = rarity_display_map.get(rarity, rarity.capitalize())
+        rarity_label = rarity.capitalize()
         if form:
             rarity_label = f"{form.capitalize()} {rarity_label}"
-
         rarity_label_lower = rarity_label.lower()
         rarity_emoji = rarity_emojis.get(rarity_label_lower, "")
-        ball_emoji = ball_emojis.get(ball, "")
 
-        msg = f"{user_settings['user_name']} 🎣 {rarity_emoji} → {ball_emoji} ({rate}%)"
+        if display_all and all_balls_str:
+            # Show all balls
+            msg = f"{user_settings['user_name']} 🎣 {rarity_emoji} → {all_balls_str}"
+        else:
+            # Default: only best ball
+            ball_emoji = ball_emojis.get(ball, "")
+            msg = f"{user_settings['user_name']} 🎣 {rarity_emoji} → {ball_emoji} ({rate}%)"
+
         await message.channel.send(msg)
         await debug_log(func_name, f"Sent recommendation: {msg}")
 
@@ -238,6 +227,8 @@ async def recommend_fishing_ball(message: discord.Message, bot):
             "rate": rate,
             "water_state": water_state,
             "is_patreon": is_patreon,
+            "channel_boost": channel_boost,
+            "display_mode": display_mode,
         }
 
     except Exception as e:

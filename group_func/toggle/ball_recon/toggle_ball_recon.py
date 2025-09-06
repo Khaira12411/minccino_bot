@@ -110,8 +110,55 @@ class RarityBatchButton(discord.ui.Button):
             )
 
 
+class DisplayModeButton(discord.ui.Button):
+    def __init__(
+        self, current_mode: str, user_id: int, category: str, view: discord.ui.View
+    ):
+        """
+        current_mode: either "Best Ball" or "All Balls"
+        view: the RaritySelectView instance to store the selected mode
+        """
+        self.user_id = user_id
+        self.category = category
+        self.view_ref = view  # store reference to the parent view
+        self.mode = current_mode
+        label = f"Display Mode: {self.mode}"
+        super().__init__(
+            label=label, style=ButtonStyle.primary, custom_id="display_mode_toggle"
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        # Flip mode visually
+        self.mode = "All Balls" if self.mode == "Best Ball" else "Best Ball"
+        self.label = f"Display Mode: {self.mode}"
+
+        # Update the view's display_mode so it will be saved on Save
+        if hasattr(self.view_ref, "display_mode"):
+            self.view_ref.display_mode = self.mode
+
+        # Update the message to reflect the flipped button
+        try:
+            await safe_respond(interaction, method="edit", view=self.view_ref)
+        except Exception as e:
+            from utils.loggers.pretty_logs import pretty_log
+
+            pretty_log(
+                "error",
+                f"Failed to toggle display mode visually for user {self.user_id} | {e}",
+            )
+            await safe_respond(
+                interaction,
+                method="followup",
+                content="❌ Something went wrong while updating display mode.",
+                ephemeral=True,
+            )
+
+
 # ─────────────────────────────
 # Rarity Selection View (Fixed)
+# ─────────────────────────────
+# ─────────────────────────────
+# Rarity Selection View (Fixed with Display Mode Tracking)
 # ─────────────────────────────
 class RaritySelectView(discord.ui.View):
     def __init__(
@@ -122,6 +169,7 @@ class RaritySelectView(discord.ui.View):
         user_subs: set,
         category: str,
         enabled: bool = True,
+        display_mode: str = "Best Ball",  # default
     ):
         super().__init__(timeout=300)
         self.bot = bot
@@ -132,6 +180,10 @@ class RaritySelectView(discord.ui.View):
         self.update_db_func = None  # will be set dynamically
         self.enabled = enabled
         self.category = category
+
+        # Track display mode
+        self.display_mode: str = display_mode
+        self.original_display_mode: str = display_mode  # for change detection
 
         # Add individual rarity toggle buttons
         for rarity in rarities:
@@ -164,37 +216,20 @@ class RaritySelectView(discord.ui.View):
             )
             return
 
-        try:
-            for child in self.children:
-                if isinstance(child, RarityToggleButton):
-                    child.checked = True
-                    child.style = ButtonStyle.success
-                    self.selection_changed.add(child.rarity_name)
-                    child.label = f"✅ {child.rarity_name.title()}"
+        for child in self.children:
+            if isinstance(child, RarityToggleButton):
+                child.checked = True
+                child.style = ButtonStyle.success
+                self.selection_changed.add(child.rarity_name)
+                child.label = f"✅ {child.rarity_name.title()}"
 
-            await safe_respond(
-                interaction,
-                method="edit",
-                view=self,
-            )
-
-            await safe_respond(
-                interaction,
-                content="✅ All rarities selected.",
-                ephemeral=True,
-                method="followup",
-            )
-
-        except Exception as e:
-            pretty_log(
-                "error", f"Failed to add all rarities for user {self.user_id} | {e}"
-            )
-            await safe_respond(
-                interaction,
-                content="❌ Failed to add all rarities.",
-                ephemeral=True,
-                method="followup",
-            )
+        await safe_respond(interaction, method="edit", view=self)
+        await safe_respond(
+            interaction,
+            content="✅ All rarities selected.",
+            ephemeral=True,
+            method="followup",
+        )
 
     async def remove_all(self, interaction: discord.Interaction):
         if not self.enabled:
@@ -206,44 +241,30 @@ class RaritySelectView(discord.ui.View):
             )
             return
 
-        try:
-            for child in self.children:
-                if isinstance(child, RarityToggleButton):
-                    child.checked = False
-                    child.style = ButtonStyle.gray
-                    self.selection_changed.discard(child.rarity_name)
-                    child.label = f"❌ {child.rarity_name.title()}"
+        for child in self.children:
+            if isinstance(child, RarityToggleButton):
+                child.checked = False
+                child.style = ButtonStyle.gray
+                self.selection_changed.discard(child.rarity_name)
+                child.label = f"❌ {child.rarity_name.title()}"
 
-            await safe_respond(
-                interaction,
-                method="edit",
-                view=self,
-            )
-
-            await safe_respond(
-                interaction,
-                content="✅ All rarities removed.",
-                ephemeral=True,
-                method="followup",
-            )
-
-        except Exception as e:
-            pretty_log(
-                "error", f"Failed to remove all rarities for user {self.user_id} | {e}"
-            )
-            await safe_respond(
-                interaction,
-                content="❌ Failed to remove all rarities.",
-                ephemeral=True,
-                method="followup",
-            )
-    #
+        await safe_respond(interaction, method="edit", view=self)
+        await safe_respond(
+            interaction,
+            content="✅ All rarities removed.",
+            ephemeral=True,
+            method="followup",
+        )
 
     async def save_selection(self, interaction: discord.Interaction):
         try:
-            # Compute changes since last save
-            changed_rarities = self.selection_changed.symmetric_difference(self.user_subs)
-            if not changed_rarities:
+            # Detect changes
+            changed_rarities = self.selection_changed.symmetric_difference(
+                self.user_subs
+            )
+            display_mode_changed = self.display_mode != self.original_display_mode
+
+            if not changed_rarities and not display_mode_changed:
                 await safe_respond(
                     interaction,
                     method="auto",
@@ -252,7 +273,7 @@ class RaritySelectView(discord.ui.View):
                 )
                 return
 
-            # Build dict for changes only
+            # Build dict for changes
             changes_dict = {"pokemon": {}, "held_items": {}, "fishing": {}}
             for r in changed_rarities:
                 new_state = r in self.selection_changed
@@ -265,7 +286,7 @@ class RaritySelectView(discord.ui.View):
                 else:
                     changes_dict[self.category][r] = new_state
 
-            # Update database
+            # Update rarities in database
             if self.update_db_func:
                 await self.update_db_func(
                     interaction.client,
@@ -273,10 +294,24 @@ class RaritySelectView(discord.ui.View):
                     {r: (r in self.selection_changed) for r in self.rarities},
                 )
 
-            # ✅ Refresh baseline
-            self.user_subs = set(self.selection_changed)
+            # Update display mode in DB if changed
+            if display_mode_changed:
+                from group_func.toggle.ball_recon.ball_recon_db_func import (
+                    update_display_mode,
+                )
 
-            # ✅ Sync button visuals to new state
+                await update_display_mode(
+                    bot=interaction.client,
+                    user_id=self.user_id,
+                    category=self.category,
+                    mode=self.display_mode,
+                )
+
+            # Refresh baseline
+            self.user_subs = set(self.selection_changed)
+            self.original_display_mode = self.display_mode
+
+            # Sync button visuals
             for child in self.children:
                 if isinstance(child, RarityToggleButton):
                     if child.rarity_name in self.user_subs:
@@ -288,13 +323,15 @@ class RaritySelectView(discord.ui.View):
                         child.style = ButtonStyle.gray
                         child.label = f"❌ {child.rarity_name.title()}"
 
-            # Build embed for just the changes
+            # Build embed
             title_map = {
                 "pokemon": "Pokemon Ball Recommendation Updated",
                 "held_items": "Pokemon w/ Held Items Ball Recommendation Updated",
                 "fishing": "Fishing Ball Recommendations Updated",
             }
             title = title_map.get(self.category, "Subscription Updated")
+
+            from utils.embeds.embed_settings_summary import build_summary_settings_embed
 
             embed = build_summary_settings_embed(
                 user=interaction.user,
@@ -304,13 +341,13 @@ class RaritySelectView(discord.ui.View):
                 description=None,
             )
 
-            # Update message with embed + fresh view
             await safe_respond(
                 interaction,
                 method="auto",
                 embed=embed,
             )
 
+            # Reload cache
             from utils.cache.ball_reco_cache import load_ball_reco_cache
 
             await load_ball_reco_cache(interaction.client)
@@ -353,24 +390,22 @@ class RarityDropdown(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         try:
             user_id = interaction.user.id
-            user_rec = await fetch_user_rec(interaction.client, user_id) or {
-                "pokemon": {},
-                "held_items": {},
-                "fishing": {},
-                "enabled": True,
-            }
+            user_rec = await fetch_user_rec(interaction.client, user_id) or {}
+            user_rec.setdefault("pokemon", {})
+            user_rec.setdefault("held_items", {})
+            user_rec.setdefault("fishing", {})
+            user_rec.setdefault("enabled", True)
 
             category = self.values[0]
             handle = await pretty_defer(interaction, ephemeral=True)
-            # ---------------- ⚡ Handle enabled toggle ----------------
+
             # ---------------- ⚡ Handle enabled toggle ----------------
             if category == "enabled_toggle":
-                prev_enabled = user_rec.get("enabled", True)
-                new_enabled = not prev_enabled
-
+                new_enabled = not user_rec["enabled"]
                 await update_enabled(interaction.client, user_id, new_enabled)
 
                 from utils.cache.ball_reco_cache import load_ball_reco_cache
+
                 await load_ball_reco_cache(interaction.client)
                 user_rec = await fetch_user_rec(interaction.client, user_id) or {}
 
@@ -386,7 +421,7 @@ class RarityDropdown(discord.ui.Select):
                     if new_enabled
                     else "🚫 Ball Recommendations Disabled"
                 )
-                desc = (
+                description = (
                     "Minccino will now ping you for ball recommendations again. ✨"
                     if new_enabled
                     else "You will not be pinged for ball recommendations."
@@ -397,10 +432,8 @@ class RarityDropdown(discord.ui.Select):
                     title=title,
                     changes=changes_dict,
                     mode="rarity",
-                    description=desc,
+                    description=description,
                 )
-
-                # ✅ Use pretty_defer handle
                 await handle.stop(content="Done", embed=embed)
                 return
 
@@ -423,6 +456,7 @@ class RarityDropdown(discord.ui.Select):
             }
             msg_content = msg_map.get(category, "Select rarities:")
 
+            # ---------------- ⚡ Create the view ----------------
             view = RaritySelectView(
                 bot=interaction.client,
                 user_id=user_id,
@@ -431,11 +465,30 @@ class RarityDropdown(discord.ui.Select):
                 enabled=user_rec.get("enabled", True),
                 category=category,
             )
+
             view.update_db_func = {
                 "pokemon": update_pokemon,
                 "held_items": update_held_items,
                 "fishing": update_fishing,
             }.get(category)
+
+            # ---------------- ⚡ Add display mode button from cache ----------------
+            from utils.cache.ball_reco_cache import ball_reco_cache
+
+            display_mode = "Best Ball"  # default fallback
+            user_cache = ball_reco_cache.get(user_id, {})
+            display_mode = user_cache.get("display_mode", {}).get(
+                category, display_mode
+            )
+
+            view.add_item(
+                DisplayModeButton(
+                    current_mode=display_mode,
+                    user_id=user_id,
+                    category=category,
+                    view=view,
+                )
+            )
 
             await safe_respond(
                 interaction,
