@@ -95,7 +95,7 @@ def build_reminder_embed(
         timestamp=datetime.now(),
     )
     embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
-    embed.set_footer(text="Wooper Reminder System")
+    embed.set_footer(text="Minccino Reminder System")
 
     return embed
 
@@ -170,7 +170,8 @@ async def pokemon_reminder_checker(bot: discord.Client):
                 if now >= ends_on_ts and not reminder_sent:
                     try:
                         embed = build_reminder_embed(user, reminder_type)
-                        await target_channel.send(embed=embed)
+                        #content = f"{user.mention}, your Relics Exchange effect has expired"
+                        await target_channel.send(embed=embed, content=user.mention)
 
                         # 🔹 Delete immediately since relics never repeat
                         await delete_reminder(bot, reminder_id)
@@ -205,7 +206,7 @@ async def pokemon_reminder_checker(bot: discord.Client):
                                     remind_next_on_ts if remind_next_on_ts else None
                                 ),
                             )
-                            await target_channel.send(embed=embed)
+                            await target_channel.send(embed=embed, content=user.mention)
 
                             if repeating:
                                 await update_catchbot_reminds_next_on(
