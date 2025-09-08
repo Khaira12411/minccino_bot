@@ -118,7 +118,7 @@ class ToggleGroup(commands.Cog):
     # 🟣────────────────────────────────────────────
     @ping_group.command(
         name="ball-recommendaton",
-        description="Subscribe or unsubscribe to Pokemon held item alerts",
+        description="Modify your ball recommendation settings",
     )
     @espeon_roles_only()
     async def toggle_ball_recon(
