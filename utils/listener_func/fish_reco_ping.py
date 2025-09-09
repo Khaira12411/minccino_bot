@@ -164,7 +164,8 @@ async def recommend_fishing_ball(message: discord.Message, bot):
 
     # --- Update water state if message contains cast info ---
     if "cast a " in embed_desc:
-        current_state = extract_water_state_from_author(trainer_name)
+        author_text = message.embeds[0].author.name if message.embeds[0].author else ""
+        current_state = extract_water_state_from_author(author_text)
         await debug_log(func_name, f"Detected cast: {current_state}")
         if current_state and current_state.lower() != water_state.lower():
             update_water_state(new_state=current_state.lower())
@@ -189,7 +190,6 @@ async def recommend_fishing_ball(message: discord.Message, bot):
         # Get display mode and determine if we should show all balls
         display_mode = user_settings.get("fishing", {}).get("display_mode", "Best Ball")
         display_all = display_mode.strip().lower() == "all balls"
-
 
         ball, rate, all_rates, all_balls_str = best_ball_fishing(
             rarity=rarity,
