@@ -7,6 +7,8 @@ from config.fish_rarity import FISH_RARITY
 from utils.listener_func.catch_rate import *
 from utils.loggers.pretty_logs import pretty_log
 from utils.cache.boosted_channels_cache import boosted_channels_cache
+from utils.cache.water_state_cache import get_water_state, update_water_state
+from utils.loggers.debug_log import debug_log, enable_debug
 
 # -------------------- Regex + constants --------------------
 HELD_ITEM_PATTERN = re.compile(
@@ -16,7 +18,8 @@ HELD_ITEM_PATTERN = re.compile(
     r"(?:<:[^:]+:\d+>\s*)+"  # Pokemon emoji (+ optional dexCaught)
     r"\*\*(?P<pokemon>[A-Za-z_]+)\*\*"
 )
-
+enable_debug(f"{__name__}.extract_water_state_from_author")
+enable_debug(f"{__name__}.parse_pokemeow_spawn")
 FISHING_COLOR = 0x87CEFA  # sky blue
 
 embed_rarity_color = {
@@ -28,6 +31,26 @@ embed_rarity_color = {
     "shiny": 16751052,
     "golden": 14940164,
 }
+
+
+def extract_water_state_from_author(author_name: str) -> str:
+
+    name_lower = author_name.lower()
+    if "gold" in name_lower:
+        state = "special"
+    elif "calm" in name_lower:
+        state = "calm"
+    elif "strong" in name_lower:
+        state = "strong"
+    elif "moderate" in name_lower:
+        state = "moderate"
+    elif "intense" in name_lower:
+        state = "intense"
+    else:
+        state = None
+
+    debug_log(f"extract_water_state_from_author('{author_name}') → {state}")
+    return state
 
 
 # -------------------- Parser --------------------
@@ -52,8 +75,34 @@ def parse_pokemeow_spawn(message: discord.Message):
         if "captcha" in title_text.lower() or "captcha" in description_text.lower():
             return None
 
+        # -------------------- CHECKING WATER STATE --------------------
+        water_state = None
+        if embed.color and embed.color.value == FISHING_COLOR:
+            if "cast a " in description_text.lower():
+                author_text = embed.author.name if embed.author else ""
+                debug_log(f"Author text for cast detection: '{author_text}'")
+
+                current_state = extract_water_state_from_author(author_text)
+                debug_log(f"Detected cast: {current_state}")
+
+                if current_state:
+                    water_state = current_state.lower()
+                    update_water_state(new_state=water_state)
+                    debug_log(
+                        f"Water state successfully updated to: {water_state}",
+                        highlight=True,
+                    )
+                else:
+                    debug_log(
+                        "No valid water state detected from author text, update skipped",
+                        highlight=True,
+                    )
+            else:
+                debug_log(
+                    "No 'cast a ' found in embed description, skipping water state update"
+                )
+
         # -------------------- MUST BE A SPAWN --------------------
-        # require "found a wild" phrase in description for normal spawns
         if description_text and "found a wild" not in description_text.lower():
             return None
 
@@ -94,20 +143,17 @@ def parse_pokemeow_spawn(message: discord.Message):
             trainer_obj = getattr(message.reference.resolved, "author", None)
             trainer_id = trainer_obj.id if trainer_obj else None
 
-        # --- Fishing ---
-        water_state = None
-        if embed.color and embed.color.value == FISHING_COLOR:
-            state_match = re.search(r"Water state:\s*([-\d]+)", footer_text or "")
-            if state_match:
-                water_state = int(state_match.group(1))
-            spawn_type = "fishing"
-        else:
-            spawn_type = "pokemon"
+        # --- Spawn type ---
+        spawn_type = (
+            "fishing"
+            if embed.color and embed.color.value == FISHING_COLOR
+            else "pokemon"
+        )
 
         # --- Held item ---
         held_pokemon = None
-        if embed.description:
-            held_match = HELD_ITEM_PATTERN.search(embed.description)
+        if description_text:
+            held_match = HELD_ITEM_PATTERN.search(description_text)
             if held_match and held_match.group("held"):
                 held_pokemon = held_match.group("pokemon")
                 spawn_type = "held_item"
@@ -120,6 +166,7 @@ def parse_pokemeow_spawn(message: discord.Message):
             "user_id": trainer_id,
             "water_state": water_state,
         }
+
     except Exception as e:
         pretty_log("error", f"Failed to parse spawn: {e}")
         return None

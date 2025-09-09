@@ -266,10 +266,10 @@ def compute_fishing_rate(
     channel_bonus = 5 if channel_boost else 0
     total_rate = base_rate + patron_bonus + channel_bonus
 
-    print(
+    """print(
         f"[DEBUG] compute_fishing_rate: {ball=} base={base_rate}% "
         f"(patron={patron_bonus}, channel_boost={channel_bonus}) total={total_rate}%"
-    )
+    )"""
 
     return max(0, min(100, total_rate))
 

@@ -1,15 +1,13 @@
-import inspect
 import re
-
 import discord
 
 from config.current_setup import POKEMEOW_APPLICATION_ID
 from group_func.toggle.reminders.reminders_sched_db_func import upsert_user_schedule
-from utils.loggers.debug_log import debug_log  # centralized debug logger
+from utils.loggers.debug_log import debug_log
 from utils.loggers.pretty_logs import pretty_log
 from group_func.toggle.reminders.user_reminders_db_func import *
 
-# Patterns to extract relic expiration timestamps
+# Patterns
 RELICS_EMBED_PATTERN = re.compile(
     r"can only exchange them after <t:(\d+):f>", re.IGNORECASE
 )
@@ -30,8 +28,6 @@ async def extract_and_save_relics_schedule(
     """
     from utils.cache.reminders_cache import user_reminders_cache
 
-    func_name = inspect.currentframe().f_code.co_name
-
     try:
         reminders = user_reminders_cache.get(user.id, {})
         relics_mode = reminders.get("relics", {}).get("mode", "off")
@@ -40,9 +36,7 @@ async def extract_and_save_relics_schedule(
 
         current_ts = reminders.get("relics", {}).get("expiration_timestamp")
         if current_ts == timestamp:
-            await debug_log(
-                func_name, f"User {user.id} schedule unchanged ({timestamp}). Skipping."
-            )
+            debug_log(f"User {user.id} schedule unchanged ({timestamp}). Skipping.")
             return None
 
         # Upsert schedule table
@@ -62,7 +56,7 @@ async def extract_and_save_relics_schedule(
         reminders["relics"]["expires_on"] = timestamp
         user_reminders_cache[user.id] = reminders
 
-        # ✅ Persist in reminders JSON in DB (multi-field, safe)
+        # Persist in reminders JSON in DB
         await update_user_reminders_fields(
             bot,
             user.id,
@@ -70,20 +64,17 @@ async def extract_and_save_relics_schedule(
             updates={
                 "relics.expires_on": timestamp,
                 "relics.has_exchanged": True,
-            }
+            },
         )
 
-        await debug_log(
-            func_name,
-            f"Updated cache & DB for user {user.id} with expires_on {timestamp}.",
-        )
+        debug_log(f"Updated cache & DB for user {user.id} with expires_on {timestamp}.")
 
         # React to message if provided
         if message:
             try:
                 await message.reference.resolved.add_reaction("📅")
             except Exception as e:
-                await debug_log(func_name, f"Failed to add reaction: {e}")
+                debug_log(f"Failed to add reaction: {e}")
 
         pretty_log(
             "info",
@@ -107,8 +98,6 @@ async def handle_relics_message(bot, message: discord.Message):
     Processes messages for users whose relics.mode != 'off'.
     Reacts with a calendar emoji if a timestamp is found.
     """
-    func_name = inspect.currentframe().f_code.co_name
-
     try:
         if message.author.id != POKEMEOW_APPLICATION_ID:
             return None
@@ -125,9 +114,8 @@ async def handle_relics_message(bot, message: discord.Message):
         relics_mode = reminders.get("relics", {}).get("mode", "off")
         if relics_mode == "off":
             return None
-        await debug_log(
-            func_name, f"Processing message {message.id} for user {replied_user.name}"
-        )
+
+        debug_log(f"Processing message {message.id} for user {replied_user.name}")
 
         # 1️⃣ Check embed
         if message.embeds:
@@ -140,9 +128,7 @@ async def handle_relics_message(bot, message: discord.Message):
                 match = RELICS_EMBED_PATTERN.search(desc_text)
                 if match:
                     ts = int(match.group(1))
-                    await debug_log(
-                        func_name, f"Found relics expiration in embed: {ts}"
-                    )
+                    debug_log(f"Found relics expiration in embed: {ts}")
                     return await extract_and_save_relics_schedule(
                         bot, replied_user, ts, message
                     )
@@ -152,7 +138,7 @@ async def handle_relics_message(bot, message: discord.Message):
         match = RELICS_SUCCESS_PATTERN.search(content)
         if match:
             ts = int(match.group(1))
-            await debug_log(func_name, f"Found relics expiration in content: {ts}")
+            debug_log(f"Found relics expiration in content: {ts}")
             return await extract_and_save_relics_schedule(
                 bot, replied_user, ts, message
             )

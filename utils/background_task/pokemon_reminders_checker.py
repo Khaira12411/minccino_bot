@@ -170,8 +170,11 @@ async def pokemon_reminder_checker(bot: discord.Client):
                 if now >= ends_on_ts and not reminder_sent:
                     try:
                         embed = build_reminder_embed(user, reminder_type)
-                        #content = f"{user.mention}, your Relics Exchange effect has expired"
-                        await target_channel.send(embed=embed, content=user.mention)
+                        content = user.mention
+                        if reminder_type == "relics":
+                            content = f"{user.mention}, your Relics Exchange effect has expired"
+
+                        await target_channel.send(embed=embed, content=content)
 
                         # 🔹 Delete immediately since relics never repeat
                         await delete_reminder(bot, reminder_id)
@@ -206,7 +209,8 @@ async def pokemon_reminder_checker(bot: discord.Client):
                                     remind_next_on_ts if remind_next_on_ts else None
                                 ),
                             )
-                            await target_channel.send(embed=embed, content=user.mention)
+                            content = f"{user.mention}, your catchbot has returned!"
+                            await target_channel.send(embed=embed, content=content)
 
                             if repeating:
                                 await update_catchbot_reminds_next_on(

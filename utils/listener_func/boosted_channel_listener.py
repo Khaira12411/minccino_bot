@@ -21,38 +21,28 @@ async def handle_boosted_channel_on_edit(bot: commands.Bot, message: discord.Mes
     """
     from utils.cache.boosted_channels_cache import boosted_channels_cache
 
-    func_name = "handle_boosted_channel_on_edit"
-
     # --- Skip entirely if cache is empty ---
     if not boosted_channels_cache:
-        await debug_log(
-            func_name, "Boosted channels cache is empty, skipping processing"
-        )
+        debug_log("Boosted channels cache is empty, skipping processing")
         return
 
-    await debug_log(
-        func_name, f"Processing message {message.id} in channel {message.channel.id}"
-    )
+    debug_log(f"Processing message {message.id} in channel {message.channel.id}")
 
     # ✅ Must be from PokéMeow bot
     if message.author.id != POKEMEOW_APPLICATION_ID:
-        await debug_log(
-            func_name, f"Ignored message: author {message.author.id} is not PokéMeow"
-        )
+        debug_log(f"Ignored message: author {message.author.id} is not PokéMeow")
         return
 
     # ✅ Must have at least one embed
     if not message.embeds:
-        await debug_log(func_name, "Ignored message: no embeds found")
+        debug_log("Ignored message: no embeds found")
         return
 
     embed = message.embeds[0]
 
     # ✅ Must have description and "You caught a"
     if not embed.description or "You caught a" not in embed.description:
-        await debug_log(
-            func_name, "Ignored message: missing description or 'You caught a'"
-        )
+        debug_log("Ignored message: missing description or 'You caught a'")
         return
 
     # ✅ Must have footer with channel boost
@@ -65,13 +55,11 @@ async def handle_boosted_channel_on_edit(bot: commands.Bot, message: discord.Mes
     # If boost exists and not in cache → insert
     if boost_match:
         boost_value = int(boost_match.group(1))
-        await debug_log(func_name, f"Found channel boost: +{boost_value}% in footer")
+        debug_log(f"Found channel boost: +{boost_value}% in footer")
 
         if channel_id not in boosted_channels_cache:
             boosted_channels_cache[channel_id] = channel_name
-            await debug_log(
-                func_name, f"Inserting channel {channel_name} ({channel_id}) into DB"
-            )
+            debug_log(f"Inserting channel {channel_name} ({channel_id}) into DB")
             try:
                 await insert_boosted_channel(bot, channel_id, channel_name)
             except Exception as e:
@@ -87,15 +75,12 @@ async def handle_boosted_channel_on_edit(bot: commands.Bot, message: discord.Mes
                     bot=bot,
                 )
         else:
-            await debug_log(
-                func_name, f"Channel {channel_name} ({channel_id}) already in cache"
-            )
+            debug_log(f"Channel {channel_name} ({channel_id}) already in cache")
     else:
         # No boost in footer but channel is in cache → remove
         if channel_id in boosted_channels_cache:
-            await debug_log(
-                func_name,
-                f"Channel {channel_name} ({channel_id}) no longer boosted, removing",
+            debug_log(
+                f"Channel {channel_name} ({channel_id}) no longer boosted, removing"
             )
             boosted_channels_cache.pop(channel_id, None)
             try:
@@ -113,7 +98,6 @@ async def handle_boosted_channel_on_edit(bot: commands.Bot, message: discord.Mes
                     bot=bot,
                 )
         else:
-            await debug_log(
-                func_name,
-                f"No boost found and channel {channel_name} not in cache, nothing to do",
+            debug_log(
+                f"No boost found and channel {channel_name} not in cache, nothing to do"
             )

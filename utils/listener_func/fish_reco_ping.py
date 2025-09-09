@@ -9,8 +9,12 @@ from utils.cache.boosted_channels_cache import boosted_channels_cache
 from utils.cache.water_state_cache import get_water_state, update_water_state
 from utils.listener_func.catch_rate import *
 from utils.listener_func.catch_rate import ball_emojis, best_ball_fishing, rarity_emojis
-from utils.loggers.debug_log import debug_log
+from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
+
+#enable_debug(f"{__name__}.recommend_fishing_ball")
+#enable_debug(f"{__name__}.extract_water_state_from_author")
+
 
 DEBUG = False
 FISHING_COLOR = 0x87CEFA  # sky blue
@@ -28,18 +32,23 @@ WILD_SPAWN_PATTERN = re.compile(
 
 
 def extract_water_state_from_author(author_name: str) -> str:
+
     name_lower = author_name.lower()
     if "gold" in name_lower:
-        return "special"
+        state = "special"
     elif "calm" in name_lower:
-        return "calm"
+        state = "calm"
     elif "strong" in name_lower:
-        return "strong"
+        state = "strong"
     elif "moderate" in name_lower:
-        return "moderate"
+        state = "moderate"
     elif "intense" in name_lower:
-        return "intense"
-    return None
+        state = "intense"
+    else:
+        state = None
+
+    debug_log(f"extract_water_state_from_author('{author_name}') → {state}")
+    return state
 
 
 def parse_pokemeow_fishing_spawn(message: discord.Message):
@@ -107,12 +116,10 @@ def parse_pokemeow_fishing_spawn(message: discord.Message):
 
 
 async def recommend_fishing_ball(message: discord.Message, bot):
-    func_name = inspect.currentframe().f_code.co_name
-
     # --- Parse spawn info using dedicated parser ---
     spawn_info = parse_pokemeow_fishing_spawn(message)
     if not spawn_info:
-        await debug_log(func_name, f"No valid spawn info in message {message.id}")
+        debug_log(f"No valid spawn info in message {message.id}")
         return None
 
     trainer_id = spawn_info["user_id"]
@@ -123,8 +130,8 @@ async def recommend_fishing_ball(message: discord.Message, bot):
     rarity = spawn_info["rarity"]
     embed_desc = message.embeds[0].description or ""
 
-    await debug_log(func_name, f"Parsed spawn info: {spawn_info}")
-    await debug_log(func_name, f"Current cache keys: {list(ball_reco_cache.keys())}")
+    debug_log(f"Parsed spawn info: {spawn_info}")
+    debug_log(f"Current cache keys: {list(ball_reco_cache.keys())}")
 
     # --- Lookup user in cache ---
     user_settings = None
@@ -156,38 +163,26 @@ async def recommend_fishing_ball(message: discord.Message, bot):
     )
 
     if not user_settings or not is_enabled:
-        await debug_log(
-            func_name,
-            f"User {trainer_name or trainer_id} is_enabled: {is_enabled} | In Cache: {bool(user_settings)}",
+        debug_log(
+            f"User {trainer_name or trainer_id} is_enabled: {is_enabled} | In Cache: {bool(user_settings)}"
         )
         return None
 
-    # --- Update water state if message contains cast info ---
-    if "cast a " in embed_desc:
-        author_text = message.embeds[0].author.name if message.embeds[0].author else ""
-        current_state = extract_water_state_from_author(author_text)
-        await debug_log(func_name, f"Detected cast: {current_state}")
-        if current_state and current_state.lower() != water_state.lower():
-            update_water_state(new_state=current_state.lower())
-            water_state = current_state.lower()
-            await debug_log(func_name, f"Updated water state to: {water_state}")
-
     # Ignore caught messages
     if "You caught a" in embed_desc:
-        await debug_log(func_name, f"Ignored caught message {message.id}")
+        debug_log(f"Ignored caught message {message.id}")
         return None
 
     # --- Determine if channel has boost ---
-    channel_boost = False
-    if message.channel.id in boosted_channels_cache:
-        channel_boost = True  # % boost from PokéMeow
+    channel_boost = message.channel.id in boosted_channels_cache
 
-    # --- Calculate best ball ---
+    # --- Update water state if message contains cast info ---
+    water_state = get_water_state()
+    debug_log(f"Using cached water state: {water_state}")
+
     # --- Calculate best ball ---
     try:
         is_patreon = bool(user_settings.get("is_patreon", False))
-
-        # Get display mode and determine if we should show all balls
         display_mode = user_settings.get("fishing", {}).get("display_mode", "Best Ball")
         display_all = display_mode.strip().lower() == "all balls"
 
@@ -197,26 +192,25 @@ async def recommend_fishing_ball(message: discord.Message, bot):
             is_patreon=is_patreon,
             form=form.lower() if form else None,
             channel_boost=channel_boost,
-            display_all=display_all,  # <-- pass display preference
+            display_all=display_all,
         )
 
         # --- Build display ---
-        rarity_label = rarity.capitalize()
-        if form:
-            rarity_label = f"{form.capitalize()} {rarity_label}"
-        rarity_label_lower = rarity_label.lower()
-        rarity_emoji = rarity_emojis.get(rarity_label_lower, "")
+        rarity_label = (
+            f"{form.capitalize()} {rarity.capitalize()}"
+            if form
+            else rarity.capitalize()
+        )
+        rarity_emoji = rarity_emojis.get(rarity_label.lower(), "")
 
         if display_all and all_balls_str:
-            # Show all balls
             msg = f"{user_settings['user_name']} 🎣 {rarity_emoji} → {all_balls_str}"
         else:
-            # Default: only best ball
             ball_emoji = ball_emojis.get(ball, "")
             msg = f"{user_settings['user_name']} 🎣 {rarity_emoji} → {ball_emoji} ({rate}%)"
 
         await message.channel.send(msg)
-        await debug_log(func_name, f"Sent recommendation: {msg}")
+        debug_log(f"Sent recommendation: {msg}")
 
         return {
             "user_name": user_settings["user_name"],
@@ -238,5 +232,5 @@ async def recommend_fishing_ball(message: discord.Message, bot):
             label="STRAYMONS",
             bot=bot,
         )
-        await debug_log(func_name, f"Exception occurred: {e}")
+        debug_log(f"Exception occurred: {e}")
         return None
