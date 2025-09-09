@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime, timedelta
 from utils.loggers.pretty_logs import pretty_log
 
@@ -41,6 +41,30 @@ async def fetch_user_schedule(bot, user_id: int, type_: str) -> Optional[dict]:
             bot=bot,
         )
         return None
+# ────────────────────────────────────────────
+#   🐱 Fetch User Reminder Rows
+# ────────────────────────────────────────────
+async def fetch_user_schedules(bot, user_id: int) -> List[dict]:
+    """
+    Fetch all reminder rows for a given user_id.
+    Returns a list of dicts.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT reminder_id, user_id, user_name, type, ends_on, remind_next_on, reminder_sent
+                FROM pokemeow_reminders_schedule
+                WHERE user_id = $1
+                """,
+                user_id,
+            )
+            return [dict(row) for row in rows]
+    except Exception as e:
+        pretty_log(
+            "error", f"Failed to fetch schedules for user {user_id}: {e}", bot=bot
+        )
+        return []
 
 
 async def upsert_user_schedule(

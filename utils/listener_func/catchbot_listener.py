@@ -13,7 +13,7 @@ from utils.cache.reminders_cache import user_reminders_cache
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.handle_catchbot_message")
+#enable_debug(f"{__name__}.handle_catchbot_message")
 
 # Patterns
 CATCHBOT_RUN_PATTERN = re.compile(

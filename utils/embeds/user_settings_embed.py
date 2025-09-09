@@ -131,7 +131,7 @@ def build_user_settings_embed(
             desc_lines.append("\n".join(lines))
         else:
             desc_lines.append("No held item subscriptions.")
-
+    #
     elif category == "reminders":
         if not data:  # no reminders set
             desc_lines.append("❌ No reminders set.")
@@ -139,7 +139,8 @@ def build_user_settings_embed(
             for cat, settings in data.items():
                 emoji = REMINDER_EMOJIS.get(cat, "❔")
 
-                mode = settings.get("mode", "off")
+                # Mode
+                mode = settings.get("mode", "off") or "off"
                 mode_emoji = REMINDER_MODE_EMOJIS.get(mode.lower(), "❔")
                 mode_display = f"{mode_emoji} {mode.title() if mode else 'Off'}"
 
@@ -150,15 +151,15 @@ def build_user_settings_embed(
                     has_exchanged = settings.get("has_exchanged", False)
                     lines.append(f"Has Exchanged: {'✅' if has_exchanged else '🚫'}")
 
-                    expires_on = settings.get("expires_on")
+                    expires_on = settings.get("expires_on") or 0
                     if expires_on and has_exchanged:
                         lines.append(f"Expiration: <t:{expires_on}:f>")
 
                 # Catchbot-specific
                 if cat == "catchbot":
-                    repeating = settings.get("repeating", 0)
-                    returns_on = settings.get("returns_on")
-                    reminds_next_on = settings.get("reminds_next_on")
+                    repeating = settings.get("repeating") or 0
+                    returns_on = settings.get("returns_on") or 0
+                    reminds_next_on = settings.get("reminds_next_on") or 0
 
                     if repeating > 0:
                         lines.append(f"⏱️ Repeating: Every {repeating} mins")

@@ -74,6 +74,187 @@ async def pretty_defer(
     return PrettyDeferHandle(interaction, msg)
 
 
+async def minccino_defer(
+    interaction: discord.Interaction,
+    view: discord.ui.View | None = None,
+    content: str = "Minccino is tidying up your request...",
+    embed: discord.Embed | None = None,
+    ephemeral: bool = True,
+):
+    """
+    Fully safe Minccino loader for interactions.
+    - Works like pretty_defer but with Minccino-style flavor.
+    - Always prefers editing the original response.
+    - Sends a public fallback if editing fails.
+    """
+
+    class MinccinoDeferHandle:
+        def __init__(
+            self,
+            interaction: discord.Interaction,
+            message: discord.Message | None,
+            ephemeral: bool,
+        ):
+            self.interaction = interaction
+            self.message = message
+            self.message_id = message.id if message else None
+            self.stopped = False
+            self.ephemeral = ephemeral
+
+        async def _resolve_message(self) -> discord.Message | None:
+            if self.message:
+                return self.message
+            try:
+                self.message = await self.interaction.original_response()
+                return self.message
+            except Exception:
+                return None
+
+        async def edit(
+            self, content=None, embed=None, view=None, with_emoji: bool = True
+        ):
+            if self.stopped:
+                return
+            msg = await self._resolve_message()
+            if not msg:
+                try:
+                    msg = await self.interaction.followup.send(
+                        content=(
+                            f"{Emojis.Minccino_Loading} {content}"
+                            if content and with_emoji
+                            else content
+                        ),
+                        embed=embed,
+                        view=view,
+                        ephemeral=self.ephemeral,
+                    )
+                    self.message = msg
+                    self.message_id = msg.id
+                    return
+                except Exception as e:
+                    pretty_log(
+                        "❌ MINCCINO_ERROR",
+                        f"[minccino_defer.edit] followup failed: {e}",
+                    )
+                    return
+
+            if content and with_emoji:
+                content = f"{Emojis.heart_loading} {content}"
+
+            kwargs = {
+                k: v
+                for k, v in {"content": content, "embed": embed, "view": view}.items()
+                if v is not None
+            }
+            try:
+                await msg.edit(**kwargs)
+            except Exception as e:
+                pretty_log(
+                    "❌ MINCCINO_ERROR",
+                    f"[minccino_defer.edit] {e}",
+                )
+
+        async def stop(self, content=None, embed=None, view=None):
+            if self.stopped:
+                return
+            self.stopped = True
+            msg = await self._resolve_message()
+            if not msg:
+                return
+            kwargs = {
+                k: v
+                for k, v in {"content": content, "embed": embed, "view": view}.items()
+                if v is not None
+            }
+            if kwargs:
+                try:
+                    await msg.edit(**kwargs)
+                except Exception as e:
+                    pretty_log(
+                        "❌ MINCCINO_ERROR",
+                        f"[minccino_defer.stop] {e}",
+                    )
+
+        async def success(
+            self,
+            content: str | None = "All done! 🐾",
+            embed: discord.Embed | None = None,
+            view: discord.ui.View | None = None,
+            ephemeral: bool | None = None,
+            override_public: bool = False,
+        ):
+            if self.stopped:
+                return
+            self.stopped = True
+
+            final_ephemeral = ephemeral if ephemeral is not None else self.ephemeral
+            base_content = content or ""
+            content_with_emoji = (
+                f"{Emojis.gray_check_animated} {base_content}" if base_content else ""
+            )
+
+            msg = await self._resolve_message()
+
+            try:
+                if final_ephemeral and (override_public or self.ephemeral):
+                    if msg:
+                        try:
+                            await msg.delete()
+                        except Exception:
+                            pass
+                    if getattr(self.interaction, "channel", None):
+                        await self.interaction.channel.send(
+                            content=content_with_emoji, embed=embed, view=view
+                        )
+                else:
+                    if msg:
+                        try:
+                            await msg.edit(
+                                content=content_with_emoji, embed=embed, view=view
+                            )
+                            return
+                        except Exception:
+                            pass
+                    if getattr(self.interaction, "channel", None):
+                        await self.interaction.channel.send(
+                            content=content_with_emoji, embed=embed, view=view
+                        )
+            except Exception as e:
+                pretty_log(
+                    "❌ MINCCINO_ERROR",
+                    f"[minccino_defer.success] {e}",
+                )
+
+    # ----------------- Send initial loader -----------------
+    msg: discord.Message | None = None
+    msg_content = f"{Emojis.heart_loading} {content}"
+
+    try:
+        if (
+            getattr(interaction, "response", None)
+            and not interaction.response.is_done()
+        ):
+            await interaction.response.send_message(
+                content=msg_content, embed=embed, view=view, ephemeral=ephemeral
+            )
+            try:
+                msg = await interaction.original_response()
+            except Exception:
+                pass
+        else:
+            msg = await interaction.followup.send(
+                content=msg_content, embed=embed, view=view, ephemeral=ephemeral
+            )
+    except Exception:
+        pass
+
+    handle = MinccinoDeferHandle(interaction, msg, ephemeral=ephemeral)
+    if view:
+        setattr(view, "defer_handle", handle)
+
+    return handle
+
+
 class LoadingMessage:
     """Dynamic loading message for Discord interactions."""
 
