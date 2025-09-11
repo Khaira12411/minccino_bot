@@ -124,6 +124,7 @@ class HELD_ITEM_POKEMON:
         "arbok",
         "cacnea",
         "cacturne",
+        "vespiquen",
     ]
 
     razorclaw = ["hakamo-o", "jangmo-o", "sneasel"]
