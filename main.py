@@ -44,19 +44,19 @@ logging.getLogger("discord.client").setLevel(logging.CRITICAL)
 ASIA_MANILA = ZoneInfo("Asia/Manila")
 
 MINCCINO_MORNING_STATUSES = [
-    (discord.ActivityType.playing, "tidying timers for the morning rush ⏰🐭"),
-    (discord.ActivityType.playing, "chasing commands and cleaning up delays 🧹🐭"),
-    (discord.ActivityType.listening, "listening for your next Pokemon call 🎶🐭"),
-    (discord.ActivityType.watching, "making sure no timers are missed 👀🐭"),
+    (discord.ActivityType.playing, "with timers for the morning rush ⏰🐭"),
+    (discord.ActivityType.playing, "with commands and cleaning up delays 🧹🐭"),
+    (discord.ActivityType.listening, "for your next Pokemon call 🎶🐭"),
+    (discord.ActivityType.watching, "over every timer 👀🐭"),
 ]
 MINCCINO_NIGHT_STATUSES = [
-    (discord.ActivityType.playing, "tidying up timers before bed 🌙🐭"),
-    (discord.ActivityType.listening, "tracking night-time Pokemon commands 🌌🐭"),
-    (discord.ActivityType.watching, "watching over sleepy timers 👀🐭"),
+    (discord.ActivityType.playing, "with timers before bed 🌙🐭"),
+    (discord.ActivityType.listening, "night-time Pokemon commands 🌌🐭"),
+    (discord.ActivityType.watching, "over sleepy timers 👀🐭"),
 ]
 MINCCINO_DEFAULT_STATUSES = [
-    (discord.ActivityType.playing, "bouncing between timers and commands 🐭⏰"),
-    (discord.ActivityType.listening, "keeping an ear on every timer ⏱️🐭"),
+    (discord.ActivityType.playing, "between timers and commands 🐭⏰"),
+    (discord.ActivityType.listening, "to every timer ⏱️🐭"),
 ]
 
 
