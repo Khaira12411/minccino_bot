@@ -7,7 +7,7 @@ from utils.essentials.loader.loader import *
 from utils.essentials.loader.loader import *
 from discord.ext import commands
 from utils.essentials.db_json_helper import *
-
+from utils.essentials.pokemeow_helpers import is_pokemeow_reply
 
 
 

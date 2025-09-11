@@ -18,8 +18,8 @@ HELD_ITEM_PATTERN = re.compile(
     r"(?:<:[^:]+:\d+>\s*)+"  # Pokemon emoji (+ optional dexCaught)
     r"\*\*(?P<pokemon>[A-Za-z_]+)\*\*"
 )
-enable_debug(f"{__name__}.extract_water_state_from_author")
-enable_debug(f"{__name__}.parse_pokemeow_spawn")
+#enable_debug(f"{__name__}.extract_water_state_from_author")
+#enable_debug(f"{__name__}.parse_pokemeow_spawn")
 FISHING_COLOR = 0x87CEFA  # sky blue
 
 embed_rarity_color = {

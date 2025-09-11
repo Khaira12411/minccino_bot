@@ -24,6 +24,7 @@ from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.loggers.pretty_logs import pretty_log
+from utils.listener_func.perks_listener import auto_update_catchboost
 
 CC_BOT_LOG_ID = 1413576563559239931
 WOOPER_ID = 1388515441592504483
@@ -98,6 +99,9 @@ class MessageCreateListener(commands.Cog):
 
                 # 🧪 Debug: Catchbot processing
                 await handle_catchbot_message(bot=self.bot, message=message)
+
+                # 🧪 Autoupdate catch boost via ;perks
+                await auto_update_catchboost(bot=self.bot, message=message)
 
             # 🌊 Waterstate channel processing ---
             if message.channel.id == WATERSTATE_CHANNEL_ID:

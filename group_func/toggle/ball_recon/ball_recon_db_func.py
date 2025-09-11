@@ -53,6 +53,69 @@ async def fetch_user_rec(bot, user_id: int) -> Optional[dict]:
         return None
 
 
+async def update_user_rec(
+    bot,
+    user_id: int,
+    user_name: str = None,
+    is_patreon: bool = None,
+    catch_rate_bonus: float = None,
+    held_items: dict = None,
+    pokemon: dict = None,
+    fishing: dict = None,
+):
+    """
+    Update only the specified fields for a user's ball recommendation preferences.
+    Fields left as None will not be updated.
+    """
+    updates = []
+    values = []
+
+    if user_name is not None:
+        updates.append("user_name = $%d" % (len(values) + 1))
+        values.append(user_name)
+    if is_patreon is not None:
+        updates.append("is_patreon = $%d" % (len(values) + 1))
+        values.append(is_patreon)
+    if catch_rate_bonus is not None:
+        updates.append("catch_rate_bonus = $%d" % (len(values) + 1))
+        values.append(catch_rate_bonus)
+    if held_items is not None:
+        updates.append("held_items = $%d::jsonb" % (len(values) + 1))
+        values.append(json.dumps(held_items))
+    if pokemon is not None:
+        updates.append("pokemon = $%d::jsonb" % (len(values) + 1))
+        values.append(json.dumps(pokemon))
+    if fishing is not None:
+        updates.append("fishing = $%d::jsonb" % (len(values) + 1))
+        values.append(json.dumps(fishing))
+
+    if not updates:
+        return  # Nothing to update
+
+    # Always update timestamp
+    updates.append("last_updated = NOW()")
+
+    query = f"""
+    UPDATE {TABLE_NAME}
+    SET {', '.join(updates)}
+    WHERE user_id = $%d
+    """ % (
+        len(values) + 1
+    )
+    values.append(user_id)
+
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(query, *values)
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to update ball recommendation for user {user_id}: {e}",
+            label="STRAYMONS",
+            bot=bot,
+        )
+
+
 async def upsert_user_rec(
     bot,
     user_id: int,
@@ -299,7 +362,6 @@ async def fetch_enabled(bot, user_id: int) -> bool:
             bot=bot,
         )
         return True
-
 
 
 async def update_display_mode(bot, user_id: int, category: str, mode: str):
