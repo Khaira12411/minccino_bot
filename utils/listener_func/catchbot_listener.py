@@ -13,7 +13,7 @@ from utils.cache.reminders_cache import user_reminders_cache
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-#enable_debug(f"{__name__}.handle_catchbot_message")
+# enable_debug(f"{__name__}.handle_catchbot_message")
 
 # Patterns
 CATCHBOT_RUN_PATTERN = re.compile(
@@ -33,10 +33,6 @@ CATCHBOT_RETURNED_PATTERN = re.compile(
 
 
 async def handle_catchbot_message(bot, message: discord.Message):
-    """
-    Central handler for CatchBot-related messages.
-    Processes messages for users whose catchbot.mode != 'off'.
-    """
     try:
         if message.author.id != POKEMEOW_APPLICATION_ID:
             return None
@@ -47,24 +43,21 @@ async def handle_catchbot_message(bot, message: discord.Message):
         if not user:
             return None
 
-        reminders = user_reminders_cache.get(user.id, {})
-        cb_mode = reminders.get("catchbot", {}).get("mode", "off")
-        if cb_mode == "off":
+        # 🔹 Must have reminders row and mode != off
+        reminders = user_reminders_cache.get(user.id)
+        if not reminders or reminders.get("catchbot", {}).get("mode", "off") == "off":
             return None
 
         debug_log(f"Processing message {message.id} for user {user.id}")
         content = message.content or ""
-        debug_log(f"Message content: {content}")
 
         # 1️⃣ Check CATCHBOT_RUN_PATTERN in content
         run_match = CATCHBOT_RUN_PATTERN.search(content)
         if run_match:
-            debug_log(f"CATCHBOT_RUN_PATTERN matched: {run_match.groups()}")
             value, unit = run_match.groups()
             value = int(value)
             seconds = value * (3600 if unit.lower() == "h" else 60)
             timestamp = int(message.created_at.timestamp()) + seconds
-            debug_log(f"Run duration {value}{unit} → timestamp {timestamp}")
 
             try:
                 await message.reference.resolved.add_reaction("📅")
@@ -81,10 +74,6 @@ async def handle_catchbot_message(bot, message: discord.Message):
                 texts_to_check.append(desc_text)
                 for field in embed.fields:
                     texts_to_check.append(f"{field.name}\n{field.value}")
-                debug_log(
-                    f"Embed {idx} combined text for pattern check:\n{desc_text}\n"
-                    + "\n".join(f"{f.name}: {f.value}" for f in embed.fields),
-                )
 
         combined_text = "\n".join(texts_to_check)
 
@@ -93,14 +82,8 @@ async def handle_catchbot_message(bot, message: discord.Message):
         checklist_match = CHECKLIST_CB_PATTERN.search(combined_text)
         returned_match = CATCHBOT_RETURNED_PATTERN.search(combined_text)
 
-        debug_log(
-            f"Combined text matches -> EMBED:{bool(embed_match)} "
-            f"CHECKLIST:{bool(checklist_match)} RETURNED:{bool(returned_match)}"
-        )
-
         if embed_match or checklist_match:
             ts = int((embed_match or checklist_match).group(1))
-            debug_log(f"Timestamp found: {ts}")
             try:
                 await message.reference.resolved.add_reaction("📅")
             except Exception as e:
@@ -108,7 +91,6 @@ async def handle_catchbot_message(bot, message: discord.Message):
             return await extract_and_save_catchbot_schedule(bot, user, ts)
 
         if returned_match:
-            debug_log(f"Catchbot returned found, deleting schedule for user {user.id}")
             await delete_user_schedule(bot, user.id, "catchbot")
             if "catchbot" in reminders:
                 reminders["catchbot"]["expiration_timestamp"] = None

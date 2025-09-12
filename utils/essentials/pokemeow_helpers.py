@@ -3,6 +3,7 @@
 # ─────────────────────────────
 import discord
 
+
 def is_pokemeow_reply(message: discord.Message) -> discord.Member | bool:
     """
     Check if a message is from PokéMeow and is a reply to a user.
@@ -31,3 +32,12 @@ def is_pokemeow_reply(message: discord.Message) -> discord.Member | bool:
     return (
         replied_msg.author if isinstance(replied_msg.author, discord.Member) else False
     )
+
+
+# ─────────────────────────────
+# 🔹 Sample usage
+# ─────────────────────────────
+# async def on_message(message: discord.Message):
+#     user = is_pokemeow_reply(message)
+#     if user:
+#         print(f"PokéMeow replied to {user.display_name}")

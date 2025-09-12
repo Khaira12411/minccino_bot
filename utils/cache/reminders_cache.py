@@ -14,6 +14,32 @@ from utils.loggers.pretty_logs import pretty_log
 # }
 user_reminders_cache: dict[int, dict] = {}
 
+import json
+
+
+def debug_print_cache(bot=None):
+    """
+    Pretty-print the current user_reminders_cache.
+    """
+    try:
+        from utils.loggers.pretty_logs import pretty_log
+
+        pretty_log(
+            tag="DEBUG",
+            label="📝 USER REMINDERS CACHE DUMP",
+            message=json.dumps(user_reminders_cache, indent=2),
+            bot=bot,
+        )
+    except Exception as e:
+        print("[DEBUG] Failed to print cache:", e)
+        print(json.dumps(user_reminders_cache, indent=2))
+
+
+import json
+
+
+import json
+
 
 async def load_user_reminders_cache(bot):
     """
@@ -22,6 +48,7 @@ async def load_user_reminders_cache(bot):
     user_reminders_cache.clear()
     try:
         rows = await fetch_all_rows(bot)
+
         for row in rows:
             reminders = row.get("reminders", {})
             # Ensure the structure is consistent
@@ -46,10 +73,12 @@ async def load_user_reminders_cache(bot):
             message=f"Loaded {len(user_reminders_cache)} user reminders into cache.",
             bot=bot,
         )
+
     except Exception as e:
         pretty_log("error", f"Failed to load user reminders cache: {e}", bot=bot)
 
     return copy.deepcopy(user_reminders_cache)
+
 
 from typing import Optional
 

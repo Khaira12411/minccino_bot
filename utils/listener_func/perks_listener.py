@@ -43,8 +43,8 @@ async def auto_update_catchboost(bot: discord.Client, message: discord.Message):
         embed = message.embeds[0]
         description = embed.description or ""
 
-        # 🛑 Must have perks in title
-        if "perks" not in embed.author.name:
+        # 🛑 Must have perks in author name
+        if not getattr(embed.author, "name", "") or "perks" not in embed.author.name.lower():
             return
 
         # 🛑 Extract catch boost

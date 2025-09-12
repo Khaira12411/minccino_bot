@@ -8,6 +8,7 @@ from utils.embeds.embed_settings_summary import *
 from utils.essentials.loader.loader import *
 from utils.essentials.safe_response import safe_respond
 from utils.loggers.pretty_logs import pretty_log
+import copy
 
 MODE_LABELS = {
     "off": "🚫 Off",
@@ -395,7 +396,11 @@ async def toggle_reminders_func(bot: commands.Bot, interaction: discord.Interact
     await interaction.response.defer(ephemeral=True)
     user_id = interaction.user.id
 
-    from group_func.toggle.reminders.user_reminders_db_func import fetch_user_row
+    from group_func.toggle.reminders.user_reminders_db_func import (
+        fetch_user_row,
+        upsert_user_reminders,
+    )
+    from utils.cache.reminders_cache import load_user_reminders_cache
 
     # 🔹 Check if the user already has a row
     user_row = await fetch_user_row(bot, user_id)
@@ -404,16 +409,33 @@ async def toggle_reminders_func(bot: commands.Bot, interaction: discord.Interact
         # ✅ Row exists → use existing reminders
         merged_reminders = user_row["reminders"]
     else:
-        # ❌ Row doesn't exist → create with defaults
-        merged_reminders = await upsert_user_reminders(
-            bot,
-            user_id,
-            interaction.user.name,
-            {
-                "relics": {"mode": "off"},
-                "catchbot": {"mode": "off"},
-            },
-        )
+        # ❌ Row doesn't exist → try creating it in DB
+        defaults = {
+            "relics": {"mode": "off"},
+            "catchbot": {"mode": "off"},
+        }
+        try:
+            merged_reminders = await upsert_user_reminders(
+                bot,
+                user_id,
+                interaction.user.name,
+                defaults,
+            )
+            if not merged_reminders:
+                await interaction.edit_original_response(
+                    content="⚠️ Failed to initialize reminders. Please try again later.",
+                    view=None,
+                )
+                return
+        except Exception as e:
+            await interaction.edit_original_response(
+                content=f"⚠️ Error creating reminders row: {e}",
+                view=None,
+            )
+            return
+
+        # 🔄 Refresh cache after insert
+        bot.loop.create_task(load_user_reminders_cache(bot=bot))
 
     # Pass merged reminders directly to the view
     view = ReminderSelectView(bot, user_id, merged_reminders)
