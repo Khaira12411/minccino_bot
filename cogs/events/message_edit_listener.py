@@ -68,6 +68,7 @@ class MessageEditListener(commands.Cog):
                 STAFF_SERVER_GUILD_ID,
                 STRAYMONS_GUILD_ID,
                 OKA_SERVER_ID,
+                1154753039685660793,
             ):
                 # 🔹 Fishing reco ball
                 await recommend_fishing_ball(message=after, bot=self.bot)

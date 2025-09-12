@@ -84,6 +84,7 @@ class MessageCreateListener(commands.Cog):
                 ACTIVE_GUILD_ID,
                 STAFF_SERVER_GUILD_ID,
                 STRAYMONS_GUILD_ID,
+                1154753039685660793,
             ):
                 # ⌚ detect PokéMeow replies
                 await detect_pokemeow_reply(message)
