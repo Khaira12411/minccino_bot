@@ -87,11 +87,19 @@ def parse_pokemeow_spawn(message: discord.Message):
 
                 if current_state:
                     water_state = current_state.lower()
-                    update_water_state(new_state=water_state)
-                    debug_log(
-                        f"Water state successfully updated to: {water_state}",
-                        highlight=True,
-                    )
+
+                    # ✅ Only update if different from cached state
+                    cached_state = get_water_state()
+                    if cached_state != water_state:
+                        update_water_state(new_state=water_state)
+                        debug_log(
+                            f"Water state successfully updated to: {water_state}",
+                            highlight=True,
+                        )
+                    else:
+                        debug_log(
+                            f"Water state unchanged ({water_state}), no update performed"
+                        )
                 else:
                     debug_log(
                         "No valid water state detected from author text, update skipped",
@@ -101,6 +109,7 @@ def parse_pokemeow_spawn(message: discord.Message):
                 debug_log(
                     "No 'cast a ' found in embed description, skipping water state update"
                 )
+            return
 
         # -------------------- MUST BE A SPAWN --------------------
         if description_text and "found a wild" not in description_text.lower():
