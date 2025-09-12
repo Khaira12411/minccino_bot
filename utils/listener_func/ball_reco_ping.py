@@ -18,8 +18,8 @@ HELD_ITEM_PATTERN = re.compile(
     r"(?:<:[^:]+:\d+>\s*)+"  # Pokemon emoji (+ optional dexCaught)
     r"\*\*(?P<pokemon>[A-Za-z_]+)\*\*"
 )
-#enable_debug(f"{__name__}.extract_water_state_from_author")
-#enable_debug(f"{__name__}.parse_pokemeow_spawn")
+# enable_debug(f"{__name__}.extract_water_state_from_author")
+# enable_debug(f"{__name__}.parse_pokemeow_spawn")
 FISHING_COLOR = 0x87CEFA  # sky blue
 
 embed_rarity_color = {
@@ -238,6 +238,13 @@ async def recommend_ball(message: discord.Message, bot):
         spawn_type = spawn_info.get("type")
         rarity = spawn_info.get("rarity")  # can be None
 
+        spawn_info = parse_pokemeow_spawn(message)
+        if not spawn_info:
+            return None
+
+        if spawn_info.get("type") == "fishing":
+            return None  # 🚪 hard exit for fishing spawns
+
         # --- Determine category and rarity key map ---
         if spawn_type == "pokemon":
             enabled = user_settings["pokemon"].get(rarity, False) if rarity else False
@@ -284,9 +291,28 @@ async def recommend_ball(message: discord.Message, bot):
         boost = int(user_settings.get("catch_rate_bonus", 0))
         is_patreon = user_settings.get("is_patreon", False)
 
-        # --- Get display mode and determine if we should show all balls ---
-        display_mode = user_settings.get("fishing", {}).get("display_mode", "Best Ball")
-        display_all = display_mode.strip().lower() == "all balls"
+        # --- Get display mode based on spawn type ---
+        if spawn_type == "pokemon":
+            display_mode = user_settings.get("pokemon", {}).get(
+                "display_mode", "Best Ball"
+            )
+        elif spawn_type == "held_item":
+            display_mode = user_settings.get("held_items", {}).get(
+                "display_mode", "Best Ball"
+            )
+        else:
+            display_mode = "Best Ball"
+
+        # ✅ Normalize to allowed values only
+        if isinstance(display_mode, str):
+            display_mode = display_mode.strip().title()
+        else:
+            display_mode = "Best Ball"
+
+        if display_mode not in ("Best Ball", "All"):
+            display_mode = "Best Ball"
+
+        display_all = display_mode == "All"
 
         ball, rate, all_rates, all_balls_str = best_ball(
             category,

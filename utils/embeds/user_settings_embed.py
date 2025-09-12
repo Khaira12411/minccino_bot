@@ -101,6 +101,16 @@ def build_user_settings_embed(
                 continue
 
             lines = []
+
+            # ✅ Add Display Mode if available
+            display_mode = sub_data.get("display_mode")
+            if isinstance(display_mode, str):
+                display_mode = display_mode.strip().title()
+                if display_mode not in ("Best Ball", "All"):
+                    display_mode = "Best Ball"
+                lines.append(f"🎛️ **Display Mode:** {display_mode}")
+
+            # Rarities
             rarities_to_show = (
                 RARITY_ORDER if sub != "held_items" else RARITY_ORDER[:-1]
             )
