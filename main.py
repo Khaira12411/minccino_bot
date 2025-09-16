@@ -25,7 +25,7 @@ from utils.loggers.pretty_logs import pretty_log, set_minccino_bot
 from utils.loggers.rate_limit_logger import setup_rate_limit_logging
 
 # ╭───────────────────────────────╮
-# │   🤎  Suppress Logs  🤍        │
+# │   🤎  Suppress Logs  🤍      │
 # ╰───────────────────────────────╯
 logging.basicConfig(level=logging.CRITICAL)
 for logger_name in [

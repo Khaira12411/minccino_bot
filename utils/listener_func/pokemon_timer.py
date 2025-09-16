@@ -14,6 +14,10 @@ from utils.loggers.pretty_logs import pretty_log
 ready_tasks = {}
 
 
+# 💜────────────────────────────────────────────
+#   Function: detect_pokemeow_reply
+#   Handles Pokemon timer notifications per user settings
+# 💜────────────────────────────────────────────
 async def detect_pokemeow_reply(message: discord.Message):
     """
     Triggered on any message.
@@ -24,10 +28,6 @@ async def detect_pokemeow_reply(message: discord.Message):
       - react → ✅ react to PokeMeow's message
     """
     try:
-        """espeon_log(
-            "info", f"Received message: {message.content}", source="PokeMeow Timer"
-        )"""
-
         if message.author.id != POKEMEOW_APPLICATION_ID:
             return
 
@@ -55,7 +55,6 @@ async def detect_pokemeow_reply(message: discord.Message):
             return
 
         setting = (user_settings.get("pokemon_setting") or "off").lower()
-
         if setting == "off":
             return
 
@@ -65,6 +64,9 @@ async def detect_pokemeow_reply(message: discord.Message):
 
         # Schedule behavior depending on setting
         async def notify_ready():
+            # 💜────────────────────────────────────────────
+            #   Pokemon Timer Notification Task
+            # 💜────────────────────────────────────────────
             try:
                 await asyncio.sleep(11)
 
@@ -79,21 +81,21 @@ async def detect_pokemeow_reply(message: discord.Message):
                 elif setting == "react":
                     await message.add_reaction(Emojis.gray_check)
 
-                """espeon_log(
-                    "info",
-                    f"Executed Pokemon timer action '{setting}' for {member}",
-                    source="PokeMeow Timer",
-                )"""
             except asyncio.CancelledError:
-                """espeon_log(
-                    "info",
-                    f"Cancelled scheduled ready notification for {member}",
-                    source="PokeMeow Timer",
-                )"""
+                # 💙 [CANCELLED] Scheduled ready notification cancelled
+                pretty_log(
+                    tag="info",
+                    message=f"Cancelled scheduled ready notification for {member}",
+                )
             except Exception as e:
+                # 💜 [MISSED] Timer ran correctly but message failed
+                # Trackable: include member ID and username
                 pretty_log(
                     tag="error",
-                    message=f"Error in Pokemon timer action for {member}: {e}",
+                    message=(
+                        f"Missed Pokemon timer notification for {member} "
+                        f"(ID: {member.id}). Timer ran correctly but message failed: {e}"
+                    ),
                 )
 
         ready_tasks[member.id] = asyncio.create_task(notify_ready())

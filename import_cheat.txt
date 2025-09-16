@@ -2,12 +2,13 @@ from utils.loggers.pretty_logs import pretty_log
 from utils.embeds.design_embed import design_embed
 from config.current_setup import MINCCINO_COLOR
 from config.aesthetic import  *
-from utils.essentials.loader.loader import *
+from utils.essentials.loader.pretty_defer import *
 
-from utils.essentials.loader.loader import *
 from discord.ext import commands
 from utils.essentials.db_json_helper import *
 from utils.essentials.pokemeow_helpers import is_pokemeow_reply
+
+from utils.database.channel_db_func import *
 
 
 

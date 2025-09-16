@@ -7,6 +7,7 @@ from config.held_items import HELD_ITEM_EMOJI
 from utils.embeds.design_embed import design_embed
 from utils.listener_func.catch_rate import rarity_emojis
 
+
 # Rarity order
 RARITY_ORDER = [
     "common",
@@ -57,7 +58,13 @@ EMBED_CONFIG = {
         "image_url": None,
     },
 }
-
+EMBED_CONFIG["wb_pings"] = {
+    "title": f"{Emojis.boss} World Boss Pings",
+    "footer_text": "⚔️ Track your world boss alerts here!",
+    "color": "brown",
+    "thumbnail_url": MINC_Thumbnails.boss,
+    "image_url": None,
+}
 
 # Category header emojis
 CATEGORY_HEADER_EMOJIS = {
@@ -65,7 +72,6 @@ CATEGORY_HEADER_EMOJIS = {
     "held_items": Emojis.backpack,
     "fishing": Emojis.fishing_rod,
 }
-
 
 def build_user_settings_embed(
     user: discord.Member, category: str, data: dict
@@ -84,6 +90,9 @@ def build_user_settings_embed(
 
     desc_lines = []
 
+    # 💖────────────────────────💖
+    # Pokémon Timer ⏰✨
+    # 💖────────────────────────💖
     if category == "timer":
         desc_lines = [
             f"{Emojis.timer} Pokémon Timer: {data.get('pokemon_setting','Not Set')}",
@@ -91,6 +100,9 @@ def build_user_settings_embed(
             # f"⚔️ Battle Timer: {data.get('battle_setting','Not Set')}",
         ]
 
+    # 🎯────────────────────────🎀
+    # Ball Recommendation 🎈🐾
+    # 🎯────────────────────────🎀
     elif category == "ball_reco":
         sub_categories = ["pokemon", "held_items", "fishing"]
         for sub in sub_categories:
@@ -130,6 +142,9 @@ def build_user_settings_embed(
                     f"{header_emoji} **{sub.title()}**\n" + "\n".join(lines)
                 )
 
+    # 👜────────────────────────💜
+    # Held Item Pings 🎒✨
+    # 👜────────────────────────💜
     elif category == "held_items":
         subscribed_items = data.get("subscribed_items", set())
         all_flag = data.get("all_held_items", False)
@@ -141,7 +156,10 @@ def build_user_settings_embed(
             desc_lines.append("\n".join(lines))
         else:
             desc_lines.append("No held item subscriptions.")
-    #
+
+    # 🔔────────────────────────🌸
+    #   Reminder Settings 📩💖
+    # 🔔────────────────────────🌸
     elif category == "reminders":
         if not data:  # no reminders set
             desc_lines.append("❌ No reminders set.")
@@ -180,6 +198,7 @@ def build_user_settings_embed(
                         lines.append(f"Returns On: <t:{returns_on}:f>")
 
                 desc_lines.append(f"{emoji} **{cat.title()}**\n" + "\n".join(lines))
+
 
     else:
         desc_lines.append("No data available.")

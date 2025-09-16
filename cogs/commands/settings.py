@@ -8,6 +8,8 @@ from utils.cache.ball_reco_cache import ball_reco_cache
 from utils.cache.held_item_cache import held_item_cache
 from utils.cache.reminders_cache import user_reminders_cache
 from utils.cache.timers_cache import timer_cache
+
+
 from utils.embeds.user_settings_embed import build_user_settings_embed
 from utils.essentials.loader.loader import *
 from utils.essentials.role_checks import *
@@ -37,6 +39,8 @@ async def reload_reminders_cache(bot: commands.Bot):
     from utils.cache.reminders_cache import load_user_reminders_cache
 
     await load_user_reminders_cache(bot=bot)
+
+
 
 
 # -------------------- Dropdown for settings --------------------
@@ -89,6 +93,7 @@ class SettingsDropdown(discord.ui.Select):
                 if not data:
                     await reload_reminders_cache(self.bot)
                     data = user_reminders_cache.get(user_id)
+
 
             if not data:
                 await defer_handle.stop(

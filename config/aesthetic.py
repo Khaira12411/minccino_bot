@@ -1,4 +1,6 @@
 class Emojis:
+    boss = "<:world_boss_spawned:1300780186073170051>"
+    error = "<:error:1417082094596657232>"
     gray_check = "<:gray_check:1411314640868216873>"
     timer = "<:timer:1411502684430929991>"
     Minccino_Heart = "<:Minccino_Heart:1411506086980354118>"
@@ -48,6 +50,7 @@ class Emojis_Balls:
     diveball = "<:diveball:1412001883639517275>"
 
 class MINC_Thumbnails:
+    boss = "https://media.discordapp.net/attachments/1394913073520967680/1417349428699856956/1248144585688092702.png?ex=68ca2904&is=68c8d784&hm=057235ee3940e94a3349d0140fc7e3b1ed0e88638f48165d1472e0821a33349b&=&format=webp&quality=lossless&width=113&height=113"
     brown_backpack = "https://media.discordapp.net/attachments/1394913073520967680/1412353518634930207/80927aac6f19fb9e38ee378e2f74e3fb-removebg-preview.png?ex=68b7fc37&is=68b6aab7&hm=1795978172f4cf61a10e83176c14dd73d8bb6eb28843c2cf70b7c4dea3ba9f4e&=&format=webp&quality=lossless&width=625&height=625"
     pink_coffee = "https://media.discordapp.net/attachments/1394913073520967680/1412353667557756949/f7963e5e13cb2768fe2f7554446c34fa-removebg-preview.png?ex=68b7fc5a&is=68b6aada&hm=17a49c9e5b7f088e6c04bf03d94dcb3aacb79e1c73c4a23b9c9cd875d5302bf1&=&format=webp&quality=lossless&width=625&height=625"
     brown_clock = "https://media.discordapp.net/attachments/1394913073520967680/1412354316186157137/5f524f3104e91cf6ef664d184db62e38-removebg-preview.png?ex=68b7fcf5&is=68b6ab75&hm=9681e56c0e37d0d63c6b991e295ff4ed9af2497cb9d2f340f0ba9a79128d51bd&=&format=webp&quality=lossless&width=625&height=625"
