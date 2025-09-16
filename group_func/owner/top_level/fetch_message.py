@@ -7,6 +7,7 @@ import discord
 
 from config.aesthetic import Emojis
 from utils.loggers.pretty_logs import pretty_log
+from utils.essentials.loader.pretty_defer import pretty_defer  # <- Minccino loader
 
 
 # 💠────────────────────────────────────────────
@@ -20,57 +21,40 @@ async def fetch_message_from_link_func(
 ) -> None:
     """
     End-to-end:
-      - shows loader (uses pretty_defer if available, else normal defer)
+      - shows loader (uses pretty_defer)
       - validates link, fetches via API
       - formats readable dump (text, embeds, attachments)
-      - sends inline if short, otherwise as .txt file (or if save_to_file=True)
-      - cleans up any temp file
+      - sends inline if short, otherwise as .txt file
+      - cleans up temp file
     """
     save_to_file = True
-    loader = None
     temp_file: Optional[Path] = None
 
-    # [💙 READY] Start loader
+    # [💙 READY] Start loader using Minccino-style pretty_defer
     try:
-        try:
-            # If you keep pretty_defer in another path, adjust import
-            from utils.essentials.loader import pretty_defer  # optional
-        except Exception:
-            pretty_defer = None
-
-        if pretty_defer:
-            loader = await pretty_defer(
-                interaction,
-                content="Fetching message…",
-                ephemeral=ephemeral,
-            )
-        else:
-            if not interaction.response.is_done():
-                await interaction.response.defer(thinking=True, ephemeral=ephemeral)
-    except Exception as e:
-        pretty_log(
-            tag="error",
-            message=f"[fetch_message] Loader setup failed: {e}",
+        loader = await pretty_defer(
+            interaction,
+            content="Fetching message…",
+            ephemeral=ephemeral,
         )
+    except Exception as e:
+        loader = None
+        pretty_log(tag="error", message=f"[fetch_message] Loader setup failed: {e}")
 
-    # [💙 READY] Helper to send a final text
+    # [💙 READY] Helper to send final text
     async def send_text(text: str):
         as_block = f"```{text}```" if len(text) <= 1900 else text
         if loader:
             try:
-                # If too long for a code block, just send as followup.
                 if len(as_block) <= 2000:
-                    await loader.stop(content=as_block)
+                    await loader.success(content=as_block)
                 else:
                     await interaction.followup.send(
                         content="📄 Output is large — sending as file…",
                         ephemeral=ephemeral,
                     )
             except Exception as e:
-                pretty_log(
-                    "❌ ERROR",
-                    f"[fetch_message] Loader stop (text) failed: {e}",
-                )
+                pretty_log("error", f"[fetch_message] Loader stop failed: {e}")
                 await interaction.followup.send(as_block[:1990], ephemeral=ephemeral)
         else:
             await interaction.followup.send(as_block[:2000], ephemeral=ephemeral)
@@ -82,14 +66,10 @@ async def fetch_message_from_link_func(
                 content=notice, file=discord.File(path), ephemeral=ephemeral
             )
         finally:
-            # Best-effort file cleanup
             try:
                 path.unlink(missing_ok=True)
             except Exception as e:
-                pretty_log(
-                    "❌ ERROR",
-                    f"[fetch_message] Temp file cleanup failed: {e}",
-                )
+                pretty_log("error", f"[fetch_message] Temp file cleanup failed: {e}")
             if loader:
                 try:
                     await loader.stop(delete=True)
@@ -99,27 +79,23 @@ async def fetch_message_from_link_func(
     # [💙 READY] Parse link → channel_id + message_id
     try:
         channel_id = message_id = None
-
-        # Standard message link: /channels/{guild}/{channel}/{message}
         m = re.search(r"/channels/(\d+)/(\d+)/(\d+)$", message_link)
         if m:
             channel_id, message_id = m.group(2), m.group(3)
         else:
-            # API link: /api/vX/channels/{channel}/messages/{message}
             m2 = re.search(r"/channels/(\d+)/messages/(\d+)$", message_link)
             if m2:
                 channel_id, message_id = m2.group(1), m2.group(2)
 
         if not channel_id or not message_id:
             await send_text(
-                "❌ Invalid message link. Expected:\n- https://discord.com/channels/<guild>/<channel>/<message>\n- https://discord.com/api/v10/channels/<channel>/messages/<message>"
+                "❌ Invalid message link. Expected:\n"
+                "- https://discord.com/channels/<guild>/<channel>/<message>\n"
+                "- https://discord.com/api/v10/channels/<channel>/messages/<message>"
             )
             return
     except Exception as e:
-        pretty_log(
-            tag="error",
-            message=f"[fetch_message] Link parse failed: {e}",
-        )
+        pretty_log(tag="error", message=f"[fetch_message] Link parse failed: {e}")
         await send_text("❌ Could not parse the message link.")
         return
 
@@ -135,17 +111,13 @@ async def fetch_message_from_link_func(
                     return
                 data = await resp.json()
     except Exception as e:
-        pretty_log(
-            tag="error",
-            message=f"[fetch_message] HTTP fetch failed: {e}",
-        )
+        pretty_log(tag="error", message=f"[fetch_message] HTTP fetch failed: {e}")
         await send_text("❌ Network error while fetching the message.")
         return
 
     # [💙 READY] Build readable dump
     try:
-        parts = []
-        parts.append("━━━━━━━━━━━━━━━━━━━━━━━")
+        parts = ["━━━━━━━━━━━━━━━━━━━━━━━"]
         author_tag = (
             f"{data['author']['username']}#{data['author'].get('discriminator','0')}"
         )
@@ -163,7 +135,7 @@ async def fetch_message_from_link_func(
         else:
             parts.append("💬 Message Content: [No text]\n")
 
-        # Replies / references (optional nice touch)
+        # Replies / references
         ref = data.get("referenced_message")
         if ref:
             ref_author = (
@@ -183,81 +155,68 @@ async def fetch_message_from_link_func(
                 parts.append(f"- {att.get('filename','file')} → {att.get('url','')}")
             parts.append("")
 
-        # Embeds (pretty)
+        # Embeds
         embeds = data.get("embeds") or []
         if embeds:
             parts.append("🖼 Embeds:")
             for idx, emb in enumerate(embeds, start=1):
                 parts.append(f"- Embed {idx}")
-
                 if emb.get("title"):
                     parts.append(f"   • Title: {emb['title']}")
-
                 if emb.get("url"):
                     parts.append(f"   • URL: {emb['url']}")
-
                 if emb.get("author") and emb["author"].get("name"):
                     author_line = emb["author"]["name"]
                     if emb["author"].get("url"):
                         author_line += f" ({emb['author']['url']})"
                     parts.append(f"   • Author: {author_line}")
-
                 if emb.get("description"):
                     parts.append("   • Description:")
                     for line in emb["description"].splitlines():
                         parts.append(f"     {line}")
-
                 if emb.get("fields"):
                     for f in emb["fields"]:
                         name = f.get("name", "Field")
                         val = f.get("value", "")
                         inline = f.get("inline", False)
-                        parts.append(f"   • {name} [{'inline' if inline else 'block'}]:")
+                        parts.append(
+                            f"   • {name} [{'inline' if inline else 'block'}]:"
+                        )
                         for line in val.splitlines():
                             parts.append(f"     {line}")
-
                 if emb.get("footer") and emb["footer"].get("text"):
                     parts.append("   • Footer:")
                     for line in emb["footer"]["text"].splitlines():
                         parts.append(f"     {line}")
-
                 if emb.get("image") and emb["image"].get("url"):
                     parts.append(f"   • Image: {emb['image']['url']}")
-
                 if emb.get("thumbnail") and emb["thumbnail"].get("url"):
                     parts.append(f"   • Thumbnail: {emb['thumbnail']['url']}")
-
                 parts.append("")
-
 
         result_text = "\n".join(parts).strip()
     except Exception as e:
-        pretty_log(
-            "error",
-            f"[fetch_message] Build dump failed: {e}",
-        )
-        await send_text("❌ Failed to format the message contents.")
+        pretty_log("error", f"[fetch_message] Build dump failed: {e}")
+        if loader:
+            await loader.error("❌ Failed to format the message contents.")
+        else:
+            await send_text("❌ Failed to format the message contents.")
         return
 
-    # [💙 READY] Decide: inline vs file, send, cleanup
+    # [💙 READY] Decide: inline vs file
     try:
         if save_to_file or len(result_text) > 1800:
             temp_file = Path(f"message_{message_id}.txt")
             temp_file.write_text(result_text, encoding="utf-8")
             await send_file(temp_file, "📄 Message dump attached:")
-            return
         else:
-            await send_text(result_text)
             if loader:
-                try:
-                    await loader.stop()  # keep the final text visible
-                except Exception:
-                    pass
-            return
+                await loader.success(content=result_text)
+            else:
+                await send_text(result_text)
     except Exception as e:
-        pretty_log(
-            tag=" ERROR",
-            message=f"[fetch_message] Send failed: {e}",
-        )
-        await send_text("❌ Failed to send the output.")
-        return
+        pretty_log("error", f"[fetch_message] Send failed: {e}")
+        if loader:
+            await loader.error("❌ Failed to send the output.")
+        else:
+            await send_text("❌ Failed to send the output.")
