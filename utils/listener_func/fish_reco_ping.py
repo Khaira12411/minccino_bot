@@ -184,7 +184,7 @@ async def recommend_fishing_ball(message: discord.Message, bot):
     try:
         is_patreon = bool(user_settings.get("is_patreon", False))
         display_mode = user_settings.get("fishing", {}).get("display_mode", "Best Ball")
-        display_all = display_mode.strip().lower() == "all balls"
+        display_all = display_mode.strip().lower() == "all"
 
         ball, rate, all_rates, all_balls_str = best_ball_fishing(
             rarity=rarity,
