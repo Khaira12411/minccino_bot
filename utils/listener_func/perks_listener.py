@@ -1,20 +1,23 @@
 # ─────────────────────────────
 # 🔹 Auto-fetch PokéMeow perks (updated with reactions)
 # ─────────────────────────────
-import re
 import json
+import re
+
 import discord
-from utils.cache.ball_reco_cache import load_ball_reco_cache
+
+from config.straymons_constants import STRAYMONS__ROLES
 from group_func.toggle.ball_recon.ball_recon_db_func import (
     fetch_user_rec,
-    upsert_user_rec,
     update_user_rec,
+    upsert_user_rec,
 )
-from utils.loggers.pretty_logs import pretty_log
+from utils.cache.ball_reco_cache import load_ball_reco_cache
 from utils.essentials.pokemeow_helpers import is_pokemeow_reply
-from config.straymons_constants import STRAYMONS__ROLES
+from utils.loggers.pretty_logs import pretty_log
 
 ALLOWED_ROLES = {STRAYMONS__ROLES.clan_staff, STRAYMONS__ROLES.sunrise_scone}
+BANNED_PHRASES = {"PokeMeow Clans — Perks Info", "PokeMeow Clans — Rank Info"}
 
 
 async def auto_update_catchboost(bot: discord.Client, message: discord.Message):
@@ -42,9 +45,17 @@ async def auto_update_catchboost(bot: discord.Client, message: discord.Message):
 
         embed = message.embeds[0]
         description = embed.description or ""
+        author_text = getattr(embed.author, "name", "")
+
+        # Must not have these phrases
+        if author_text in BANNED_PHRASES:
+            return
 
         # 🛑 Must have perks in author name
-        if not getattr(embed.author, "name", "") or "perks" not in embed.author.name.lower():
+        if (
+            not getattr(embed.author, "name", "")
+            or "perks" not in embed.author.name.lower()
+        ):
             return
 
         # 🛑 Extract catch boost
