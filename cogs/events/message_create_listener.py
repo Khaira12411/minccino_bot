@@ -17,18 +17,19 @@ from config.current_setup import (
     WATERSTATE_CHANNEL_ID,
 )
 from utils.listener_func.ball_reco_ping import recommend_ball
+from utils.listener_func.battle_timer import detect_pokemeow_battle
 from utils.listener_func.catchbot_listener import handle_catchbot_message
 from utils.listener_func.held_item_ping import held_item_ping_handler
+from utils.listener_func.perks_listener import auto_update_catchboost
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.loggers.pretty_logs import pretty_log
-from utils.listener_func.perks_listener import auto_update_catchboost
 
 CC_BOT_LOG_ID = 1413576563559239931
 WOOPER_ID = 1388515441592504483
-
+KHY_CHANNEL_ID = 1050645885844987904
 
 class MessageCreateListener(commands.Cog):
     # 💜────────────────────────────────────────────
@@ -65,8 +66,13 @@ class MessageCreateListener(commands.Cog):
     async def on_message(self, message: discord.Message):
         try:
             # 🐳 Only process Wooper's messages in CC_BOT_LOG_ID
-            if message.channel.id == CC_BOT_LOG_ID:# and message.author.id == WOOPER_ID:
-                pretty_log("debug", f"Message in CC log: {message.id}, author={message.author} ({message.author.id}), embeds={len(message.embeds)}")
+            if (
+                message.channel.id == CC_BOT_LOG_ID
+            ):  # and message.author.id == WOOPER_ID:
+                pretty_log(
+                    "debug",
+                    f"Message in CC log: {message.id}, author={message.author} ({message.author.id}), embeds={len(message.embeds)}",
+                )
 
                 await handle_reminder_embed(bot=self.bot, message=message)
                 return
@@ -88,6 +94,10 @@ class MessageCreateListener(commands.Cog):
             ):
                 # ⌚ detect PokéMeow replies
                 await detect_pokemeow_reply(message)
+                
+                if message.channel.id == KHY_CHANNEL_ID:
+                    # ⌚ detect PokéMeow Battle replies
+                    await detect_pokemeow_battle(bot=self.bot, message=message)
 
                 # 🐚 Held item ping
                 await held_item_ping_handler(self.bot, message)

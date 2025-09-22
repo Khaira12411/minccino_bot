@@ -309,10 +309,10 @@ async def recommend_ball(message: discord.Message, bot):
         else:
             display_mode = "Best Ball"
 
-        if display_mode not in ("Best Ball", "All"):
+        if display_mode not in ("Best Ball", "All Balls"):
             display_mode = "Best Ball"
 
-        display_all = display_mode == "All"
+        display_all = display_mode == "All Balls"
 
         ball, rate, all_rates, all_balls_str = best_ball(
             category,

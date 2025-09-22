@@ -1,16 +1,21 @@
 # utils/loggers/smart_debug.py
 import logging
 import inspect
+from datetime import datetime
 
 # -----------------------------
 # 🔹 Central Logger Setup
 # -----------------------------
 logger = logging.getLogger("smart_debug")
 logger.setLevel(logging.DEBUG)
+logger.propagate = False  # ⬅️ stop root logger from adding "DEBUG:smart_debug:"
+
 ch = logging.StreamHandler()
-formatter = logging.Formatter("[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s")
+formatter = logging.Formatter("%(message)s")
 ch.setFormatter(formatter)
-logger.addHandler(ch)
+
+if not logger.handlers:  # avoid duplicate handlers on reload
+    logger.addHandler(ch)
 
 # -----------------------------
 # 🔹 Global Debug Toggles
@@ -48,9 +53,10 @@ def debug_log(message: str, highlight: bool = False, disabled: bool = False):
     if not debug_enabled(key):
         return
 
-    log_line = f"[{key}] {message}"
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_line = f"[{now}] [🧪 {func_name}] {message}"
 
-    # ANSI escape code for bright cyan highlight for the whole line
+    # ANSI bright cyan for highlight
     if highlight:
         log_line = f"\033[96m{log_line}\033[0m"
 

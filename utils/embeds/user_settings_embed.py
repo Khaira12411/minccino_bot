@@ -96,8 +96,8 @@ def build_user_settings_embed(
     if category == "timer":
         desc_lines = [
             f"{Emojis.timer} Pokémon Timer: {data.get('pokemon_setting','Not Set')}",
+            f"⚔️ Battle Timer: {data.get('battle_setting','Not Set')}",
             # f"🎣 Fishing Timer: {data.get('fish_setting','Not Set')}",
-            # f"⚔️ Battle Timer: {data.get('battle_setting','Not Set')}",
         ]
 
     # 🎯────────────────────────🎀
@@ -198,7 +198,6 @@ def build_user_settings_embed(
                         lines.append(f"Returns On: <t:{returns_on}:f>")
 
                 desc_lines.append(f"{emoji} **{cat.title()}**\n" + "\n".join(lines))
-
 
     else:
         desc_lines.append("No data available.")

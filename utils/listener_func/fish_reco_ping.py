@@ -12,8 +12,8 @@ from utils.listener_func.catch_rate import ball_emojis, best_ball_fishing, rarit
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-#enable_debug(f"{__name__}.recommend_fishing_ball")
-#enable_debug(f"{__name__}.extract_water_state_from_author")
+# enable_debug(f"{__name__}.recommend_fishing_ball")
+# enable_debug(f"{__name__}.extract_water_state_from_author")
 
 
 DEBUG = False
@@ -184,7 +184,7 @@ async def recommend_fishing_ball(message: discord.Message, bot):
     try:
         is_patreon = bool(user_settings.get("is_patreon", False))
         display_mode = user_settings.get("fishing", {}).get("display_mode", "Best Ball")
-        display_all = display_mode.strip().lower() == "all"
+        display_all = display_mode.strip().lower() == "all balls"
 
         ball, rate, all_rates, all_balls_str = best_ball_fishing(
             rarity=rarity,

@@ -43,22 +43,24 @@ class ToggleGroup(commands.Cog):
     #     💜 Toggle Top level Command Group 💜
     # ─────────────────────────────────────────────
     @toggle_group.command(
-        name="pokemon-timer",
-        description="Sets or removes your pokemon command timer",
+        name="timer",
+        description="Sets or removes your pokemon/battle command timer",
     )
     @espeon_roles_only()
     async def timer_pokemon_set(
         self,
         interaction: discord.Interaction,
+        type: Literal["Pokemon", "Battle"],
         mode: Literal["On", "On w/o pings", "React", "Off"],
     ):
-        slash_cmd_name = "toggle timer-pokemon"
+        slash_cmd_name = "toggle timer"
 
         await run_command_safe(
             bot=self.bot,
             interaction=interaction,
             slash_cmd_name=slash_cmd_name,
-            command_func=timer_pokemon_set_func,
+            command_func=timer_set_func,
+            type=type,
             mode=mode,
         )
 
