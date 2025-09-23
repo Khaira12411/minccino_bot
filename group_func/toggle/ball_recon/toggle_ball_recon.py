@@ -126,30 +126,52 @@ class DisplayModeButton(discord.ui.Button):
         super().__init__(
             label=label, style=ButtonStyle.primary, custom_id="display_mode_toggle"
         )
-
+    #
     async def callback(self, interaction: discord.Interaction):
-        # Flip mode visually
+        # Flip mode
         self.mode = "All Balls" if self.mode == "Best Ball" else "Best Ball"
         self.label = f"Display Mode: {self.mode}"
 
-        # Update the view's display_mode so it will be saved on Save
-        if hasattr(self.view_ref, "display_mode"):
-            self.view_ref.display_mode = self.mode
-
-        # Update the message to reflect the flipped button
         try:
+            # Save immediately in DB
+            from group_func.toggle.ball_recon.ball_recon_db_func import update_display_mode
+            await update_display_mode(
+                bot=interaction.client,
+                user_id=self.user_id,
+                category=self.category,
+                mode=self.mode,
+            )
+
+            # Reload cache
+            from utils.cache.ball_reco_cache import load_ball_reco_cache
+            await load_ball_reco_cache(interaction.client)
+
+            # Keep the view in sync
+            if hasattr(self.view_ref, "display_mode"):
+                self.view_ref.display_mode = self.mode
+                self.view_ref.original_display_mode = self.mode
+
+            # Update the view in place
             await safe_respond(interaction, method="edit", view=self.view_ref)
+
+            # ✅ Ephemeral confirmation
+            await safe_respond(
+                interaction,
+                method="followup",
+                content=f"✅ Display Mode changed to **{self.mode}** for `{self.category.title()}`.",
+                ephemeral=True,
+            )
+
         except Exception as e:
             from utils.loggers.pretty_logs import pretty_log
-
             pretty_log(
                 "error",
-                f"Failed to toggle display mode visually for user {self.user_id} | {e}",
+                f"Failed to save display mode toggle for user {self.user_id} | {e}",
             )
             await safe_respond(
                 interaction,
                 method="followup",
-                content="❌ Something went wrong while updating display mode.",
+                content="❌ Failed to update display mode. Please try again later.",
                 ephemeral=True,
             )
 
@@ -475,11 +497,12 @@ class RarityDropdown(discord.ui.Select):
             # ---------------- ⚡ Add display mode button from cache ----------------
             from utils.cache.ball_reco_cache import ball_reco_cache
 
+            # fixed
             display_mode = "Best Ball"  # default fallback
             user_cache = ball_reco_cache.get(user_id, {})
-            display_mode = user_cache.get("display_mode", {}).get(
-                category, display_mode
-            )
+            category_data = user_cache.get(category, {})
+            if isinstance(category_data, dict):
+                display_mode = category_data.get("display_mode", display_mode)
 
             view.add_item(
                 DisplayModeButton(

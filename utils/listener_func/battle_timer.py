@@ -147,7 +147,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
 
                 battle_embed = discord.Embed(color=MINCCINO_COLOR)
                 if enemy_id:
-                    battle_embed.description = f"`;b npc {enemy_id}`"
+                    battle_embed.description = f";b npc {enemy_id}"
                 else:
                     battle_embed.description = "Your battle command is ready!"
 

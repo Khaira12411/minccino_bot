@@ -94,8 +94,9 @@ def build_reminder_embed(
         color=MINCCINO_COLOR,
         timestamp=datetime.now(),
     )
+    guild = user.guild
     embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
-    embed.set_footer(text="Minccino Reminder System")
+    embed.set_footer(text="Minccino Reminder System", icon_url=guild.icon.url)
 
     return embed
 

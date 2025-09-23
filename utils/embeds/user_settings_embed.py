@@ -118,9 +118,9 @@ def build_user_settings_embed(
             display_mode = sub_data.get("display_mode")
             if isinstance(display_mode, str):
                 display_mode = display_mode.strip().title()
-                if display_mode not in ("Best Ball", "All"):
+                if display_mode not in ("Best Ball", "All Balls"):
                     display_mode = "Best Ball"
-                lines.append(f"🎛️ **Display Mode:** {display_mode}")
+                lines.append(f"🎛️ **Display Mode:** __{display_mode}__")
 
             # Rarities
             rarities_to_show = (
