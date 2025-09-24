@@ -26,7 +26,8 @@ from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.loggers.pretty_logs import pretty_log
-
+from utils.listener_func.feeling_lucky import feeling_lucky_cd
+from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 CC_BOT_LOG_ID = 1413576563559239931
 WOOPER_ID = 1388515441592504483
 KHY_CHANNEL_ID = 1050645885844987904
@@ -94,10 +95,9 @@ class MessageCreateListener(commands.Cog):
             ):
                 # ⌚ detect PokéMeow replies
                 await detect_pokemeow_reply(message)
-                
-                if message.channel.id == KHY_CHANNEL_ID:
-                    # ⌚ detect PokéMeow Battle replies
-                    await detect_pokemeow_battle(bot=self.bot, message=message)
+
+                # ⌚ detect PokéMeow Battle replies
+                await detect_pokemeow_battle(bot=self.bot, message=message)
 
                 # 🐚 Held item ping
                 await held_item_ping_handler(self.bot, message)
@@ -113,6 +113,10 @@ class MessageCreateListener(commands.Cog):
 
                 # 🧪 Autoupdate catch boost via ;perks
                 await auto_update_catchboost(bot=self.bot, message=message)
+
+                if message.channel.id == STRAYMONS__TEXT_CHANNELS.feeling_lucky:
+                    # 🍀 Feeling Lucky Cooldown
+                    await feeling_lucky_cd(bot=self.bot, message=message)
 
             # 🌊 Waterstate channel processing ---
             if message.channel.id == WATERSTATE_CHANNEL_ID:

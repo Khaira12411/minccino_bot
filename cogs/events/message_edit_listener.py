@@ -15,8 +15,10 @@ from config.current_setup import (
     STAFF_SERVER_GUILD_ID,
     STRAYMONS_GUILD_ID,
 )
+from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.listener_func.boosted_channel_listener import handle_boosted_channel_on_edit
 from utils.listener_func.fish_reco_ping import recommend_fishing_ball
+from utils.listener_func.fl_rs import fl_rs_checker
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.loggers.pretty_logs import pretty_log
@@ -75,6 +77,9 @@ class MessageEditListener(commands.Cog):
 
                 # Boosted Channel Listener
                 await handle_boosted_channel_on_edit(bot=self.bot, message=after)
+                
+            if after.channel.id == STRAYMONS__TEXT_CHANNELS.feeling_lucky:
+                await fl_rs_checker(bot=self.bot, message=after)
 
         except Exception as e:
             pretty_log(

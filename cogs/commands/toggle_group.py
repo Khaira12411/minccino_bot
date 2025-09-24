@@ -65,6 +65,29 @@ class ToggleGroup(commands.Cog):
         )
 
     timer_pokemon_set.extras = {"category": "Public"}
+    # 🟣────────────────────────────────────────────
+    #     💜 Toggle Top level Command Group 💜
+    # ─────────────────────────────────────────────
+    @toggle_group.command(
+        name="fl-reminder",
+        description="Changes your feeling lucky reminder settings",
+    )
+    async def feeling_lucky_reminder_update(
+        self,
+        interaction: discord.Interaction,
+        type: Literal["Channel", "Dm", "Off"],
+    ):
+        slash_cmd_name = "toggle timer"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=feeling_lucky_reminder_update_func,
+            type=type,
+        )
+
+    feeling_lucky_reminder_update.extras = {"category": "Public"}
 
     # 🟣────────────────────────────────────────────
     #     💜 /toggle reminders 💜

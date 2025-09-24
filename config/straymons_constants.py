@@ -403,7 +403,7 @@ class STRAYMONS__CATEGORIES:
 #       STRAYMONS__ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class STRAYMONS__ROLES:
-
+    fl_cd = 1420276219248906333
     xeno = 1258992854764621835
     straymons_overseer = 1282129009970380853
     pokemeow = 1050318651301056554

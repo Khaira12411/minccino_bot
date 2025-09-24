@@ -4,7 +4,7 @@ from utils.loggers.pretty_logs import pretty_log
 
 # 🧹 Import your scheduled tasks
 from utils.background_task.pokemon_reminders_checker import pokemon_reminder_checker
-
+from utils.background_task.fl_cd_checker import fl_cd_checker
 
 # 🍰──────────────────────────────
 #   🎀 Cog: CentralLoop
@@ -46,6 +46,9 @@ class CentralLoop(commands.Cog):
                 # 🦭 Check if any pokemon reminder is due
                 await pokemon_reminder_checker(self.bot)
 
+                # 🍀 Check if any Feeling Lucky cd is due
+                await fl_cd_checker(bot=self.bot)
+
             except Exception as e:
                 pretty_log(
                     "error",
@@ -72,5 +75,6 @@ async def setup(bot: commands.Bot):
     print("\n[📋 CENTRAL LOOP CHECKLIST] Scheduled tasks loaded:")
     print("  ─────────────────────────────────────────────")
     print("  ✅ 🦭  pokemon_reminder_checker")
+    print("  ✅ 🍀  fl_cd_checker")
     print("  🧭 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")

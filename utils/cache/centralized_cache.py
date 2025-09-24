@@ -14,7 +14,7 @@ from utils.cache.boosted_channels_cache import (
 )
 
 from utils.loggers.pretty_logs import pretty_log
-
+from utils.cache.fl_cache import feeling_lucky_cache, load_feeling_lucky_cache
 
 # 🐾────────────────────────────────────────────
 #     💜 Load Everything in One Go
@@ -31,7 +31,7 @@ async def load_all_caches(bot):
     # 🍄 Held Item Users Ping cache
     await load_held_item_cache(bot)
 
-    # 🍀 Ball Recommendation cache
+    # 🍚 Ball Recommendation cache
     await load_ball_reco_cache(bot)
 
     # ⚾ User Reminders cache
@@ -40,10 +40,11 @@ async def load_all_caches(bot):
     # 💒 Boosted Channels cache
     await load_boosted_channels_cache(bot)
 
-
-
     # 🌊 Fetch latest waterstate
     await fetch_latest_water_state(bot)
+
+    # 🍀 Feeling Lucky Cooldowns
+    await load_feeling_lucky_cache(bot)
 
     # 🎀 Unified single-line log with all caches
     pretty_log(
@@ -53,7 +54,8 @@ async def load_all_caches(bot):
             f"(Waterstate: {get_water_state()}, Timers: {len(timer_cache)}, "
             f"Held Items: {len(held_item_cache)}, Ball Recon: {len(ball_reco_cache)}, "
             f"Reminders: {len(user_reminders_cache)}, "
-            f"Boosted Channels: {len(boosted_channels_cache)})"
+            f"Boosted Channels: {len(boosted_channels_cache)}, "
+            f"Feeling Lucky Cooldowns: {len(feeling_lucky_cache)})"
         ),
         label="🥨 CENTRAL CACHE",
         bot=bot,

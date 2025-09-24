@@ -318,6 +318,7 @@ async def startup_checklist(bot: commands.Bot):
         held_item_cache,
         timer_cache,
         user_reminders_cache,
+        feeling_lucky_cache,
     )
 
     print("\n★━━━━━━━━━━━━━━━━━━━━★")
@@ -325,9 +326,10 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ 🌊 {get_water_state()} Waterstate")  # use getter
     print(f"✅ {len(timer_cache)} ⌚ Pokemon Timer Users")
     print(f"✅ {len(held_item_cache)} 🍄 Held Item Ping Users")
-    print(f"✅ {len(ball_reco_cache)} 🍀 Ball Recommendation Users")
+    print(f"✅ {len(ball_reco_cache)} 🍚 Ball Recommendation Users")
     print(f"✅ {len(user_reminders_cache)} ⚾ User Remidners")
     print(f"✅ {len(boosted_channels_cache)} 💒 Boosted Channels")
+    print(f"✅ {len(feeling_lucky_cache)} 🍀 Feeling Lucky Cooldowns")
     print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
     print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
     pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"
