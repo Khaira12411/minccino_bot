@@ -65,6 +65,55 @@ async def fetch_user_schedules(bot, user_id: int) -> List[dict]:
             "error", f"Failed to fetch schedules for user {user_id}: {e}", bot=bot
         )
         return []
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Check if schedule exists with same timestamp & type
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async def schedule_exists_with_same_ts(
+    bot,
+    user_id: int,
+    type_: str,
+    timestamp: int,
+) -> bool:
+    """
+    Check if a row already exists for the given user_id, type, and timestamp.
+    Returns True if found, False otherwise.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT 1
+                FROM pokemeow_reminders_schedule
+                WHERE user_id = $1
+                  AND type = $2
+                  AND ends_on = $3
+                LIMIT 1
+                """,
+                user_id,
+                type_,
+                timestamp,
+            )
+            if row:
+                pretty_log(
+                    "debug",
+                    f"[CB CHECK] Found existing schedule for {user_id} type={type_} ts={timestamp}",
+                    bot=bot,
+                )
+                return True
+            else:
+                pretty_log(
+                    "debug",
+                    f"[CB CHECK] No existing schedule for {user_id} type={type_} ts={timestamp}",
+                    bot=bot,
+                )
+                return False
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"[CB CHECK] Failed for {user_id}, type {type_}, ts={timestamp}: {e}",
+            bot=bot,
+        )
+        return False
 
 
 async def upsert_user_schedule(

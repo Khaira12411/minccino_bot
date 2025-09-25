@@ -18,7 +18,7 @@ from config.current_setup import (
 )
 from utils.listener_func.ball_reco_ping import recommend_ball
 from utils.listener_func.battle_timer import detect_pokemeow_battle
-from utils.listener_func.catchbot_listener import handle_catchbot_message
+from utils.listener_func.catchbot_listener import *
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.perks_listener import auto_update_catchboost
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
@@ -36,6 +36,15 @@ newly_boosted_trigger = (
     "<:checkedbox:752302633141665812> successfully applied a +5% channel boost to"
 )
 remove_boosted_trigger = "<:checkedbox:752302633141665812> successfully removed the channel boost from channel"
+cb_return_trigger = ":robot: I have returned with some Pokemon for you!"
+cb_command_embed_trigger = (
+    ":battery: Your CatchBot is currently catching Pokemon for you!"
+)
+cb_checklist_trigger = "View your event checklist with ;e cl"
+CATCHBOT_SPENT_PATTERN = re.compile(
+    r"You spent <:[^:]+:\d+> \*\*[\d,]+ PokeCoins\*\* to run your catch bot\.",
+    re.IGNORECASE,
+)
 class MessageCreateListener(commands.Cog):
     # 💜────────────────────────────────────────────
     # [🟣 INIT] Cog Initialization
@@ -112,9 +121,6 @@ class MessageCreateListener(commands.Cog):
                 # 🧪 Debug: Relics processing
                 await handle_relics_message(bot=self.bot, message=message)
 
-                # 🧪 Debug: Catchbot processing
-                await handle_catchbot_message(bot=self.bot, message=message)
-
                 # 🧪 Autoupdate catch boost via ;perks
                 await auto_update_catchboost(bot=self.bot, message=message)
 
@@ -129,6 +135,38 @@ class MessageCreateListener(commands.Cog):
                 # 😢 Remove Channel Boost Listener
                 if remove_boosted_trigger.lower() in message.content.lower():
                     await remove_boosted_channel_listener(bot=self.bot, message=message)
+
+                # 🟣 Catchbot processing
+                if message.content:
+                    # 1️⃣ CatchBot return text
+                    if cb_return_trigger.lower() in message.content.lower():
+                        await handle_cb_return_message(bot=self.bot, message=message)
+
+                    # 2️⃣ CatchBot run message
+                    elif CATCHBOT_SPENT_PATTERN.search(message.content):
+                        await handle_cb_run_message(bot=self.bot, message=message)
+
+                # 3️⃣ CatchBot embeds
+                if message.embeds:
+                    embed = message.embeds[0]
+
+                    # 🔹 Check fields
+                    for field in embed.fields:
+                        name = field.name.lower() if field.name else ""
+                        value = field.value.lower() if field.value else ""
+
+                        if cb_command_embed_trigger.lower() in name or cb_command_embed_trigger.lower() in value:
+                            pretty_log("embed", f"Matched CatchBot command trigger in embed field: {field.name}")
+                            await handle_cb_command_embed(bot=self.bot, message=message)
+                            break
+
+                    # 🔹 Check footer for ;cl command
+                    if embed.footer and embed.footer.text:
+                        footer_text = embed.footer.text.lower()
+                        if cb_checklist_trigger.lower() in footer_text:
+                            pretty_log("embed", f"Matched CatchBot checklist trigger in embed footer: {footer_text}")
+                            await handle_cb_checklist_message(bot=self.bot, message=message)
+
 
             # 🌊 Waterstate channel processing ---
             if message.channel.id == WATERSTATE_CHANNEL_ID:

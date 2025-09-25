@@ -2,37 +2,152 @@ import re
 from datetime import datetime
 
 import discord
+from discord.ext import commands
 
 from config.current_setup import POKEMEOW_APPLICATION_ID
 from group_func.toggle.reminders.reminders_sched_db_func import (
     delete_user_schedule,
     upsert_user_schedule,
+    schedule_exists_with_same_ts
 )
 from group_func.toggle.reminders.user_reminders_db_func import *
 from utils.cache.reminders_cache import user_reminders_cache
-from utils.loggers.debug_log import debug_log, enable_debug
+from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.loggers.debug_log import debug_log
 from utils.loggers.pretty_logs import pretty_log
 
-# enable_debug(f"{__name__}.handle_catchbot_message")
-
-# Patterns
-CATCHBOT_RUN_PATTERN = re.compile(
-    r"to run your catch bot.*?It will be back with.*?in \*\*(\d+)([hHmM])\*\*",
-    re.IGNORECASE | re.DOTALL,
-)
-
-CATCHBOT_EMBED_PATTERN = re.compile(
-    r"It will be back on [^<]*<t:(\d+):f>", re.IGNORECASE
-)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🔹 Regex Patterns
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CATCHBOT_RUN_PATTERN = re.compile(r"in \*\*(\d+)([hHmM])\*\*", re.IGNORECASE)
+CATCHBOT_EMBED_PATTERN = re.compile(r"It will be back on .*?<t:(\d+):f>", re.IGNORECASE)
 CHECKLIST_CB_PATTERN = re.compile(
-    r"Your catch bot will be back on [^<]*<t:(\d+):f>", re.IGNORECASE
+    r"Your catch bot will be back on <t:(\d+):f>", re.IGNORECASE
 )
 CATCHBOT_RETURNED_PATTERN = re.compile(
-    r":confetti_ball: \*\*Your catchbot returned with \d+ Pokemon!?\*\*", re.IGNORECASE
+    r":confetti_ball: \*\*Your catchbot returned with \d+ Pokemon!?\*\*",
+    re.IGNORECASE,
 )
 
 
-async def handle_catchbot_message(bot, message: discord.Message):
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ;cl checklist embed
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async def handle_cb_checklist_message(bot: commands.Bot, message: discord.Message):
+    if message.author.id != POKEMEOW_APPLICATION_ID:
+        return
+
+    embed = message.embeds[0]
+    if not embed or not embed.description:
+        return
+
+    member = await get_pokemeow_reply_member(message=message)
+    if not member:
+        return
+
+    # 🔹 Must have reminders row and mode != off
+    reminders = user_reminders_cache.get(member.id)
+    if not reminders or reminders.get("catchbot", {}).get("mode", "off") == "off":
+        return None
+
+    m = CHECKLIST_CB_PATTERN.search(embed.description)
+    if not m:
+        return
+
+    timestamp = int(m.group(1))
+    if not timestamp:
+        return
+
+    # 🗂️ Save schedule
+    result = await extract_and_save_catchbot_schedule(
+        bot=bot, user=member, timestamp=timestamp
+    )
+
+    # 📅 React only if new schedule
+    if result == "added":
+        try:
+            await message.reference.resolved.add_reaction("📅")
+        except Exception as e:
+            pretty_log(
+                "warn", f"[CB CHECKLIST] Failed to add 📅 reaction: {e}", bot=bot
+            )
+
+    pretty_log(
+        "info",
+        f"[CB CHECKLIST] Result={result} ts={timestamp} for {member.id}",
+        bot=bot,
+    )
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ;cb embed
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async def handle_cb_command_embed(bot: commands.Bot, message: discord.Message):
+    if message.author.id != POKEMEOW_APPLICATION_ID:
+        return
+
+    embed = message.embeds[0]
+    if not embed:
+        return
+
+    member = await get_pokemeow_reply_member(message=message)
+    if not member:
+        return
+
+    reminders = user_reminders_cache.get(member.id)
+    if not reminders or reminders.get("catchbot", {}).get("mode", "off") == "off":
+        return None
+
+    # 🔹 1. Try matching timestamp in description
+    timestamp = None
+    if embed.description:
+        m = CATCHBOT_EMBED_PATTERN.search(embed.description)
+        if m:
+            timestamp = int(m.group(1))
+            pretty_log(
+                "embed", f"[CB EMBED] Found ts in description: {timestamp}", bot=bot
+            )
+
+    # 🔹 2. If not found, try each field value
+    if not timestamp:
+        for field in embed.fields:
+            if not field.value:
+                continue
+            m = CATCHBOT_EMBED_PATTERN.search(field.value)
+            if m:
+                timestamp = int(m.group(1))
+                pretty_log(
+                    "embed",
+                    f"[CB EMBED] Found ts in field '{field.name}': {timestamp}",
+                    bot=bot,
+                )
+                break
+
+    # 🔹 3. If still not found, stop
+    if not timestamp:
+        return
+
+    # 🗂️ Save schedule
+    result = await extract_and_save_catchbot_schedule(
+        bot=bot, user=member, timestamp=timestamp
+    )
+
+    # 📅 React only if new schedule
+    if result == "added":
+        try:
+            await message.reference.resolved.add_reaction("📅")
+        except Exception as e:
+            pretty_log("warn", f"[CB EMBED] Failed to add 📅 reaction: {e}", bot=bot)
+
+    pretty_log(
+        "info", f"[CB EMBED] Result={result} ts={timestamp} for {member.id}", bot=bot
+    )
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ;cb run
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async def handle_cb_run_message(bot, message: discord.Message):
     try:
         if message.author.id != POKEMEOW_APPLICATION_ID:
             return None
@@ -43,91 +158,102 @@ async def handle_catchbot_message(bot, message: discord.Message):
         if not user:
             return None
 
-        # 🔹 Must have reminders row and mode != off
         reminders = user_reminders_cache.get(user.id)
         if not reminders or reminders.get("catchbot", {}).get("mode", "off") == "off":
             return None
 
-        debug_log(f"Processing message {message.id} for user {user.id}")
         content = message.content or ""
-
-        # 1️⃣ Check CATCHBOT_RUN_PATTERN in content
         run_match = CATCHBOT_RUN_PATTERN.search(content)
-        if run_match:
-            value, unit = run_match.groups()
-            value = int(value)
-            seconds = value * (3600 if unit.lower() == "h" else 60)
-            timestamp = int(message.created_at.timestamp()) + seconds
+        if not run_match:
+            return None
 
+        value, unit = run_match.groups()
+        value = int(value)
+        seconds = value * (3600 if unit.lower() == "h" else 60)
+        timestamp = int(message.created_at.timestamp()) + seconds
+
+        # 🗂️ Save schedule
+        result = await extract_and_save_catchbot_schedule(bot, user, timestamp)
+
+        # 📅 React if new schedule added
+        if result == "added":
             try:
                 await message.reference.resolved.add_reaction("📅")
             except Exception as e:
-                debug_log(f"Failed to add reaction: {e}")
+                pretty_log("warn", f"[CB RUN] Failed to add 📅 reaction: {e}", bot=bot)
 
-            return await extract_and_save_catchbot_schedule(bot, user, timestamp)
-
-        # 2️⃣ Combine all embed content (description + fields)
-        texts_to_check = []
-        if message.embeds:
-            for idx, embed in enumerate(message.embeds):
-                desc_text = embed.description or ""
-                texts_to_check.append(desc_text)
-                for field in embed.fields:
-                    texts_to_check.append(f"{field.name}\n{field.value}")
-
-        combined_text = "\n".join(texts_to_check)
-
-        # 3️⃣ Search all patterns in combined text
-        embed_match = CATCHBOT_EMBED_PATTERN.search(combined_text)
-        checklist_match = CHECKLIST_CB_PATTERN.search(combined_text)
-        returned_match = CATCHBOT_RETURNED_PATTERN.search(combined_text)
-
-        if embed_match or checklist_match:
-            ts = int((embed_match or checklist_match).group(1))
-            try:
-                await message.reference.resolved.add_reaction("📅")
-            except Exception as e:
-                debug_log(f"Failed to add reaction: {e}")
-            return await extract_and_save_catchbot_schedule(bot, user, ts)
-
-        if returned_match:
-            await delete_user_schedule(bot, user.id, "catchbot")
-            if "catchbot" in reminders:
-                reminders["catchbot"]["expiration_timestamp"] = None
-            user_reminders_cache[user.id] = reminders
-            return "deleted"
-
-    except Exception as e:
         pretty_log(
-            "error", f"Failed to handle catchbot message {message.id}: {e}", bot=bot
+            "info", f"[CB RUN] Result={result} ts={timestamp} for {user.id}", bot=bot
         )
 
-    return None
+    except Exception as e:
+        pretty_log("error", f"[CB RUN] Failed on {message.id}: {e}", bot=bot)
 
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# cb return
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async def handle_cb_return_message(bot, message: discord.Message):
+    try:
+        if message.author.id != POKEMEOW_APPLICATION_ID:
+            return None
+
+        if not message.reference or not getattr(message.reference, "resolved", None):
+            return None
+        user = message.reference.resolved.author
+        if not user:
+            return None
+
+        reminders = user_reminders_cache.get(user.id)
+        if not reminders or reminders.get("catchbot", {}).get("mode", "off") == "off":
+            return None
+
+        await delete_user_schedule(bot, user.id, "catchbot")
+        if "catchbot" in reminders:
+            reminders["catchbot"]["expiration_timestamp"] = None
+        user_reminders_cache[user.id] = reminders
+
+        pretty_log(
+            "info", f"[CB RETURN] Cleared catchbot schedule for {user.id}", bot=bot
+        )
+        return "deleted"
+
+    except Exception as e:
+        pretty_log("error", f"[CB RETURN] Failed on {message.id}: {e}", bot=bot)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Shared save logic
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async def extract_and_save_catchbot_schedule(
     bot, user: discord.User | discord.Member, timestamp: int
-):
+) -> str:
     """
     Upsert user's catchbot schedule, update cache, DB table, and nested reminders JSON.
+    Returns: "added", "unchanged", or "failed"
     """
     try:
         reminders = user_reminders_cache.get(user.id, {})
         cb_settings = reminders.get("catchbot", {"mode": "off"})
         cb_mode = cb_settings.get("mode", "off")
         if cb_mode == "off":
-            return None
+            return "failed"
 
-        debug_log(f"Processing user {user.id} with catchbot_mode={cb_mode}")
-
-        current_ts = reminders.get("catchbot", {}).get("expiration_timestamp")
+        # 🔎 Skip if schedule unchanged
+        current_ts = reminders.get("catchbot", {}).get("returns_on")
         if current_ts == timestamp:
-            debug_log(f"User {user.id} schedule unchanged ({timestamp}). Skipping.")
-            return None
+            pretty_log(
+                "debug",
+                f"[CB SAVE] Schedule unchanged for {user.id} ({timestamp})",
+                bot=bot,
+            )
+            return "unchanged"
 
+        # ⏰ Calculate next reminder if repeating
         repeating = cb_settings.get("repeating")
         reminds_next_on = timestamp + int(repeating) * 60 if repeating else None
 
+        # 💾 Write to DB
         await upsert_user_schedule(
             bot=bot,
             user_id=user.id,
@@ -137,30 +263,29 @@ async def extract_and_save_catchbot_schedule(
             remind_next_on=reminds_next_on,
         )
 
+        # 🗃️ Update cache
         if "catchbot" not in reminders:
             reminders["catchbot"] = {}
         reminders["catchbot"]["returns_on"] = timestamp
         if reminds_next_on:
             reminders["catchbot"]["reminds_next_on"] = reminds_next_on
+        else:
+            reminders["catchbot"].pop("reminds_next_on", None)
 
         user_reminders_cache[user.id] = reminders
 
+        # 📝 Update reminders JSON in DB
         updates = {"catchbot.returns_on": timestamp}
         if reminds_next_on:
             updates["catchbot.reminds_next_on"] = reminds_next_on
 
         await update_user_reminders_fields(bot, user.id, user.name, updates=updates)
 
-        debug_log(f"Updated cache & DB for user {user.id} with timestamp {timestamp}")
         pretty_log(
-            "info", f"Saved catchbot schedule {timestamp} for user {user.id}", bot=bot
+            "info", f"[CB SAVE] Stored schedule {timestamp} for {user.id}", bot=bot
         )
-        return timestamp
+        return "added"
 
     except Exception as e:
-        pretty_log(
-            "error",
-            f"Failed to save catchbot schedule for user {user.id}: {e}",
-            bot=bot,
-        )
-        return None
+        pretty_log("error", f"[CB SAVE] Failed for {user.id}: {e}", bot=bot)
+        return "failed"
