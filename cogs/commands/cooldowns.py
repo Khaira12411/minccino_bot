@@ -1,13 +1,15 @@
 # utils/commands/feeling_lucky.py
+from datetime import datetime
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-from datetime import datetime
-
 
 from config.aesthetic import *
-from utils.loggers.pretty_logs import pretty_log
 from config.current_setup import MINCCINO_COLOR
+from utils.embeds.design_embed import design_embed
+from utils.loggers.pretty_logs import pretty_log
+
 
 class FeelingLucky(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -36,15 +38,18 @@ class FeelingLucky(commands.Cog):
                 desc = "🍀 Your Feeling Lucky cooldown has expired! You can use `;find` now."
             else:
                 # Show relative timestamp
-                desc = (
-                    f"🍀 You can use `;find` again <t:{cooldown_until}:R> "
-                    f"({datetime.fromtimestamp(cooldown_until).strftime('%H:%M:%S')})"
-                )
+                desc = f"🍀 You can use `;find` again on <t:{cooldown_until}:f> ☘︎ <t:{cooldown_until}:R> "
 
         embed = discord.Embed(
             title="Feeling Lucky Cooldown", description=desc, color=MINCCINO_COLOR
         )
-
+        footer_text = "Cooldowns reset automatically. 🍀"
+        embed = design_embed(
+            user=interaction.user,
+            embed=embed,
+            thumbnail_url=MINC_Thumbnails.fl,
+            footer_text=footer_text,
+        )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
