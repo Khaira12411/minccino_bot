@@ -27,11 +27,15 @@ from utils.listener_func.reminder_embed_handler import handle_reminder_embed
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.loggers.pretty_logs import pretty_log
 from utils.listener_func.feeling_lucky import feeling_lucky_cd
+from utils.listener_func.boosted_channel_listener import newly_boosted_channel_listener, remove_boosted_channel_listener
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 CC_BOT_LOG_ID = 1413576563559239931
 WOOPER_ID = 1388515441592504483
 KHY_CHANNEL_ID = 1050645885844987904
-
+newly_boosted_trigger = (
+    "<:checkedbox:752302633141665812> successfully applied a +5% channel boost to"
+)
+remove_boosted_trigger = "<:checkedbox:752302633141665812> successfully removed the channel boost from channel"
 class MessageCreateListener(commands.Cog):
     # 💜────────────────────────────────────────────
     # [🟣 INIT] Cog Initialization
@@ -117,6 +121,14 @@ class MessageCreateListener(commands.Cog):
                 if message.channel.id == STRAYMONS__TEXT_CHANNELS.feeling_lucky:
                     # 🍀 Feeling Lucky Cooldown
                     await feeling_lucky_cd(bot=self.bot, message=message)
+
+                # 🌟 Newly Channel Boost Listener
+                if newly_boosted_trigger.lower() in message.content.lower():
+                    await newly_boosted_channel_listener(bot=self.bot, message=message)
+
+                # 😢 Remove Channel Boost Listener
+                if remove_boosted_trigger.lower() in message.content.lower():
+                    await remove_boosted_channel_listener(bot=self.bot, message=message)
 
             # 🌊 Waterstate channel processing ---
             if message.channel.id == WATERSTATE_CHANNEL_ID:

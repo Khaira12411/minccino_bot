@@ -9,10 +9,140 @@ from utils.database.boosted_channels_db_func import (
 from utils.loggers.pretty_logs import pretty_log
 from utils.loggers.debug_log import debug_log
 from discord.ext import commands
+from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 
 BOOST_FOOTER_PATTERN = re.compile(r"\(\+(\d+)% ;channel boost\)")
 
 
+# ─────────────────────────────────────────────
+# 💠 Newly Boosted Channel Listener
+# ─────────────────────────────────────────────
+async def newly_boosted_channel_listener(bot: commands.Bot, message: discord.Message):
+    """
+    Extract the first channel ID from a message content in the format <#123456789012345678>.
+    Logs and caches newly boosted channels.
+    """
+    from utils.cache.boosted_channels_cache import boosted_channels_cache
+
+    try:
+        content = message.content
+        if not content:
+            return
+
+        match = re.search(r"<#(\d+)>", content)
+        if not match:
+            pretty_log(
+                "warn", f"No channel mention found in boost message {message.id}."
+            )
+            return
+
+        boosted_channel_id = int(match.group(1))
+        member = await get_pokemeow_reply_member(message=message)
+        if not member:
+            return
+
+        guild = member.guild
+        boosted_channel = guild.get_channel(boosted_channel_id)
+        if not boosted_channel:
+            pretty_log(
+                "warn",
+                f"Boosted channel {boosted_channel_id} not found in guild {guild.name} ({guild.id}).",
+            )
+            return
+
+        if boosted_channel_id not in boosted_channels_cache:
+            boosted_channels_cache[boosted_channel_id] = boosted_channel.name
+            try:
+                await insert_boosted_channel(
+                    bot, boosted_channel_id, boosted_channel.name
+                )
+            except Exception as e:
+                pretty_log(
+                    "error",
+                    f"Failed to insert boosted channel {boosted_channel.name}: {e}",
+                )
+            else:
+                pretty_log(
+                    "",
+                    f"Detected boosted channel: {boosted_channel.name} ({boosted_channel_id}), +5% boost, added to cache & DB",
+                )
+
+        pretty_log(
+            "ready",
+            f"Logged channel boost: <#{boosted_channel_id}> boosted by {member.display_name} (Message ID {message.id}).",
+        )
+
+    except Exception as e:
+        pretty_log(
+            "critical",
+            f"Unexpected error in boost_channel_listener (Message ID {getattr(message, 'id', 'unknown')}): {e}",
+        )
+
+
+# ─────────────────────────────────────────────
+# 💠 Remove Boosted Channel Listener
+# ─────────────────────────────────────────────
+async def remove_boosted_channel_listener(bot: commands.Bot, message: discord.Message):
+    from utils.cache.boosted_channels_cache import boosted_channels_cache
+
+    try:
+        if not boosted_channels_cache:
+            return
+
+        content = message.content
+        if not content:
+            return
+
+        match = re.search(r"<#(\d+)>", content)
+        if not match:
+            pretty_log(
+                "warn", f"No channel mention found in unboost message {message.id}."
+            )
+            return
+
+        unboosted_channel_id = int(match.group(1))
+        member = await get_pokemeow_reply_member(message=message)
+        if not member:
+            return
+
+        guild = member.guild
+        unboosted_channel = guild.get_channel(unboosted_channel_id)
+        if not unboosted_channel:
+            pretty_log(
+                "warn",
+                f"Unboosted channel {unboosted_channel_id} not found in guild {guild.name} ({guild.id}).",
+            )
+            return
+
+        unboosted_channel_name = unboosted_channel.name
+
+        if unboosted_channel_id not in boosted_channels_cache:
+            pretty_log(
+                "info",
+                f"Tried to remove {unboosted_channel_name} ({unboosted_channel_id}) "
+                f"but it was not in cache.",
+            )
+            return
+
+        boosted_channels_cache.pop(unboosted_channel_id, None)
+        await delete_boosted_channel(bot, unboosted_channel_id)
+
+        pretty_log(
+            "ready",
+            f"Removed boosted channel: {unboosted_channel_name} ({unboosted_channel_id}), "
+            f"boost removed by {member.display_name} (Message ID {message.id}).",
+        )
+
+    except Exception as e:
+        pretty_log(
+            "critical",
+            f"Unexpected error in remove_boosted_channel_listener "
+            f"(Message ID {getattr(message, 'id', 'unknown')}): {e}",
+        )
+
+# ─────────────────────────────────────────────
+# 💠 Handle Boosted Channel on Edit
+# ─────────────────────────────────────────────
 async def handle_boosted_channel_on_edit(bot: commands.Bot, message: discord.Message):
     """
     Detect if a PokéMeow message contains a channel boost. Update cache & DB accordingly.
