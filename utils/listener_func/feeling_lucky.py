@@ -13,17 +13,39 @@ from utils.database.fl_cd_db_func import upsert_feeling_lucky_cd
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
 from utils.database.fl_reminders_db_func import *
-
 # 🍀────────────────────────────────────────────
 #   Function: feeling_lucky_cd
 #   Handles Pokémon find cooldowns per user
 # 🍀────────────────────────────────────────────
-
 async def feeling_lucky_cd(bot: commands.Bot, message: discord.Message):
     try:
         if message.author.id != POKEMEOW_APPLICATION_ID:
             return
 
+        # 🚫 Skip if it's a captcha (content, embed title, or embed description)
+        if "captcha" in message.content.lower():
+            pretty_log(
+                "info",
+                f"Skipped cooldown — captcha detected in message content",
+                label="🍀 FEELING LUCKY CD",
+                bot=bot,
+            )
+            return
+
+        if message.embeds:
+            embed = message.embeds[0]
+            if (embed.title and "captcha" in embed.title.lower()) or (
+                embed.description and "captcha" in embed.description.lower()
+            ):
+                pretty_log(
+                    "info",
+                    f"Skipped cooldown — captcha detected in embed",
+                    label="🍀 FEELING LUCKY CD",
+                    bot=bot,
+                )
+                return
+
+        # ✅ Normal handling continues here
         match = re.search(r"\*\*(.+?)\*\* found a wild", message.content)
         if not match:
             return
@@ -40,7 +62,9 @@ async def feeling_lucky_cd(bot: commands.Bot, message: discord.Message):
 
         fl_reminder_info = await fetch_fl_reminder_db(bot=bot, user_id=member.id)
         if not fl_reminder_info:
-            await upsert_fl_reminder_db(bot=bot, user_id=member.id, user_name=member.name)
+            await upsert_fl_reminder_db(
+                bot=bot, user_id=member.id, user_name=member.name
+            )
 
         fl_cd_role = guild.get_role(STRAYMONS__ROLES.fl_cd)
         if fl_cd_role:
