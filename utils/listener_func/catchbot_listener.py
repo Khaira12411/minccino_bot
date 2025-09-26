@@ -245,15 +245,21 @@ async def extract_and_save_catchbot_schedule(
         reminders = user_reminders_cache.get(user.id, {})
         cb_settings = reminders.get("catchbot", {"mode": "off"})
         cb_mode = cb_settings.get("mode", "off")
+
         if cb_mode == "off":
+            pretty_log(
+                "skip",
+                f"[CB SAVE] Skipped for {user.name} → catchbot mode is OFF",
+                bot=bot,
+            )
             return "failed"
 
         # 🔎 Skip if schedule unchanged
         current_ts = reminders.get("catchbot", {}).get("returns_on")
         if current_ts == timestamp:
             pretty_log(
-                "debug",
-                f"[CB SAVE] Schedule unchanged for {user.name} ({timestamp})",
+                "skip",
+                f"[CB SAVE] Skipped for {user.name} → schedule unchanged ({timestamp})",
                 bot=bot,
             )
             return "unchanged"
@@ -291,7 +297,9 @@ async def extract_and_save_catchbot_schedule(
         await update_user_reminders_fields(bot, user.id, user.name, updates=updates)
 
         pretty_log(
-            "info", f"[CB SAVE] Stored schedule {timestamp} for {user.name}", bot=bot
+            "info",
+            f"[CB SAVE] Stored schedule {timestamp} for {user.name}",
+            bot=bot,
         )
         return "added"
 

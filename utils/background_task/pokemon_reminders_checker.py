@@ -149,20 +149,31 @@ async def pokemon_reminder_checker(bot: discord.Client):
                 pretty_log("warn", f"User {user_id} not found in guild.", bot=bot)
                 continue
 
-            # --- Determine target channel ---
-            try:
-                channel_id = await get_registered_personal_channel(bot, user_id)
-                target_channel = (
-                    bot.get_channel(channel_id)
-                    if channel_id
-                    else user.dm_channel or await user.create_dm()
-                )
-                if not target_channel:
-                    pretty_log("warn", f"No target channel for user {user_id}", bot=bot)
-                    continue
-            except Exception as e:
+            # --- Determine target channel based on mode ---
+            reminders_cache = user_reminders_cache.get(user_id, {})
+            mode = reminders_cache.get(reminder_type, {}).get("mode", "channel")
+
+            if mode == "off":
                 pretty_log(
-                    "warn", f"Failed to get target channel for {user_id}: {e}", bot=bot
+                    "skip",
+                    f"[REMINDER] Skipped reminder {reminder_id} for {user_id} (mode=off)",
+                    bot=bot,
+                )
+                continue
+
+            target_channel = None
+            if mode == "channel":
+                channel_id = await get_registered_personal_channel(bot, user_id)
+                if channel_id:
+                    target_channel = bot.get_channel(channel_id)
+            elif mode == "dms":
+                target_channel = user.dm_channel or await user.create_dm()
+
+            if not target_channel:
+                pretty_log(
+                    "warn",
+                    f"[REMINDER] No target channel for {user_id} (mode={mode})",
+                    bot=bot,
                 )
                 continue
 
@@ -179,6 +190,7 @@ async def pokemon_reminder_checker(bot: discord.Client):
 
                         # 🔹 Delete immediately since relics never repeat
                         await delete_reminder(bot, reminder_id)
+                        clear_expired_reminder_fields(user_id, "relics", bot=bot)
 
                         pretty_log(
                             "info",
@@ -219,16 +231,26 @@ async def pokemon_reminder_checker(bot: discord.Client):
                                 )
                             else:
                                 await delete_reminder(bot, reminder_id)
+                                clear_expired_reminder_fields(
+                                    user_id, "catchbot", bot=bot
+                                )
                                 reminders_cache = user_reminders_cache.get(user_id)
+
                                 if reminders_cache and "catchbot" in reminders_cache:
                                     reminders_cache = reminders_cache["catchbot"]  # now this is a real reference
                                     reminders_cache["expiration_timestamp"] = None
 
                                     pretty_log(
                                         "info",
-                                        f"Set catchbot expiration_timestamp to None for user {user_id} in cache"
+                                        f"[CB CLEANUP] Set catchbot expiration_timestamp=None for user {user_id} in cache",
+                                        bot=bot,
                                     )
-
+                                else:
+                                    pretty_log(
+                                        "skip",
+                                        f"[CB CLEANUP] Skipped cache cleanup → no catchbot entry for user {user_id}",
+                                        bot=bot,
+                                    )
 
                             pretty_log(
                                 "info",
@@ -270,5 +292,88 @@ async def pokemon_reminder_checker(bot: discord.Client):
             pretty_log(
                 "error",
                 f"Error processing reminder {reminder.get('reminder_id')}: {e}",
+                bot=bot,
+            )
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🧹 Helper: Clear expired reminder fields by type (cache + DB)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+import json
+
+
+async def clear_expired_reminder_fields(bot, user_id: int, reminder_type: str):
+    """
+    Safely clears expired fields in both cache and DB for a given reminder type.
+
+    - bot: discord.Client → has pg_pool
+    - user_id: int → target user
+    - reminder_type: str → which reminder to clear (e.g., "relics", "catchbot")
+    """
+    reminders = user_reminders_cache.get(user_id)
+    if not reminders or reminder_type not in reminders:
+        pretty_log(
+            "debug",
+            f"[REMINDER] No cache found for {reminder_type} → {user_id}, skip.",
+            bot=bot,
+        )
+        return
+
+    entry = reminders[reminder_type]
+    changed = False
+
+    if reminder_type == "relics":
+        if entry.get("expiration_timestamp") is not None:
+            entry["expiration_timestamp"] = None
+            changed = True
+            pretty_log(
+                "info",
+                f"[REMINDER] Cleared relics expiration_timestamp for {user_id}",
+                bot=bot,
+            )
+
+    elif reminder_type == "catchbot":
+        if "returns_on" in entry:
+            entry["returns_on"] = None
+            changed = True
+            pretty_log(
+                "info",
+                f"[REMINDER] Cleared catchbot returns_on for {user_id}",
+                bot=bot,
+            )
+
+        if not entry.get("repeating"):
+            # remove keys completely if no repeating
+            entry.pop("returns_on", None)
+            entry.pop("reminds_next_on", None)
+            changed = True
+            pretty_log(
+                "info",
+                f"[REMINDER] Removed catchbot schedule (no repeat) for {user_id}",
+                bot=bot,
+            )
+
+    # 🔹 Push updates to DB if changes happened
+    if changed:
+        try:
+            async with bot.pg_pool.acquire() as conn:
+                await conn.execute(
+                    """
+                    UPDATE user_pokemeow_reminders
+                    SET reminders = $2
+                    WHERE user_id = $1
+                    """,
+                    user_id,
+                    json.dumps(reminders),
+                )
+            pretty_log(
+                "db",
+                f"[REMINDER] Synced cleanup of {reminder_type} for {user_id} → DB updated",
+                bot=bot,
+            )
+        except Exception as e:
+            pretty_log(
+                "error",
+                f"[REMINDER] Failed DB cleanup sync for {reminder_type} → {user_id}: {e}",
                 bot=bot,
             )
