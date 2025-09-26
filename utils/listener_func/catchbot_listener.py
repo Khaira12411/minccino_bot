@@ -241,6 +241,11 @@ async def extract_and_save_catchbot_schedule(
     Upsert user's catchbot schedule, update cache, DB table, and nested reminders JSON.
     Returns: "added", "unchanged", or "failed"
     """
+    pretty_log(
+        "info",
+        f"➡️ [CB SAVE] Entered extract_and_save_catchbot_schedule for {user.name} (ID: {user.id})",
+        bot=bot,
+    )
     try:
         reminders = user_reminders_cache.get(user.id, {})
         cb_settings = reminders.get("catchbot", {"mode": "off"})
