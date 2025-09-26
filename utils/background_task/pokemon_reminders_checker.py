@@ -162,6 +162,7 @@ async def pokemon_reminder_checker(bot: discord.Client):
                 continue
 
             target_channel = None
+            mode = mode.lower()
             if mode == "channel":
                 channel_id = await get_registered_personal_channel(bot, user_id)
                 if channel_id:
@@ -190,8 +191,9 @@ async def pokemon_reminder_checker(bot: discord.Client):
 
                         # 🔹 Delete immediately since relics never repeat
                         await delete_reminder(bot, reminder_id)
-                        clear_expired_reminder_fields(user_id, "relics", bot=bot)
-
+                        await clear_expired_reminder_fields(
+                            bot=bot, user_id=user_id, reminder_type="relics"
+                        )
                         pretty_log(
                             "info",
                             f"Sent {reminder_type} reminder {reminder_id} to {user_id}",
@@ -231,13 +233,15 @@ async def pokemon_reminder_checker(bot: discord.Client):
                                 )
                             else:
                                 await delete_reminder(bot, reminder_id)
-                                clear_expired_reminder_fields(
-                                    user_id, "catchbot", bot=bot
+                                await clear_expired_reminder_fields(
+                                    bot=bot, user_id=user_id, reminder_type="catchbot"
                                 )
                                 reminders_cache = user_reminders_cache.get(user_id)
 
                                 if reminders_cache and "catchbot" in reminders_cache:
-                                    reminders_cache = reminders_cache["catchbot"]  # now this is a real reference
+                                    reminders_cache = reminders_cache[
+                                        "catchbot"
+                                    ]  # now this is a real reference
                                     reminders_cache["expiration_timestamp"] = None
 
                                     pretty_log(
@@ -284,9 +288,7 @@ async def pokemon_reminder_checker(bot: discord.Client):
                         bot=bot,
                     )
 
-            # --- Clear cache ---
-            if user_id in user_reminders_cache:
-                del user_reminders_cache[user_id]
+
 
         except Exception as e:
             pretty_log(
