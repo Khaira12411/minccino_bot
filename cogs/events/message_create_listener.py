@@ -140,10 +140,18 @@ class MessageCreateListener(commands.Cog):
                 if message.content:
                     # 1️⃣ CatchBot return text
                     if cb_return_trigger.lower() in message.content.lower():
+                        pretty_log(
+                            "info",
+                            f"Matched CatchBot return trigger | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
                         await handle_cb_return_message(bot=self.bot, message=message)
 
                     # 2️⃣ CatchBot run message
                     elif CATCHBOT_SPENT_PATTERN.search(message.content):
+                        pretty_log(
+                            "info",
+                            f"Matched CatchBot spent pattern | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
                         await handle_cb_run_message(bot=self.bot, message=message)
 
                 # 3️⃣ CatchBot embeds
@@ -166,7 +174,6 @@ class MessageCreateListener(commands.Cog):
                         if cb_checklist_trigger.lower() in footer_text:
                             pretty_log("embed", f"Matched CatchBot checklist trigger in embed footer: {footer_text}")
                             await handle_cb_checklist_message(bot=self.bot, message=message)
-
 
             # 🌊 Waterstate channel processing ---
             if message.channel.id == WATERSTATE_CHANNEL_ID:

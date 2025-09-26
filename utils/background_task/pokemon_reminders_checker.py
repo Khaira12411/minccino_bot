@@ -219,6 +219,16 @@ async def pokemon_reminder_checker(bot: discord.Client):
                                 )
                             else:
                                 await delete_reminder(bot, reminder_id)
+                                reminders_cache = user_reminders_cache.get(user_id)
+                                if reminders_cache and "catchbot" in reminders_cache:
+                                    reminders_cache = reminders_cache["catchbot"]  # now this is a real reference
+                                    reminders_cache["expiration_timestamp"] = None
+
+                                    pretty_log(
+                                        "info",
+                                        f"Set catchbot expiration_timestamp to None for user {user_id} in cache"
+                                    )
+
 
                             pretty_log(
                                 "info",

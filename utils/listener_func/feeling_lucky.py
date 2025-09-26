@@ -37,7 +37,7 @@ async def feeling_lucky_cd(bot: commands.Bot, message: discord.Message):
         await upsert_feeling_lucky_cd(
             bot=bot, user_id=member.id, user_name=member.display_name
         )
-        
+
         fl_reminder_info = await fetch_fl_reminder_db(bot=bot, user_id=member.id)
         if not fl_reminder_info:
             await upsert_fl_reminder_db(bot=bot, user_id=member.id, user_name=member.name)
@@ -48,7 +48,7 @@ async def feeling_lucky_cd(bot: commands.Bot, message: discord.Message):
 
         cooldown_time = datetime.now() + timedelta(hours=6)
         desc = (
-            f"🍀 {member.mention}, you can use /find here again "
+            f"🍀 {member.mention}, you can use ;find here again "
             f"<t:{int(cooldown_time.timestamp())}:R>.\n"
             "Type /cooldowns to check your cooldowns."
         )

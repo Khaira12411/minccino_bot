@@ -145,12 +145,12 @@ async def upsert_user_schedule(
                 reminder_sent,
             )
         pretty_log(
-            "info", f"Upserted schedule for user {user_id}, type {type_}", bot=bot
+            "info", f"Upserted schedule for user {user_name}, type {type_}", bot=bot
         )
     except Exception as e:
         pretty_log(
             "error",
-            f"Failed to upsert schedule for user {user_id}, type {type_}: {e}",
+            f"Failed to upsert schedule for user {user_name}, type {type_}: {e}",
             bot=bot,
         )
 

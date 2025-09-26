@@ -203,7 +203,7 @@ async def upsert_user_reminders(bot, user_id: int, user_name: str, updates: dict
                 json.dumps(merged),
             )
 
-        pretty_log("info", f"Incrementally upserted user {user_id}", bot=bot)
+        pretty_log("info", f"Incrementally upserted user {user_name}", bot=bot)
         return merged
 
     except Exception as e:
@@ -369,14 +369,14 @@ async def update_user_reminders_fields(
 
         pretty_log(
             "info",
-            f"Updated multiple fields for user {user_id} (cache + DB): {list(updates.keys())}",
+            f"Updated multiple fields for user {user_name} (cache + DB): {list(updates.keys())}",
             bot=bot,
         )
 
     except Exception as e:
         pretty_log(
             "error",
-            f"Failed to update fields for user {user_id}: {e}",
+            f"Failed to update fields for user {user_name}: {e}",
             bot=bot,
         )
 

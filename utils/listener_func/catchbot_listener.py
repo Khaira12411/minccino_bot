@@ -140,7 +140,7 @@ async def handle_cb_command_embed(bot: commands.Bot, message: discord.Message):
             pretty_log("warn", f"[CB EMBED] Failed to add 📅 reaction: {e}", bot=bot)
 
     pretty_log(
-        "info", f"[CB EMBED] Result={result} ts={timestamp} for {member.id}", bot=bot
+        "info", f"[CB EMBED] Result={result} ts={timestamp} for {member.name}", bot=bot
     )
 
 
@@ -183,7 +183,7 @@ async def handle_cb_run_message(bot, message: discord.Message):
                 pretty_log("warn", f"[CB RUN] Failed to add 📅 reaction: {e}", bot=bot)
 
         pretty_log(
-            "info", f"[CB RUN] Result={result} ts={timestamp} for {user.id}", bot=bot
+            "info", f"[CB RUN] Result={result} ts={timestamp} for {user.name}", bot=bot
         )
 
     except Exception as e:
@@ -209,12 +209,21 @@ async def handle_cb_return_message(bot, message: discord.Message):
             return None
 
         await delete_user_schedule(bot, user.id, "catchbot")
-        if "catchbot" in reminders:
+
+        # 🔹 Clear catchbot expiration in cache if it exists
+        reminders = user_reminders_cache.get(user.id)
+        if reminders and "catchbot" in reminders:
             reminders["catchbot"]["expiration_timestamp"] = None
-        user_reminders_cache[user.id] = reminders
+            pretty_log(
+                "info",
+                f"[CB RETURN] Cleared catchbot expiration_timestamp in cache for {user.name}",
+                bot=bot,
+            )
 
         pretty_log(
-            "info", f"[CB RETURN] Cleared catchbot schedule for {user.id}", bot=bot
+            "info",
+            f"[CB RETURN] Cleared catchbot schedule for {user.name}",
+            bot=bot,
         )
         return "deleted"
 
@@ -244,7 +253,7 @@ async def extract_and_save_catchbot_schedule(
         if current_ts == timestamp:
             pretty_log(
                 "debug",
-                f"[CB SAVE] Schedule unchanged for {user.id} ({timestamp})",
+                f"[CB SAVE] Schedule unchanged for {user.name} ({timestamp})",
                 bot=bot,
             )
             return "unchanged"
@@ -282,10 +291,10 @@ async def extract_and_save_catchbot_schedule(
         await update_user_reminders_fields(bot, user.id, user.name, updates=updates)
 
         pretty_log(
-            "info", f"[CB SAVE] Stored schedule {timestamp} for {user.id}", bot=bot
+            "info", f"[CB SAVE] Stored schedule {timestamp} for {user.name}", bot=bot
         )
         return "added"
 
     except Exception as e:
-        pretty_log("error", f"[CB SAVE] Failed for {user.id}: {e}", bot=bot)
+        pretty_log("error", f"[CB SAVE] Failed for {user.name}: {e}", bot=bot)
         return "failed"
