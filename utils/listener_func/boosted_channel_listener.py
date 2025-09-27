@@ -223,7 +223,7 @@ async def handle_boosted_channel_on_edit(bot: commands.Bot, message: discord.Mes
                 )
             else:
                 pretty_log(
-                    "warn",
+                    "info",
                     f"Channel {channel_name} ({channel_id}) no longer boosted, removed from cache & DB",
                     bot=bot,
                 )
