@@ -40,7 +40,7 @@ class ToggleGroup(commands.Cog):
     toggle_group.add_command(ping_group)
 
     # 🟣────────────────────────────────────────────
-    #     💜 Toggle Top level Command Group 💜
+    #     💜 Toggle Timer 💜
     # ─────────────────────────────────────────────
     @toggle_group.command(
         name="timer",
@@ -66,7 +66,7 @@ class ToggleGroup(commands.Cog):
 
     timer_pokemon_set.extras = {"category": "Public"}
     # 🟣────────────────────────────────────────────
-    #     💜 Toggle Top level Command Group 💜
+    #     💜 Toggle fl-reminder 💜
     # ─────────────────────────────────────────────
     @toggle_group.command(
         name="fl-reminder",
@@ -89,6 +89,29 @@ class ToggleGroup(commands.Cog):
 
     feeling_lucky_reminder_update.extras = {"category": "Public"}
 
+    # 🟣────────────────────────────────────────────
+    #     💜 Toggle captcha-alert 💜
+    # ─────────────────────────────────────────────
+    @toggle_group.command(
+        name="captcha-alert",
+        description="Changes your captcha alert settings",
+    )
+    async def captcha_alert_setting(
+        self,
+        interaction: discord.Interaction,
+        alert_type: Literal["On", "On w/captcha role ping", "Off"],
+    ):
+        slash_cmd_name = "toggle captcha-alert"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=captcha_alert_settings_func,
+            alert_type=alert_type,
+        )
+
+    captcha_alert_setting.extras = {"category": "Public"}
     # 🟣────────────────────────────────────────────
     #     💜 /toggle reminders 💜
     # 🟣────────────────────────────────────────────

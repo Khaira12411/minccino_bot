@@ -45,13 +45,13 @@ class RemindersCog(commands.Cog):
 
             if type_key == "catchbot":
                 if ends_on:
-                    line += f"\n**Arrives On:** <t:{ends_on}:f>"
+                    line += f"\n- **Arrives On:** <t:{ends_on}:f>"
                 if remind_next_on:
                     line += f"\n**Sent Next Reminder:** {'✅' if sent else '❌'}"
             else:
                 sub_lines = []
                 if ends_on:
-                    sub_lines.append(f"**Ends On:** <t:{ends_on}:f>")
+                    sub_lines.append(f"\n- **Ends On:** <t:{ends_on}:f>")
                 if remind_next_on:
                     sub_lines.append(f"**Next Remind:** <t:{remind_next_on}:f>")
                     sub_lines.append(

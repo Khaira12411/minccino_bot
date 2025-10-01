@@ -8,8 +8,7 @@ from utils.cache.ball_reco_cache import ball_reco_cache
 from utils.cache.held_item_cache import held_item_cache
 from utils.cache.reminders_cache import user_reminders_cache
 from utils.cache.timers_cache import timer_cache
-
-
+from utils.cache.user_captcha_alert_cache import user_captcha_alert_cache
 from utils.embeds.user_settings_embed import build_user_settings_embed
 from utils.essentials.loader.loader import *
 from utils.essentials.role_checks import *
@@ -41,6 +40,10 @@ async def reload_reminders_cache(bot: commands.Bot):
     await load_user_reminders_cache(bot=bot)
 
 
+async def reload_captcha_alert_cache(bot: commands.Bot):
+    from utils.cache.user_captcha_alert_cache import load_user_captcha_alert_cache
+
+    await load_user_captcha_alert_cache(bot=bot)
 
 
 # -------------------- Dropdown for settings --------------------
@@ -48,6 +51,7 @@ class SettingsDropdown(discord.ui.Select):
     def __init__(self, user_id: int, bot: commands.Bot):
         options = [
             discord.SelectOption(label="Timer", value="timer"),
+            discord.SelectOption(label="Captcha Alert", value="captcha_alert"),
             discord.SelectOption(label="Ball Recommendation", value="ball_reco"),
             discord.SelectOption(label="Held Item Pings", value="held_items"),
             discord.SelectOption(label="Reminders", value="reminders"),
@@ -78,6 +82,12 @@ class SettingsDropdown(discord.ui.Select):
                 if not data:
                     await reload_timer_cache(self.bot)
                     data = timer_cache.get(user_id)
+            elif category == "captcha_alert":
+                data = user_captcha_alert_cache.get(user_id)
+                if not data:
+                    await reload_captcha_alert_cache(self.bot)
+                    data = user_captcha_alert_cache.get(user_id)
+
             elif category == "ball_reco":
                 data = ball_reco_cache.get(user_id)
                 if not data:
@@ -93,7 +103,6 @@ class SettingsDropdown(discord.ui.Select):
                 if not data:
                     await reload_reminders_cache(self.bot)
                     data = user_reminders_cache.get(user_id)
-
 
             if not data:
                 await defer_handle.stop(

@@ -7,7 +7,6 @@ from config.held_items import HELD_ITEM_EMOJI
 from utils.embeds.design_embed import design_embed
 from utils.listener_func.catch_rate import rarity_emojis
 
-
 # Rarity order
 RARITY_ORDER = [
     "common",
@@ -57,6 +56,13 @@ EMBED_CONFIG = {
         "thumbnail_url": MINC_Thumbnails.bell,
         "image_url": None,
     },
+    "captcha_alert": {
+        "title": f"{Emojis.gray_shield} Captcha Alert Settings",
+        "footer_text": "🛡️ Captcha alerts help you protect your Pokémon journey!",
+        "color": "brown",
+        "thumbnail_url": MINC_Thumbnails.captcha_alert,
+        "image_url": None,
+    },
 }
 EMBED_CONFIG["wb_pings"] = {
     "title": f"{Emojis.boss} World Boss Pings",
@@ -72,6 +78,7 @@ CATEGORY_HEADER_EMOJIS = {
     "held_items": Emojis.backpack,
     "fishing": Emojis.fishing_rod,
 }
+
 
 def build_user_settings_embed(
     user: discord.Member, category: str, data: dict
@@ -99,6 +106,13 @@ def build_user_settings_embed(
             f"⚔️ Battle Timer: {data.get('battle_setting','Not Set')}",
             # f"🎣 Fishing Timer: {data.get('fish_setting','Not Set')}",
         ]
+
+    # 🛡️────────────────────────🎀
+    # Captcha Alert 🐭💥
+    # 🛡️────────────────────────🎀
+    
+    elif category == "captcha_alert":
+        desc_lines = [f"📢 Alert Type: {data.get('alert_type','Off').title()}"]
 
     # 🎯────────────────────────🎀
     # Ball Recommendation 🎈🐾

@@ -307,10 +307,7 @@ async def setup_hook():
 # ╭───────────────────────────────╮
 # │     🤎  Startup Checklist  🤍  │
 # ╰───────────────────────────────╯
-
-
 async def startup_checklist(bot: commands.Bot):
-
     from utils.cache import (
         ball_reco_cache,
         boosted_channels_cache,
@@ -319,6 +316,7 @@ async def startup_checklist(bot: commands.Bot):
         timer_cache,
         user_reminders_cache,
         feeling_lucky_cache,
+        user_captcha_alert_cache,
     )
 
     print("\n★━━━━━━━━━━━━━━━━━━━━★")
@@ -330,6 +328,7 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {len(user_reminders_cache)} ⚾ User Remidners")
     print(f"✅ {len(boosted_channels_cache)} 💒 Boosted Channels")
     print(f"✅ {len(feeling_lucky_cache)} 🍀 Feeling Lucky Cooldowns")
+    print(f"✅ {len(user_captcha_alert_cache)} 🛡️  Captcha Alert Users")
     print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
     print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
     pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"

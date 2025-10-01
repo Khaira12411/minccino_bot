@@ -29,6 +29,7 @@ class Emojis:
     greatball_unlocked = "<:greatball_unlocked:1413697507870900224>"
     pokeball_unlocked = "<:pokeball_unlocked:1413697494155526195>"
     gray_check_animated = "<a:gray_check_animated:1415094434785132668>"
+    gray_shield = "<:gray_shield:1422760941652545568>"
 
 class Emojis_Rarity:
     common = "<:common:1412000858329321482>"
@@ -50,6 +51,7 @@ class Emojis_Balls:
     diveball = "<:diveball:1412001883639517275>"
 
 class MINC_Thumbnails:
+    captcha_alert = "https://media.discordapp.net/attachments/1394913073520967680/1422761285422157905/image.png?ex=68ddd934&is=68dc87b4&hm=3eda2aa450903858d789b543495a6054c1b44a2e3ec731d3c4f0c13ece9ce473&=&format=webp&quality=lossless&width=576&height=576"
     fl = "https://media.discordapp.net/attachments/1394913073520967680/1420580195659939840/image.png?ex=68d5e9e7&is=68d49867&hm=af6fb5c2d86a87813dba5f96f3488f321c0c13a4677bfb02c46ea1ecac0fb6f6&=&format=webp&quality=lossless&width=576&height=576"
     boss = "https://media.discordapp.net/attachments/1394913073520967680/1417349428699856956/1248144585688092702.png?ex=68ca2904&is=68c8d784&hm=057235ee3940e94a3349d0140fc7e3b1ed0e88638f48165d1472e0821a33349b&=&format=webp&quality=lossless&width=113&height=113"
     brown_backpack = "https://media.discordapp.net/attachments/1394913073520967680/1412353518634930207/80927aac6f19fb9e38ee378e2f74e3fb-removebg-preview.png?ex=68b7fc37&is=68b6aab7&hm=1795978172f4cf61a10e83176c14dd73d8bb6eb28843c2cf70b7c4dea3ba9f4e&=&format=webp&quality=lossless&width=625&height=625"

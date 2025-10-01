@@ -3,18 +3,22 @@
 #       🎀 Calls all individual caches 🎀
 # ─────────────────────────────────────────────
 
-from utils.cache.timers_cache import load_timer_cache, timer_cache
-from utils.cache.held_item_cache import load_held_item_cache, held_item_cache
-from utils.cache.ball_reco_cache import load_ball_reco_cache, ball_reco_cache
-from utils.cache.water_state_cache import get_water_state, fetch_latest_water_state
-from utils.cache.reminders_cache import *
+from utils.cache.ball_reco_cache import ball_reco_cache, load_ball_reco_cache
 from utils.cache.boosted_channels_cache import (
     boosted_channels_cache,
     load_boosted_channels_cache,
 )
-
-from utils.loggers.pretty_logs import pretty_log
 from utils.cache.fl_cache import feeling_lucky_cache, load_feeling_lucky_cache
+from utils.cache.held_item_cache import held_item_cache, load_held_item_cache
+from utils.cache.reminders_cache import *
+from utils.cache.timers_cache import load_timer_cache, timer_cache
+from utils.cache.user_captcha_alert_cache import (
+    load_user_captcha_alert_cache,
+    user_captcha_alert_cache,
+)
+from utils.cache.water_state_cache import fetch_latest_water_state, get_water_state
+from utils.loggers.pretty_logs import pretty_log
+
 
 # 🐾────────────────────────────────────────────
 #     💜 Load Everything in One Go
@@ -46,6 +50,9 @@ async def load_all_caches(bot):
     # 🍀 Feeling Lucky Cooldowns
     await load_feeling_lucky_cache(bot)
 
+    # 🛡️ User Captcha Alert
+    await load_user_captcha_alert_cache(bot)
+
     # 🎀 Unified single-line log with all caches
     pretty_log(
         tag="",
@@ -55,7 +62,8 @@ async def load_all_caches(bot):
             f"Held Items: {len(held_item_cache)}, Ball Recon: {len(ball_reco_cache)}, "
             f"Reminders: {len(user_reminders_cache)}, "
             f"Boosted Channels: {len(boosted_channels_cache)}, "
-            f"Feeling Lucky Cooldowns: {len(feeling_lucky_cache)})"
+            f"Feeling Lucky Cooldowns: {len(feeling_lucky_cache)},"
+            f"Captcha Alerts: {len(user_captcha_alert_cache)}"
         ),
         label="🥨 CENTRAL CACHE",
         bot=bot,
