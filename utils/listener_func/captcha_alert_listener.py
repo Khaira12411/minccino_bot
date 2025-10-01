@@ -38,7 +38,7 @@ async def captcha_alert_handler(bot: commands.Bot, message: discord.Message):
                 return
 
         guild = message.guild
-
+        #
         member = await get_pokemeow_reply_member(message=message)
         if not member:
             return
@@ -68,10 +68,10 @@ async def captcha_alert_handler(bot: commands.Bot, message: discord.Message):
             return
 
         elif alert_type == "on":
-            content = f"{member.mention} a CAPTCHA has appeared! Please solve it to avoid being banned!"
+            content = f"{member.mention} a CAPTCHA has appeared! Please solve it to avoid getting banned!"
 
         else:
-            content = f"{CAPTCHA_HELPER_MENTION}! {member.display_name} has a spawned a CAPTCHA! Please assist them in solving it!"
+            content = f"{CAPTCHA_HELPER_MENTION}! {member.mention} has a spawned a CAPTCHA! Please assist them in solving it!"
 
         await message.channel.send(content=content)
 

@@ -27,6 +27,7 @@ TAGS = {
     "critical": "🚨 CRITICAL",
     "skip": "🤍 SKIP",
     "sent": "📨 SENT",
+    "captcha": "📢 CAPTCHA",
 }
 
 # -------------------- 🎨 ANSI Colors --------------------

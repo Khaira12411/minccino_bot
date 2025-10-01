@@ -50,7 +50,10 @@ CATCHBOT_SPENT_PATTERN = re.compile(
     r"You spent <:[^:]+:\d+> \*\*[\d,]+ PokeCoins\*\* to run your catch bot\.",
     re.IGNORECASE,
 )
-captcha_alert_trigger = "A wild Captcha has appeared!"
+captcha_alert_trigger = "A wild Captcha has appeared"
+captcha_description_trigger = (
+    "you must type your answer to the captcha below to continue playing"
+)
 
 
 class MessageCreateListener(commands.Cog):
@@ -135,14 +138,15 @@ class MessageCreateListener(commands.Cog):
                     await remove_boosted_channel_listener(bot=self.bot, message=message)
 
                 # 🛡️ Captcha Alert Listener
-                if first_embed and (
-                    (first_embed.title and captcha_alert_trigger in first_embed.title)
-                    or (
-                        first_embed.description
-                        and captcha_alert_trigger in first_embed.description
-                    )
-                ):
-                    await captcha_alert_handler(bot=self.bot, message=message)
+                if first_embed:
+                    title = first_embed.title.lower() if first_embed.title else ""
+                    description = first_embed.description.lower() if first_embed.description else ""
+                    if "captcha" in title or "captcha" in description:
+                        pretty_log(
+                            tag="info",
+                            message=f"🔐 Entered Captcha Alert Listener | message_id={message.id}",
+                        )
+                        await captcha_alert_handler(bot=self.bot, message=message)
 
                 # 🟣 Catchbot processing
                 if message.content:
