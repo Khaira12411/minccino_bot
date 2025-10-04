@@ -156,43 +156,69 @@ async def fetch_message_from_link_func(
             parts.append("")
 
         # Embeds
+        # Embeds
         embeds = data.get("embeds") or []
         if embeds:
             parts.append("🖼 Embeds:")
             for idx, emb in enumerate(embeds, start=1):
-                parts.append(f"- Embed {idx}")
+                parts.append(f"━ Embed {idx} ━")
+
+                # Color
+                if emb.get("color") is not None:
+                    color_val = emb["color"]
+                    parts.append(f"🎨 Color: #{color_val:06X}")
+
+                # Title
                 if emb.get("title"):
-                    parts.append(f"   • Title: {emb['title']}")
+                    parts.append(f"📌 Title:")
+                    parts.append(f"   🔹 {emb['title']}")
+
+                # URL
                 if emb.get("url"):
-                    parts.append(f"   • URL: {emb['url']}")
+                    parts.append(f"🔗 URL:")
+                    parts.append(f"   🔹 {emb['url']}")
+
+                # Author
                 if emb.get("author") and emb["author"].get("name"):
                     author_line = emb["author"]["name"]
                     if emb["author"].get("url"):
                         author_line += f" ({emb['author']['url']})"
-                    parts.append(f"   • Author: {author_line}")
+                    parts.append("👤 Author:")
+                    parts.append(f"   🔹 {author_line}")
+
+                # Description
                 if emb.get("description"):
-                    parts.append("   • Description:")
+                    parts.append("📝 Description:")
                     for line in emb["description"].splitlines():
-                        parts.append(f"     {line}")
+                        parts.append(f"   🔹 {line}")
+
+                # Fields
                 if emb.get("fields"):
+                    parts.append("📂 Fields:")
                     for f in emb["fields"]:
                         name = f.get("name", "Field")
                         val = f.get("value", "")
                         inline = f.get("inline", False)
-                        parts.append(
-                            f"   • {name} [{'inline' if inline else 'block'}]:"
-                        )
+                        inline_note = "inline" if inline else "block"
+                        parts.append(f"  • {name} [{inline_note}]:")
                         for line in val.splitlines():
-                            parts.append(f"     {line}")
+                            parts.append(f"     🔹 {line}")
+
+                # Footer
                 if emb.get("footer") and emb["footer"].get("text"):
-                    parts.append("   • Footer:")
+                    parts.append("🦶 Footer:")
                     for line in emb["footer"]["text"].splitlines():
-                        parts.append(f"     {line}")
+                        parts.append(f"   🔹 {line}")
+
+                # Images / Thumbnails
                 if emb.get("image") and emb["image"].get("url"):
-                    parts.append(f"   • Image: {emb['image']['url']}")
+                    parts.append("🖼 Image:")
+                    parts.append(f"   🔹 {emb['image']['url']}")
                 if emb.get("thumbnail") and emb["thumbnail"].get("url"):
-                    parts.append(f"   • Thumbnail: {emb['thumbnail']['url']}")
-                parts.append("")
+                    parts.append("🖼 Thumbnail:")
+                    parts.append(f"   🔹 {emb['thumbnail']['url']}")
+
+                parts.append("")  # space after each embed
 
         result_text = "\n".join(parts).strip()
     except Exception as e:
