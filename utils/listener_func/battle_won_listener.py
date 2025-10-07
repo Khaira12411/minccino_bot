@@ -74,7 +74,7 @@ async def battle_won_listener(bot: discord.Client, message: discord.Message):
     ):
         content = (
             f"🏆 **{user.display_name}** has reached **300 Battles Won** this week "
-            f"and earned the **{STRAYMONS__ROLES['weekly_guardian']['name']}** role!"
+            f"and earned the **Weekly Guardian** role!"
         )
         update_weekly_guardian_mark(user_id)
         await message.channel.send(content)

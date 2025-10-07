@@ -154,7 +154,7 @@ async def weekly_stats_syncer(bot, message: discord.Message):
     ):
         await message.channel.send(
             f"🏆 **{user.display_name}** has reached **300 Battles Won** this week "
-            f"and earned the **{STRAYMONS__ROLES['weekly_guardian']['name']}** role!"
+            f"and earned the **Weekly Guardian** role!"
         )
         weekly_guardian_role = message.guild.get_role(STRAYMONS__ROLES.weekly_guardian)
         if weekly_guardian_role and weekly_guardian_role not in user.roles:
