@@ -18,6 +18,7 @@ async def weekly_stats_syncer(bot, message: discord.Message):
         update_weekly_angler_mark,
         update_weekly_grinder_mark,
         update_weekly_requirement_mark,
+        update_weekly_guardian_mark,
         weekly_goal_cache,
     )
     pretty_log(
@@ -160,7 +161,7 @@ async def weekly_stats_syncer(bot, message: discord.Message):
             await user.add_roles(
                 weekly_guardian_role, reason="Reached 300 battles won in Weekly Goal"
             )
-        update_weekly_angler_mark(user.id)
+        update_weekly_guardian_mark(user.id)
         pretty_log(
             "info",
             f"Assigned Weekly Guardian role to {user.display_name} ({user_id})",
