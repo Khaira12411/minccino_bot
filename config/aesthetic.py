@@ -1,4 +1,7 @@
 class Emojis:
+    gray_star = "<:gray_star:1425062849285197844>"
+    celebrate = "<a:celebrate:1425062873838780416>"
+    medal = "<a:medal:1425062839806201866>"
     boss = "<:world_boss_spawned:1300780186073170051>"
     error = "<:error:1417082094596657232>"
     gray_check = "<:gray_check:1411314640868216873>"
@@ -66,3 +69,6 @@ class MINC_Thumbnails:
 class MINC_DIVIDER:
     brown_stars = "https://media.discordapp.net/attachments/1393740397905313912/1412595875360014376/image.png?ex=68b8dded&is=68b78c6d&hm=1562907ed9097b683e921ce2f8790e23ea6d8c7dacc51a2587cff87882b9f4ff&=&format=webp&quality=lossless&width=1215&height=54"
     tulips = "https://media.discordapp.net/attachments/1393740397905313912/1412599439968964689/image.png?ex=68b8e13f&is=68b78fbf&hm=d6750e5a1ddc1a3c7a208efc86938938185e0f979b23c8ed53f3c2d4e358689f&=&format=webp&quality=lossless&width=1646&height=191"
+
+class Image_Link:
+    new_week = "https://media.discordapp.net/attachments/1358029599463968798/1396344374920613919/Welcome_to_Straymons_2.png?ex=68e5e509&is=68e49389&hm=f277d9deeadc4b8fff890fce51f6ae0b91de611d46cdec04d9608f02f3dd0979&=&format=webp&quality=lossless&width=915&height=307"

@@ -108,7 +108,7 @@ async def pokemon_caught_listener(
             )
             if goal_tracker_channel:
                 await goal_tracker_channel.send(
-                    f"⭐ {member.display_name} has reached the Weekly requirement catch goal of 175!"
+                    f"{Emojis.gray_star} {member.display_name} has reached the Weekly requirement catch goal of 175!"
                 )
 
         # Weekly grinder 2000 Pokémon
@@ -140,7 +140,7 @@ async def pokemon_caught_listener(
             )
             if goal_tracker_channel:
                 await goal_tracker_channel.send(
-                    f"🏅 {member.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon!"
+                    f"{Emojis.medal} {member.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon! {Emojis.celebrate}"
                 )
 
     # Plume fossil alert

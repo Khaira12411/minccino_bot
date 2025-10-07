@@ -4,7 +4,7 @@ import discord
 
 from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
 from utils.loggers.pretty_logs import pretty_log
-
+from config.aesthetic import Emojis
 
 # 🌸───────────────────────────────────────────────🌸
 # 🩷 ⏰ Weekly Stats Syncer Listener               🩷
@@ -104,7 +104,7 @@ async def weekly_stats_syncer(bot, message: discord.Message):
         )
         if goal_tracker_channel:
             await goal_tracker_channel.send(
-                f"⭐ {user.display_name} has reached the Weekly requirement catch goal of 175!"
+                f"{Emojis.gray_star} {user.display_name} has reached the Weekly requirement catch goal of 175!"
             )
     if pokemon_caught >= 2000 and not weekly_goal_cache[user_id].get(
         "weekly_grinder_mark"
@@ -124,7 +124,7 @@ async def weekly_stats_syncer(bot, message: discord.Message):
         )
         if goal_tracker_channel:
             await goal_tracker_channel.send(
-                f"🏅 {user.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon!"
+                f"{Emojis.medal} {user.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon! {Emojis.celebrate}"
             )
 
         pretty_log(
