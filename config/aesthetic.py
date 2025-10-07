@@ -1,7 +1,9 @@
 class Emojis:
+
     gray_star = "<:gray_star:1425062849285197844>"
     celebrate = "<a:celebrate:1425062873838780416>"
-    medal = "<a:medal:1425062839806201866>"
+    medal = "<:medal2:1425090465518194810>"
+    medal2 = "<a:medal:1425062839806201866>"
     boss = "<:world_boss_spawned:1300780186073170051>"
     error = "<:error:1417082094596657232>"
     gray_check = "<:gray_check:1411314640868216873>"
