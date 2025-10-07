@@ -6,4 +6,7 @@ from .water_state_cache import waterstate_cache, update_water_state, fetch_lates
 from .boosted_channels_cache import boosted_channels_cache
 from .fl_cache import feeling_lucky_cache
 from .user_captcha_alert_cache import user_captcha_alert_cache
+from .res_fossil_cache import res_fossils_alert_cache
+from .straymon_member_cache import straymon_member_cache, load_straymon_member_cache
+from .weekly_goal_tracker_cache import weekly_goal_cache, load_weekly_goal_cache
 __all__ = ["load_timer_cache"]

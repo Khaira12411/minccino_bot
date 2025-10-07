@@ -13,7 +13,7 @@ from utils.embeds.user_settings_embed import build_user_settings_embed
 from utils.essentials.loader.loader import *
 from utils.essentials.role_checks import *
 from utils.loggers.pretty_logs import pretty_log
-
+from utils.cache.res_fossil_cache import res_fossils_alert_cache
 
 # -------------------- Cache reload helpers --------------------
 async def reload_timer_cache(bot: commands.Bot):
@@ -45,6 +45,10 @@ async def reload_captcha_alert_cache(bot: commands.Bot):
 
     await load_user_captcha_alert_cache(bot=bot)
 
+async def reload_res_fossil_cache(bot: commands.Bot):
+    from utils.cache.res_fossil_cache import load_res_fossils_alert_cache
+
+    await load_res_fossils_alert_cache(bot=bot)
 
 # -------------------- Dropdown for settings --------------------
 class SettingsDropdown(discord.ui.Select):
@@ -55,6 +59,7 @@ class SettingsDropdown(discord.ui.Select):
             discord.SelectOption(label="Ball Recommendation", value="ball_reco"),
             discord.SelectOption(label="Held Item Pings", value="held_items"),
             discord.SelectOption(label="Reminders", value="reminders"),
+            discord.SelectOption(label="Alerts", value="alerts"),
         ]
         super().__init__(
             placeholder="Choose a category...",
@@ -103,7 +108,20 @@ class SettingsDropdown(discord.ui.Select):
                 if not data:
                     await reload_reminders_cache(self.bot)
                     data = user_reminders_cache.get(user_id)
-
+            elif category == "alerts":
+                captcha_data = user_captcha_alert_cache.get(user_id)
+                if not captcha_data:
+                    await reload_captcha_alert_cache(self.bot)
+                    captcha_data = user_captcha_alert_cache.get(user_id)
+                res_fossil_data = res_fossils_alert_cache.get(user_id)
+                if not res_fossil_data:
+                    await reload_res_fossil_cache(self.bot)
+                    res_fossil_data = res_fossils_alert_cache.get(user_id)
+                data = {
+                    "captcha_alert": captcha_data,
+                    "res_fossil_alert": res_fossil_data,
+                }
+                
             if not data:
                 await defer_handle.stop(
                     content="❌ No data found for you. Try again in a moment.",

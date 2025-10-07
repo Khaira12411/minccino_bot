@@ -1,0 +1,64 @@
+import time
+
+import discord
+from utils.loggers.pretty_logs import pretty_log
+
+straymon_member_cache: dict[int, dict] = {}
+# Structure:
+# user_id -> {
+#   "user_name": str,
+#   "channel_id": int
+# }
+
+async def load_straymon_member_cache(bot):
+    """
+    Load all straymon members into memory cache.
+    Uses the fetch_all_straymon_members DB function.
+    """
+    from utils.database.straymon_info_db_func import fetch_all_straymon_members
+
+    straymon_member_cache.clear()
+    rows = await fetch_all_straymon_members(bot)
+    for row in rows:
+        straymon_member_cache[row["user_id"]] = {
+            "user_name": row.get("user_name"),
+            "channel_id": row.get("channel_id"),
+        }
+
+    try:
+        pretty_log(
+            "info",
+            f"Loaded {len(straymon_member_cache)} straymon members into cache",
+            label="💠 STRAYMON MEMBER CACHE",
+            bot=bot,
+        )
+    except Exception as e:
+        # fallback to console if Discord logging fails
+        print(
+            f"[💠 STRAYMON MEMBER CACHE] Loaded {len(straymon_member_cache)} entries (pretty_log failed: {e})"
+        )
+
+    return straymon_member_cache
+
+def fetch_straymon_member_cache(user_id: int):
+    """
+    Fetch a straymon member from cache by user ID.
+    Returns a dict with user_name and channel_id, or None if not found.
+    """
+    return straymon_member_cache.get(user_id)
+
+
+def fetch_straymon_member_cache_by_name(user_name: str):
+    """
+    Fetch a straymon member from cache by Discord username (no duplicates expected).
+    Returns a dict with user_id, user_name, channel_id, or None if not found.
+    """
+    lowered_name = user_name.lower()
+    for uid, data in straymon_member_cache.items():
+        if data.get("user_name", "").lower() == lowered_name:
+            return {
+                "user_id": uid,
+                "user_name": data.get("user_name"),
+                "channel_id": data.get("channel_id"),
+            }
+    return None

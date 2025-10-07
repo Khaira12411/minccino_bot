@@ -33,7 +33,12 @@ from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.loggers.pretty_logs import pretty_log
+from utils.listener_func.battle_won_listener import battle_won_listener
+from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 
+
+weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
+battle_won_trigger = "won the battle! :tada:"
 CC_BOT_LOG_ID = 1413576563559239931
 WOOPER_ID = 1388515441592504483
 KHY_CHANNEL_ID = 1050645885844987904
@@ -112,6 +117,10 @@ class MessageCreateListener(commands.Cog):
 
                 # ⌚ detect PokéMeow Battle replies
                 await detect_pokemeow_battle(bot=self.bot, message=message)
+                # Process battle won
+                if message.content and battle_won_trigger in message.content:
+
+                    await battle_won_listener(bot=self.bot, message=message)
 
                 # 🐚 Held item ping
                 await held_item_ping_handler(self.bot, message)
@@ -136,6 +145,13 @@ class MessageCreateListener(commands.Cog):
                 # 😢 Remove Channel Boost Listener
                 if remove_boosted_trigger.lower() in message.content.lower():
                     await remove_boosted_channel_listener(bot=self.bot, message=message)
+
+                # ⏰ Weekly Stats Syncer
+                if first_embed:
+                    embed_title = first_embed.title or ""
+                    if weekly_stats_trigger in embed_title:
+                        await weekly_stats_syncer(bot=self.bot, message=message)
+
 
                 # 🛡️ Captcha Alert Listener
                 if first_embed:

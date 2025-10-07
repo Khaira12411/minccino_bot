@@ -23,7 +23,7 @@ from utils.essentials.get_pg_pool import get_pg_pool
 from utils.essentials.role_checks import *
 from utils.loggers.pretty_logs import pretty_log, set_minccino_bot
 from utils.loggers.rate_limit_logger import setup_rate_limit_logging
-
+from utils.background_task.scheduler import setup_scheduler
 # ╭───────────────────────────────╮
 # │   🤎  Suppress Logs  🤍      │
 # ╰───────────────────────────────╯
@@ -303,7 +303,10 @@ async def setup_hook():
         except Exception as e:
             pretty_log("error", f"Failed to load {cog_name}: {e}", include_trace=True)
 
-
+    # ── 🤎 Scheduler Setup ──
+    await setup_scheduler(bot)
+    # Optional: store scheduler manager on bot for easy access later
+    bot.scheduler_manager = bot.scheduler_manager or None
 # ╭───────────────────────────────╮
 # │     🤎  Startup Checklist  🤍  │
 # ╰───────────────────────────────╯
@@ -317,11 +320,16 @@ async def startup_checklist(bot: commands.Bot):
         user_reminders_cache,
         feeling_lucky_cache,
         user_captcha_alert_cache,
+        res_fossils_alert_cache,
+        straymon_member_cache,
+        weekly_goal_cache,
     )
 
     print("\n★━━━━━━━━━━━━━━━━━━━━★")
     print(f"✅ {len(bot.cogs)} 🌼 Cogs Loaded")
     print(f"✅ 🌊 {get_water_state()} Waterstate")  # use getter
+    print(f"✅ {len(straymon_member_cache)} 🐥 Straymon Members")
+    print(f"✅ {len(weekly_goal_cache)} 🎀 Weekly Goal Trackers")
     print(f"✅ {len(timer_cache)} ⌚ Pokemon Timer Users")
     print(f"✅ {len(held_item_cache)} 🍄 Held Item Ping Users")
     print(f"✅ {len(ball_reco_cache)} 🍚 Ball Recommendation Users")
@@ -329,12 +337,21 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {len(boosted_channels_cache)} 💒 Boosted Channels")
     print(f"✅ {len(feeling_lucky_cache)} 🍀 Feeling Lucky Cooldowns")
     print(f"✅ {len(user_captcha_alert_cache)} 🛡️  Captcha Alert Users")
+    print(f"✅ {len(res_fossils_alert_cache)} 🦴  Research Fossils Alert Users")
     print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
     print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
     pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"
     print(f"✅ {pg_status} 🧀  PostgreSQL Pool")
     total_slash_commands = sum(1 for _ in bot.tree.walk_commands())
     print(f"✅ {total_slash_commands} 🍞 Slash Commands Synced")
+    # Check weekly goals reset job
+    scheduler_status = "Not Scheduled"
+    if hasattr(bot, "scheduler_manager") and bot.scheduler_manager:
+        job = bot.scheduler_manager.jobs.get("weekly_goals_reset")
+        if job:
+            scheduler_status = f"Scheduled ✅ next run: {job.next_run_time}"
+
+    print(f"✅ {scheduler_status} ⏰ Weekly Goals Reset")
     print("★━━━━━━━━━━━━━━━━━━━━★\n")
 
 

@@ -90,29 +90,6 @@ class ToggleGroup(commands.Cog):
     feeling_lucky_reminder_update.extras = {"category": "Public"}
 
     # 🟣────────────────────────────────────────────
-    #     💜 Toggle captcha-alert 💜
-    # ─────────────────────────────────────────────
-    @toggle_group.command(
-        name="captcha-alert",
-        description="Changes your captcha alert settings",
-    )
-    async def captcha_alert_setting(
-        self,
-        interaction: discord.Interaction,
-        alert_type: Literal["On", "On w/captcha role ping", "Off"],
-    ):
-        slash_cmd_name = "toggle captcha-alert"
-
-        await run_command_safe(
-            bot=self.bot,
-            interaction=interaction,
-            slash_cmd_name=slash_cmd_name,
-            command_func=captcha_alert_settings_func,
-            alert_type=alert_type,
-        )
-
-    captcha_alert_setting.extras = {"category": "Public"}
-    # 🟣────────────────────────────────────────────
     #     💜 /toggle reminders 💜
     # 🟣────────────────────────────────────────────
     @toggle_group.command(
@@ -133,7 +110,29 @@ class ToggleGroup(commands.Cog):
             command_func=toggle_reminders_func,
         )
 
-    toggle_reminders.extras = {"category": "Owner"}
+    toggle_reminders.extras = {"category": "Public"}
+    # 🟣────────────────────────────────────────────
+    #     💜 /toggle alerts 💜
+    # 🟣────────────────────────────────────────────
+    @toggle_group.command(
+        name="alerts",
+        description="Modifies your alerts' settings",
+    )
+    @espeon_roles_only()
+    async def toggle_alerts(
+        self,
+        interaction: discord.Interaction,
+    ):
+        slash_cmd_name = "toggle alerts"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=alert_settings_func,
+        )
+
+    toggle_alerts.extras = {"category": "Public"}
 
     # 🟣────────────────────────────────────────────
     #     💜 Toggle Ping Command Group 💜

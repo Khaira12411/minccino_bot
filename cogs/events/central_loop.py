@@ -28,6 +28,7 @@ class CentralLoop(commands.Cog):
     async def central_loop(self):
         """Background loop that ticks every 60 seconds"""
         await self.bot.wait_until_ready()
+        from utils.cache.weekly_goal_tracker_cache import flush_weekly_goal_cache
         pretty_log(
             "",
             "✅ Central loop started!",
@@ -48,6 +49,9 @@ class CentralLoop(commands.Cog):
 
                 # 🍀 Check if any Feeling Lucky cd is due
                 await fl_cd_checker(bot=self.bot)
+
+                # 💠 Flush any dirty weekly goal stats to DB
+                await flush_weekly_goal_cache(self.bot)
 
             except Exception as e:
                 pretty_log(
@@ -76,5 +80,6 @@ async def setup(bot: commands.Bot):
     print("  ─────────────────────────────────────────────")
     print("  ✅ 🦭  pokemon_reminder_checker")
     print("  ✅ 🍀  fl_cd_checker")
+    print("  ✅ 💠  flush_weekly_goal_cache")
     print("  🧭 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")

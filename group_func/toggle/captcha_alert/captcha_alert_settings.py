@@ -32,7 +32,7 @@ async def captcha_alert_settings_func(
     )
 
     # Upsert into DB
-    await upsert_user_captcha_alert(bot, user_id, user_name, alert_type.lower())
+    await upsert_user_captcha_alert(bot, user, alert_type.lower())
 
     # Confirmation Embed
     embed = discord.Embed(

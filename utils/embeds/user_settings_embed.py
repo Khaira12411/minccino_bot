@@ -63,6 +63,13 @@ EMBED_CONFIG = {
         "thumbnail_url": MINC_Thumbnails.captcha_alert,
         "image_url": None,
     },
+    "alerts": {
+        "title": f"{Emojis.gray_shield} Alerts Settings",
+        "footer_text": "🛡️ Manage your captcha and fossil alerts here!",
+        "color": "brown",
+        "thumbnail_url": MINC_Thumbnails.captcha_alert,
+        "image_url": None,
+    },
 }
 EMBED_CONFIG["wb_pings"] = {
     "title": f"{Emojis.boss} World Boss Pings",
@@ -108,11 +115,24 @@ def build_user_settings_embed(
         ]
 
     # 🛡️────────────────────────🎀
-    # Captcha Alert 🐭💥
+    # Alerts 🐭💥
     # 🛡️────────────────────────🎀
-    
-    elif category == "captcha_alert":
-        desc_lines = [f"📢 Alert Type: {data.get('alert_type','Off').title()}"]
+    elif category == "alerts":
+        captcha_data = data.get("captcha_alert", {})
+        res_fossil_data = data.get("res_fossil_alert", {})
+
+        # Captcha Alert
+        desc_lines = []
+        captcha_notify = "Off"
+        res_notify = "Off"
+        if captcha_data:
+            captcha_notify = captcha_data.get("notify", "Off").title()
+        if res_fossil_data:
+            res_notify = res_fossil_data.get("notify", "Off").title()
+        desc_lines.append(
+            f"🛡️ **Captcha Alert:** {captcha_notify}"
+            f"\n🦴 **Res Fossil Alert:** {res_notify}"
+        )
 
     # 🎯────────────────────────🎀
     # Ball Recommendation 🎈🐾

@@ -1,5 +1,5 @@
 # 💠────────────────────────────────────────────
-#   🐾 User Captcha Alert DB Functions
+#   🐾 User res fossils alert DB Functions
 # 💠────────────────────────────────────────────
 
 import asyncpg
@@ -8,21 +8,21 @@ import discord
 from utils.loggers.pretty_logs import pretty_log
 
 TABLE_NAME = "user_alerts"
-ALERT_TYPE = "captcha"
+ALERT_TYPE = "res_fossils"
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 💾 Fetch all captcha alerts
+# 💾 Fetch all res fossils alerts
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-async def fetch_all_captcha_alerts(bot) -> list[asyncpg.Record]:
+async def fetch_all_res_fossils_alerts(bot) -> list[asyncpg.Record]:
     """
-    Fetch all rows where alert_type='captcha'.
+    Fetch all rows where alert_type='res_fossils'.
 
     Args:
         bot: The Discord bot instance containing the PostgreSQL pool.
 
     Returns:
-        List of asyncpg.Record representing all captcha alerts.
+        List of asyncpg.Record representing all res fossils alerts.
         Returns [] if query fails.
     """
     try:
@@ -38,11 +38,11 @@ async def fetch_all_captcha_alerts(bot) -> list[asyncpg.Record]:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 💾 Fetch single user captcha alert
+# 💾 Fetch single user res fossils alert
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-async def fetch_user_captcha_alert(bot, user_id: int) -> asyncpg.Record | None:
+async def fetch_user_res_fossils_alert(bot, user_id: int) -> asyncpg.Record | None:
     """
-    Fetch a single user's captcha alert row.
+    Fetch a single user's res fossils alert row.
 
     Args:
         bot: The Discord bot instance containing the PostgreSQL pool.
@@ -68,11 +68,11 @@ async def fetch_user_captcha_alert(bot, user_id: int) -> asyncpg.Record | None:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 💾 Upsert captcha alert
+# 💾 Upsert res fossils alert
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-async def upsert_user_captcha_alert(bot, user: discord.Member, notify: str):
+async def upsert_user_res_fossils_alert(bot, user: discord.Member, notify: str):
     """
-    Insert or update a user's captcha alert.
+    Insert or update a user's res fossils alert.
 
     Args:
         bot: The Discord bot instance containing the PostgreSQL pool.
@@ -83,7 +83,7 @@ async def upsert_user_captcha_alert(bot, user: discord.Member, notify: str):
     user_id = user.id
     user_name = user.name
     try:
-        from utils.cache.user_captcha_alert_cache import upsert_user_captcha_alert_cache
+        from utils.cache.res_fossil_cache import upsert_res_fossils_alert_cache
 
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
@@ -107,7 +107,7 @@ async def upsert_user_captcha_alert(bot, user: discord.Member, notify: str):
             bot=bot,
         )
 
-        upsert_user_captcha_alert_cache(user=user, notify=notify)
+        upsert_res_fossils_alert_cache(user=user, notify=notify)
 
     except Exception as e:
         pretty_log(
@@ -116,11 +116,11 @@ async def upsert_user_captcha_alert(bot, user: discord.Member, notify: str):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 💾 Remove captcha alert
+# 💾 Remove res fossils alert
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-async def remove_user_captcha_alert(bot, user: discord.Member):
+async def remove_user_res_fossils_alert(bot, user: discord.Member):
     """
-    Remove a user's captcha alert row from DB and cache.
+    Remove a user's res fossils alert row from DB and cache.
 
     Args:
         bot: The Discord bot instance containing the PostgreSQL pool.
@@ -130,7 +130,9 @@ async def remove_user_captcha_alert(bot, user: discord.Member):
     user_name = user.name
 
     try:
-        from utils.cache.user_captcha_alert_cache import remove_user_captcha_alert_cache
+        from utils.cache.res_fossil_cache import (
+            remove_user_res_fossils_alert_cache,
+        )
 
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
@@ -140,7 +142,7 @@ async def remove_user_captcha_alert(bot, user: discord.Member):
             )
 
         pretty_log("db", f"Removed {ALERT_TYPE} alert for {user_name}", bot=bot)
-        remove_user_captcha_alert_cache(user=user)
+        remove_user_res_fossils_alert_cache(user=user)
 
     except Exception as e:
         pretty_log(
@@ -153,9 +155,9 @@ async def remove_user_captcha_alert(bot, user: discord.Member):
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 💾 Update notify type
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-async def update_user_captcha_notify(bot, user: discord.Member, new_notify: str):
+async def update_user_res_fossils_notify(bot, user: discord.Member, new_notify: str):
     """
-    Update a user's `notify` type for captcha alerts.
+    Update a user's `notify` type for res fossils alerts.
 
     Args:
         bot: The Discord bot instance containing the PostgreSQL pool.
@@ -166,8 +168,8 @@ async def update_user_captcha_notify(bot, user: discord.Member, new_notify: str)
     user_name = user.name
 
     try:
-        from utils.cache.user_captcha_alert_cache import (
-            update_user_captcha_notify_cache,
+        from utils.cache.res_fossil_cache import (
+            update_res_fossil_notify_type_cache,
         )
 
         async with bot.pg_pool.acquire() as conn:
@@ -188,7 +190,7 @@ async def update_user_captcha_notify(bot, user: discord.Member, new_notify: str)
             bot=bot,
         )
 
-        update_user_captcha_notify_cache(user=user, new_notify=new_notify)
+        update_res_fossil_notify_type_cache(user=user, new_notify=new_notify)
 
     except Exception as e:
         pretty_log(

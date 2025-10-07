@@ -57,9 +57,9 @@ async def captcha_alert_handler(bot: commands.Bot, message: discord.Message):
             )
             return
 
-        alert_type = (captcha_alert_info.get("alert_type") or "off").lower()
+        notify = (captcha_alert_info.get("notify") or "off").lower()
         content = ""
-        if alert_type == "off":
+        if notify == "off":
             pretty_log(
                 "info",
                 f"Skipping ...  {member.display_name} has turned off captcha alerts",
@@ -67,7 +67,7 @@ async def captcha_alert_handler(bot: commands.Bot, message: discord.Message):
             )
             return
 
-        elif alert_type == "on":
+        elif notify == "on":
             content = f"{member.mention} a CAPTCHA has appeared! Please solve it to avoid getting banned!"
 
         else:
