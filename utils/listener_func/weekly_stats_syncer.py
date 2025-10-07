@@ -20,18 +20,30 @@ async def weekly_stats_syncer(bot, message: discord.Message):
         update_weekly_requirement_mark,
         weekly_goal_cache,
     )
+    pretty_log(
+        "info",
+        f"Weekly Stats Syncer triggered by message ID {message.id} in channel {message.channel.id}",
+        label="💠 WEEKLY STATS",
+        bot=bot,
+    )
 
     embed = message.embeds[0]
     embed_description = embed.description or ""
 
-    # Regex specifically for the bolded pattern (user's own stats)
-    # Format: **36** **khy.09 followed by stats on same line ending with **
+    # Updated regex to handle the actual bolded format
+    # Format: **1** **empyyy_ (newline) stats line ending with **
     bolded_pattern = re.compile(
-        r"\*\*(\d+)\*\* \*\*(.+?)\n<:dexcaught:[^>]+> (\d+) • <:oldrod:[^>]+> (\d+).*?:crossed_swords: (\d+)\*\*"
+        r"\*\*(\d+)\*\* \*\*(.+?)\n<:dexcaught:[^>]+> (\d+(?:,\d+)*) • <:oldrod:[^>]+> (\d+(?:,\d+)*) • <:poke_egg:[^>]+> \d+ • :tickets: \d+ • :robot: \d+ • :crossed_swords: (\d+(?:,\d+)*)\*\*"
     )
 
     match = bolded_pattern.search(embed_description)
     if not match:
+        pretty_log(
+            "warning",
+            "No bolded weekly stats line found - this means the user's own stats are not visible in this embed.",
+            label="💠 WEEKLY STATS DEBUG",
+            bot=bot,
+        )
         return
 
     rank = int(match.group(1))
@@ -83,7 +95,7 @@ async def weekly_stats_syncer(bot, message: discord.Message):
     if pokemon_caught >= 175 and not weekly_goal_cache[user_id].get(
         "weekly_requirement_mark"
     ):
-        await update_weekly_requirement_mark(user)
+        update_weekly_requirement_mark(user.id)
         await message.channel.send(
             f"Congratulations {user.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉"
         )
@@ -97,7 +109,7 @@ async def weekly_stats_syncer(bot, message: discord.Message):
     if pokemon_caught >= 2000 and not weekly_goal_cache[user_id].get(
         "weekly_grinder_mark"
     ):
-        await update_weekly_grinder_mark(user)
+        update_weekly_grinder_mark(user.id)
         await message.channel.send(
             f"Wow {user.display_name}! You've caught over 2000 Pokémon this week! Incredible dedication! 🎉 "
             "We are also giving you the role of Weekly Grinder! Don't forget to do /active-giveaways to check for any active Weekly Grinder Giveaways"
@@ -122,7 +134,7 @@ async def weekly_stats_syncer(bot, message: discord.Message):
             bot=bot,
         )
     if fish_caught >= 500 and not weekly_goal_cache[user_id].get("weekly_angler_mark"):
-        await update_weekly_angler_mark(user)
+        update_weekly_angler_mark(user.id)
         await message.channel.send(
             f"Congratulations {user.display_name}! You've reached the weekly angler goal of catching 500 fish! 🎉 We are also giving you the role of Weekly Angler"
         )
@@ -149,7 +161,7 @@ async def weekly_stats_syncer(bot, message: discord.Message):
             await user.add_roles(
                 weekly_guardian_role, reason="Reached 300 battles won in Weekly Goal"
             )
-        await update_weekly_angler_mark(user)
+        update_weekly_angler_mark(user.id)
         pretty_log(
             "info",
             f"Assigned Weekly Guardian role to {user.display_name} ({user_id})",

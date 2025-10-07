@@ -147,9 +147,14 @@ class MessageCreateListener(commands.Cog):
                     await remove_boosted_channel_listener(bot=self.bot, message=message)
 
                 # ⏰ Weekly Stats Syncer
-                if first_embed:
-                    embed_title = first_embed.title or ""
+                embed = message.embeds[0] if message.embeds else None
+                if embed:
+                    embed_title = embed.title or ""
                     if weekly_stats_trigger in embed_title:
+                        pretty_log(
+                            "info",
+                            f"Matched Weekly Stats trigger  from created message | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
                         await weekly_stats_syncer(bot=self.bot, message=message)
 
 

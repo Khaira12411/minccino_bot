@@ -84,7 +84,7 @@ async def explore_caught_listener(
     if total_caught >= 175 and not weekly_goal_cache[member_id].get(
         "weekly_requirement_mark"
     ):
-        await update_weekly_requirement_mark(member)
+        update_weekly_requirement_mark(member.id)
         await after.channel.send(
             f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉"
         )
@@ -98,7 +98,7 @@ async def explore_caught_listener(
     if total_caught >= 2000 and not weekly_goal_cache[member_id].get(
         "weekly_grinder_mark"
     ):
-        await update_weekly_grinder_mark(member)
+        update_weekly_grinder_mark(member.id)
         await after.channel.send(
             f"Wow {member.display_name}! You've caught over 2000 Pokémon this week! Incredible dedication! 🎉 "
             "We are also giving you the role of Weekly Grinder! Don't forget to do /active-giveaways to check for any active Weekly Grinder Giveaways"
