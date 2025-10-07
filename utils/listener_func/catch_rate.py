@@ -374,8 +374,8 @@ def compute_catch_rate(
         base_rate = 80
 
     # Apply boosts
-    if is_patreon:
-        base_rate += 5
+    """if is_patreon:
+        base_rate += 5"""
     if channel_boost:
         base_rate += 5
     base_rate += boost

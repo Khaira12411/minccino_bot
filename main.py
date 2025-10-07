@@ -333,7 +333,7 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {len(timer_cache)} ⌚ Pokemon Timer Users")
     print(f"✅ {len(held_item_cache)} 🍄 Held Item Ping Users")
     print(f"✅ {len(ball_reco_cache)} 🍚 Ball Recommendation Users")
-    print(f"✅ {len(user_reminders_cache)} ⚾ User Remidners")
+    print(f"✅ {len(user_reminders_cache)} ⚾ User Reminders")
     print(f"✅ {len(boosted_channels_cache)} 💒 Boosted Channels")
     print(f"✅ {len(feeling_lucky_cache)} 🍀 Feeling Lucky Cooldowns")
     print(f"✅ {len(user_captcha_alert_cache)} 🛡️  Captcha Alert Users")

@@ -427,9 +427,14 @@ class RarityDropdown(discord.ui.Select):
                 await update_enabled(interaction.client, user_id, new_enabled)
 
                 from utils.cache.ball_reco_cache import load_ball_reco_cache
-
                 await load_ball_reco_cache(interaction.client)
+
+                # ✅ REFRESH user_rec after cache reload
                 user_rec = await fetch_user_rec(interaction.client, user_id) or {}
+                user_rec.setdefault("pokemon", {})
+                user_rec.setdefault("held_items", {})
+                user_rec.setdefault("fishing", {})
+                user_rec.setdefault("enabled", True)
 
                 changes_dict = {}
                 for sub in ["pokemon", "held_items", "fishing"]:
@@ -456,9 +461,19 @@ class RarityDropdown(discord.ui.Select):
                     mode="rarity",
                     description=description,
                 )
-                await handle.stop(content="Done", embed=embed)
-                return
 
+                # ✅ UPDATE THE DROPDOWN VIEW to show the new state
+                # Recreate the dropdown view so it reflects the new enabled state
+                new_view = RarityDropdownView(interaction.client, user_id)
+
+                await safe_respond(
+                    interaction,
+                    method="edit",
+                    content="Pick a category to manage your ball recommendation settings:\n (If you are new, select the enabled/disabled first!)",
+                    embed=embed,
+                    view=new_view,  # Use the new view
+                )
+                return
             # ---------------- 🎣 Normal rarity selection ----------------
             current = user_rec.get(category, {})
             if isinstance(current, str):

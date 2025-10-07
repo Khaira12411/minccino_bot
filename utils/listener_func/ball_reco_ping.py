@@ -248,11 +248,7 @@ async def recommend_ball(message: discord.Message, bot):
         # --- Determine category and rarity key map ---
         if spawn_type == "pokemon":
             enabled = user_settings["pokemon"].get(rarity, False) if rarity else False
-            category = (
-                "patron_gen_1_8"
-                if user_settings.get("is_patreon", False)
-                else "non_patron_gen_1_8"
-            )
+            category = "non_patron_gen_1_8"
             rarity_key_map = {
                 "common": "common_70",
                 "uncommon": "uncommon_60",
