@@ -116,8 +116,7 @@ async def pokemon_caught_listener(
             "weekly_grinder_mark", False
         ):
             await message.channel.send(
-                f"Wow {member.display_name}! You've caught over 2000 Pokémon this week! Incredible dedication! 🎉 "
-                "We are also giving you the role of Weekly Grinder! Don't forget to do /active-giveaways to check for any active Weekly Grinder Giveaways"
+                f"🎉 Wow {member.display_name}! You've caught over 2000 Pokémon this week and earned the **Weekly Grinder** role! Check /active-giveaways for any current Weekly Grinder giveaways."
             )
             update_weekly_grinder_mark(member.id, True)
             weekly_grinder_role = message.guild.get_role(
