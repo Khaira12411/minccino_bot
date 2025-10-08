@@ -54,37 +54,42 @@ class WeeklyGoalPaginator(View):
         member_count = len(self.goals)
 
         embed = discord.Embed(title="🎯 Weekly Goal Progress")
-
-        # Build the description with all users on this page
-        description_parts = []
-
-        for r in page_goals:
-            user_id = r["user_id"]
-            user = self.bot.get_user(user_id)
-
-            user_pokemon_caught = r.get("pokemon_caught", 0)
-            user_fish_caught = r.get("fish_caught", 0)
-            user_battles_won = r.get("battles_won", 0)
-
-            if user_id == self.user.id:
-                name_line = f"{Emojis.heart_cheese} {user.mention}"
-            else:
-                name_line = f"{Emojis.brown_mouse} {user.mention}"
-            desc_lines = (
-                f"{name_line}\n"
-                f"> - {Emojis.gray_ball} Pokémon Caught: **{user_pokemon_caught}**\n"
-                f"> - {Emojis.gray_fishrod} Fish Caught: **{user_fish_caught}**\n"
-                f"> - {Emojis.gray_swords} Battles Won: **{user_battles_won}**\n"
-            )
-            # Add each user's lines to the description
-            description_parts.append(desc_lines)
-
-        # Set the full description
-        embed.description = "\n".join(description_parts)
-        footer_text = f"Page {self.page + 1}/{self.max_page + 1} • Members: {member_count} • Weekly Goals reset every Sunday at midnight EST"
         design_embed(user=self.user, embed=embed, thumbnail_url=MINC_Thumbnails.goal)
-        embed.set_footer(text=footer_text)
 
+        # Add each user's progress as a field (2 per line)
+        for i in range(0, len(page_goals), 2):
+            field_group = page_goals[i : i + 2]
+            field_values = []
+
+            for r in field_group:
+                user_id = r["user_id"]
+                user = self.bot.get_user(user_id)
+
+                user_pokemon_caught = r.get("pokemon_caught", 0)
+                user_fish_caught = r.get("fish_caught", 0)
+                user_battles_won = r.get("battles_won", 0)
+
+                if user_id == self.user.id:
+                    name_line = f"{Emojis.heart_cheese} {user.mention}"
+                else:
+                    name_line = f"{Emojis.brown_mouse} {user.mention}"
+
+                value = (
+                    f"{name_line}\n"
+                    f"> {Emojis.gray_ball} Pokémon: **{user_pokemon_caught:,}**\n"
+                    f"> {Emojis.gray_fishrod} Fish: **{user_fish_caught:,}**\n"
+                    f"> {Emojis.gray_swords} Battles: **{user_battles_won:,}**"
+                )
+                field_values.append(value)
+
+            # Add both users’ info side by side
+            embed.add_field(name="\u200b", value="\n\n".join(field_values), inline=True)
+
+        footer_text = (
+            f"Page {self.page + 1}/{self.max_page + 1} • Members: {member_count} • "
+            "Weekly Goals reset every Sunday at midnight EST"
+        )
+        embed.set_footer(text=footer_text)
         return embed
 
     async def on_timeout(self):
@@ -131,9 +136,9 @@ class WeeklyGoalView(commands.Cog):
             member_battles_won = member_stats.get("battles_won", 0)
 
             desc = (
-                f"> - {Emojis.gray_ball} Pokémon Caught: **{member_pokemon_caught}**\n"
-                f"> - {Emojis.gray_fishrod} Fish Caught: **{member_fish_caught}**\n"
-                f"> - {Emojis.gray_swords} Battles Won: **{member_battles_won}**\n\n"
+                f"> - {Emojis.gray_ball} Pokémon Caught: **{member_pokemon_caught:,}**\n"
+                f"> - {Emojis.gray_fishrod} Fish Caught: **{member_fish_caught:,}**\n"
+                f"> - {Emojis.gray_swords} Battles Won: **{member_battles_won:,}**\n\n"
             )
             embed = discord.Embed(
                 title="🎯 Your Weekly Goal Progress",
