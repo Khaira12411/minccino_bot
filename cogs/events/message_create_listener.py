@@ -162,7 +162,7 @@ class MessageCreateListener(commands.Cog):
                 if first_embed:
                     title = first_embed.title.lower() if first_embed.title else ""
                     description = first_embed.description.lower() if first_embed.description else ""
-                    if "captcha" in title or "captcha" in description:
+                    if ("captcha" in title or "captcha" in description) and "captcha forgiveness centre" not in title and "captcha forgiveness centre" not in description:
                         pretty_log(
                             tag="info",
                             message=f"🔐 Entered Captcha Alert Listener | message_id={message.id}",

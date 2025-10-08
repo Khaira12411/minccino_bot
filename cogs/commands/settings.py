@@ -55,11 +55,10 @@ class SettingsDropdown(discord.ui.Select):
     def __init__(self, user_id: int, bot: commands.Bot):
         options = [
             discord.SelectOption(label="Timer", value="timer"),
-            discord.SelectOption(label="Captcha Alert", value="captcha_alert"),
+            discord.SelectOption(label="Alerts", value="alerts"),
             discord.SelectOption(label="Ball Recommendation", value="ball_reco"),
             discord.SelectOption(label="Held Item Pings", value="held_items"),
             discord.SelectOption(label="Reminders", value="reminders"),
-            discord.SelectOption(label="Alerts", value="alerts"),
         ]
         super().__init__(
             placeholder="Choose a category...",
@@ -121,7 +120,7 @@ class SettingsDropdown(discord.ui.Select):
                     "captcha_alert": captcha_data,
                     "res_fossil_alert": res_fossil_data,
                 }
-                
+
             if not data:
                 await defer_handle.stop(
                     content="❌ No data found for you. Try again in a moment.",

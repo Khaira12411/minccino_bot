@@ -13,7 +13,7 @@ from utils.loggers.pretty_logs import pretty_log
 # 🩷 ⏰ Weekly Goal View Paginator                  🩷
 # 🌸───────────────────────────────────────────────🌸
 class WeeklyGoalPaginator(View):
-    def __init__(self, bot, user, goals, per_page=25, timeout=120):
+    def __init__(self, bot, user, goals, per_page=12, timeout=120):
         super().__init__(timeout=timeout)
         self.bot = bot
         self.user = user
@@ -70,10 +70,10 @@ class WeeklyGoalPaginator(View):
             )
             if user_id == self.user.id:
                 embed.add_field(
-                    name="\u200b", value=f"⭐{user.mention}{field_value}", inline=False
+                    name="\u200b", value=f"⭐{user.mention}{field_value}", inline=True
                 )
             else:
-                embed.add_field(name="\u200b", value=f"{user.mention}{field_value}", inline=False)
+                embed.add_field(name="\u200b", value=f"{user.mention}{field_value}", inline=True)
 
         footer_text = f"Page {self.page + 1}/{self.max_page + 1} • Members: {member_count} • Weekly Goals reset every Sunday at midnight EST"
         design_embed(user=self.user, embed=embed)
