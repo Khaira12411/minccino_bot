@@ -53,7 +53,7 @@ def held_item_message(pokemon_name: str, user_sub: dict) -> str | None:
             "subscribed_items": {"hardstone", "assaultvest", ...}
         }
     """
-    held_item_phrase = f"{Emojis.held_item} held item! "
+    held_item_phrase = f"{Emojis.held_item} item! "
 
     items_for_pokemon = [
         item
@@ -63,7 +63,7 @@ def held_item_message(pokemon_name: str, user_sub: dict) -> str | None:
     proper_pokemon_name = pokemon_name.title()
 
     if not items_for_pokemon:
-        return f"{proper_pokemon_name} has a {held_item_phrase}"
+        return f"{proper_pokemon_name} is holding an {held_item_phrase}"
 
     subscribed_items = user_sub.get("subscribed_items", set())
     all_items_flag = user_sub.get("all_held_items", False)
@@ -78,7 +78,7 @@ def held_item_message(pokemon_name: str, user_sub: dict) -> str | None:
         return None
 
     if len(items_to_show) == 1:
-        return f"{proper_pokemon_name} has a {held_item_phrase} (Special Item Chance: {items_to_show[0]})"
+        return f"{proper_pokemon_name} is holding an {held_item_phrase} (Special Item Chance: {items_to_show[0]})"
     else:
         items_str = " or ".join(items_to_show)
-        return f"{proper_pokemon_name} has a {held_item_phrase} (Special Item Chance: {items_str})"
+        return f"{proper_pokemon_name} is holding an {held_item_phrase} (Special Item Chance: {items_str})"
