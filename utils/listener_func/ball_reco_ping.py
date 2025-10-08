@@ -160,12 +160,16 @@ def parse_pokemeow_spawn(message: discord.Message):
         )
 
         # --- Held item ---
+        # --- Held item ---
         held_pokemon = None
         if description_text:
-            held_match = HELD_ITEM_PATTERN.search(description_text)
-            if held_match and held_match.group("held"):
-                held_pokemon = held_match.group("pokemon")
+            # Simple check: if held item emoji is in description, it's a held item spawn
+            if "<:held_item:" in description_text:
                 spawn_type = "held_item"
+                # You can still extract the pokemon name if needed with a simpler regex
+                pokemon_match = re.search(r'\*\*([A-Za-z_]+)\*\*', description_text)
+                if pokemon_match:
+                    held_pokemon = pokemon_match.group(1)
 
         return {
             "type": spawn_type,
