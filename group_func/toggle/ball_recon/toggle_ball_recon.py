@@ -567,7 +567,7 @@ async def toggle_ball_rec_func(bot: commands.Bot, interaction: discord.Interacti
         if not row:
             await safe_respond(
                 interaction,
-                content="Please set your catch rate first using the /set-catch-boost command!",
+                content="Please set your catch rate first using the `;perks` command!",
                 ephemeral=True,
                 method="auto",
             )

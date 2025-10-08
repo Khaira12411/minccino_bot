@@ -1,5 +1,9 @@
 class Emojis:
-
+    brown_mouse = "<:brown_mouse:1425335928897147023>"
+    heart_cheese = "<:heart_cheese:1425335919153643520>"
+    gray_swords = "<:gray_swords:1425329896774959145>"
+    gray_fishrod = "<:gray_rod:1425329793846480956>"
+    gray_ball = "<:gray_ball:1425298782152818698>"
     gray_star = "<:gray_star:1425062849285197844>"
     celebrate = "<a:celebrate:1425062873838780416>"
     medal = "<:medal2:1425090465518194810>"
@@ -56,6 +60,7 @@ class Emojis_Balls:
     diveball = "<:diveball:1412001883639517275>"
 
 class MINC_Thumbnails:
+    goal = "https://media.discordapp.net/attachments/1394913073520967680/1425339641846042624/image.png?ex=68e73a7c&is=68e5e8fc&hm=497750b9566e5bb377654f90a8b23d1963c186127f2af7e3e78c3b6c6c4ad347&=&format=webp&quality=lossless&width=640&height=640"
     captcha_alert = "https://media.discordapp.net/attachments/1394913073520967680/1422761285422157905/image.png?ex=68ddd934&is=68dc87b4&hm=3eda2aa450903858d789b543495a6054c1b44a2e3ec731d3c4f0c13ece9ce473&=&format=webp&quality=lossless&width=576&height=576"
     fl = "https://media.discordapp.net/attachments/1394913073520967680/1420580195659939840/image.png?ex=68d5e9e7&is=68d49867&hm=af6fb5c2d86a87813dba5f96f3488f321c0c13a4677bfb02c46ea1ecac0fb6f6&=&format=webp&quality=lossless&width=576&height=576"
     boss = "https://media.discordapp.net/attachments/1394913073520967680/1417349428699856956/1248144585688092702.png?ex=68ca2904&is=68c8d784&hm=057235ee3940e94a3349d0140fc7e3b1ed0e88638f48165d1472e0821a33349b&=&format=webp&quality=lossless&width=113&height=113"
