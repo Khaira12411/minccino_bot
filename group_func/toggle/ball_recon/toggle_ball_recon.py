@@ -396,14 +396,37 @@ class RarityDropdown(discord.ui.Select):
     def __init__(self, bot, user_id: int):
         self.bot = bot
         self.user_id = user_id
+
+        # Get current enabled state
+        # You'll need to fetch this from your cache or database
+        # For now I'll show the pattern:
         options = [
-            discord.SelectOption(label="Pokemon", value="pokemon"),
-            discord.SelectOption(label="Pokemon w/ Held Item", value="held_items"),
-            discord.SelectOption(label="Fishing", value="fishing"),
-            discord.SelectOption(label="Enabled/Disabled", value="enabled_toggle"),
+            discord.SelectOption(
+                label="🌸 Pokemon",
+                value="pokemon",
+                description="Ball recommendations for regular Pokemon spawns",
+            ),
+            discord.SelectOption(
+                label="💎 Pokemon w/ Held Item",
+                value="held_items",
+                description="Ball recommendations for Pokemon with held items",
+            ),
+            discord.SelectOption(
+                label="🎣 Fishing",
+                value="fishing",
+                description="Ball recommendations while fishing",
+            ),
         ]
+        # Add the master toggle option (you could make this dynamic later)
+        options.append(
+            discord.SelectOption(
+                label="🔌 Master Toggle",  # Keep it simple for now
+                value="enabled_toggle",
+                description="Turn all recommendations ON/OFF (keeps your settings)",
+            )
+        )
         super().__init__(
-            placeholder="Choose a category...",
+            placeholder="✨ Choose a category to configure...",
             min_values=1,
             max_values=1,
             options=options,
@@ -434,7 +457,7 @@ class RarityDropdown(discord.ui.Select):
                 user_rec.setdefault("pokemon", {})
                 user_rec.setdefault("held_items", {})
                 user_rec.setdefault("fishing", {})
-                user_rec.setdefault("enabled", True)
+                user_rec.setdefault("enabled", new_enabled)  # ✅ Use new_enabled instead of True
 
                 changes_dict = {}
                 for sub in ["pokemon", "held_items", "fishing"]:
@@ -463,7 +486,6 @@ class RarityDropdown(discord.ui.Select):
                 )
 
                 # ✅ UPDATE THE DROPDOWN VIEW to show the new state
-                # Recreate the dropdown view so it reflects the new enabled state
                 new_view = RarityDropdownView(interaction.client, user_id)
 
                 await safe_respond(
@@ -471,7 +493,7 @@ class RarityDropdown(discord.ui.Select):
                     method="edit",
                     content="Pick a category to manage your ball recommendation settings:\n (If you are new, select the enabled/disabled first!)",
                     embed=embed,
-                    view=new_view,  # Use the new view
+                    view=new_view,
                 )
                 return
             # ---------------- 🎣 Normal rarity selection ----------------
