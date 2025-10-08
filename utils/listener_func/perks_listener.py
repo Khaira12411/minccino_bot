@@ -69,17 +69,30 @@ async def auto_update_catchboost(bot: discord.Client, message: discord.Message):
         existing = await fetch_user_rec(bot, member.id)
 
         # Normalize schemas for held_items, pokemon, fishing
-        DEFAULT_HELD_ITEMS = {
-            "rare": False,
-            "shiny": False,
+        DEFAULT_RARITY_SETTINGS = {
             "common": False,
             "uncommon": False,
-            "legendary": False,
+            "rare": False,
             "superrare": False,
+            "legendary": False,
+            "shiny": False,
+        }
+
+        DEFAULT_HELD_ITEMS = {
+            **DEFAULT_RARITY_SETTINGS,
             "display_mode": "Best Ball",
         }
-        DEFAULT_POKEMON = DEFAULT_HELD_ITEMS.copy()
-        DEFAULT_FISHING = DEFAULT_HELD_ITEMS.copy()
+
+        DEFAULT_POKEMON = {
+            **DEFAULT_RARITY_SETTINGS,
+            "display_mode": "Best Ball",
+        }
+
+        DEFAULT_FISHING = {
+            **DEFAULT_RARITY_SETTINGS,
+            "golden": False,  # ✅ Only fishing has golden
+            "display_mode": "Best Ball",
+        }
 
         def normalize(data, defaults):
             if isinstance(data, str):
@@ -89,7 +102,18 @@ async def auto_update_catchboost(bot: discord.Client, message: discord.Message):
                     data = {}
             if not isinstance(data, dict):
                 data = {}
-            return {key: bool(data.get(key, False)) for key in defaults.keys()}
+
+            # ✅ FIX: Handle display_mode specially
+            normalized = {}
+            for key, default_value in defaults.items():
+                if key == "display_mode":
+                    # Keep display_mode as string
+                    normalized[key] = data.get(key, default_value)
+                else:
+                    # Convert other fields to boolean
+                    normalized[key] = bool(data.get(key, False))
+
+            return normalized
 
         held_items = normalize(
             existing.get("held_items") if existing else {}, DEFAULT_HELD_ITEMS
