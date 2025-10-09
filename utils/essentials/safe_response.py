@@ -71,9 +71,10 @@ async def safe_respond(
     except NotFound as e:
         # Handle Unknown Interaction (10062) or Unknown Webhook (10015)
         if e.code in (10062, 10015):
+            # ✅ Change from "warn" to "info" to reduce spam
             pretty_log(
-                "warn",
-                f"[SafeRespond] Interaction invalid for {interaction.user} ({interaction.user.id}) | {e}",
+                "info",  # Changed from "warn"
+                f"[SafeRespond] Interaction invalid for {interaction.user} ({interaction.user.id}) - connection issues, ignoring",
             )
             if not ephemeral and interaction.channel:
                 return await interaction.channel.send(**kwargs)

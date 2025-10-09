@@ -1,4 +1,5 @@
 import json
+import time
 
 import discord
 from discord import ButtonStyle, app_commands
@@ -29,6 +30,7 @@ class RarityToggleButton(discord.ui.Button):
         self.checked = checked
         self.category = category
         self.enabled_state = enabled  # ✅ renamed to avoid API confusion
+        self.last_interaction = 0  # ✅ Add this line
 
         emoji_str = rarity_emojis.get(rarity_name, "❔")
         emoji = (
@@ -42,6 +44,13 @@ class RarityToggleButton(discord.ui.Button):
         )
 
     async def callback(self, interaction: discord.Interaction):
+        # ✅ Add this cooldown check at the very beginning
+        now = time.time()
+        if now - self.last_interaction < 1.0:
+            return  # Silently ignore rapid clicks
+        self.last_interaction = now
+
+
         if not self.enabled_state:
             await safe_respond(
                 interaction,
@@ -122,19 +131,31 @@ class DisplayModeButton(discord.ui.Button):
         self.category = category
         self.view_ref = view  # store reference to the parent view
         self.mode = current_mode
+        self.last_interaction = 0  # ✅ Add this line
+
         label = f"Display Mode: {self.mode}"
         super().__init__(
             label=label, style=ButtonStyle.primary, custom_id="display_mode_toggle"
         )
+
     #
     async def callback(self, interaction: discord.Interaction):
+        # ✅ Add this cooldown check at the very beginning
+        now = time.time()
+        if now - self.last_interaction < 1.0:
+            return  # Silently ignore rapid clicks
+        self.last_interaction = now
+
         # Flip mode
         self.mode = "All Balls" if self.mode == "Best Ball" else "Best Ball"
         self.label = f"Display Mode: {self.mode}"
 
         try:
             # Save immediately in DB
-            from group_func.toggle.ball_recon.ball_recon_db_func import update_display_mode
+            from group_func.toggle.ball_recon.ball_recon_db_func import (
+                update_display_mode,
+            )
+
             await update_display_mode(
                 bot=interaction.client,
                 user_id=self.user_id,
@@ -144,6 +165,7 @@ class DisplayModeButton(discord.ui.Button):
 
             # Reload cache
             from utils.cache.ball_reco_cache import load_ball_reco_cache
+
             await load_ball_reco_cache(interaction.client)
 
             # Keep the view in sync
@@ -164,6 +186,7 @@ class DisplayModeButton(discord.ui.Button):
 
         except Exception as e:
             from utils.loggers.pretty_logs import pretty_log
+
             pretty_log(
                 "error",
                 f"Failed to save display mode toggle for user {self.user_id} | {e}",
@@ -277,7 +300,7 @@ class RaritySelectView(discord.ui.View):
             ephemeral=True,
             method="followup",
         )
-
+    #
     async def save_selection(self, interaction: discord.Interaction):
         try:
             # Detect changes
@@ -295,39 +318,41 @@ class RaritySelectView(discord.ui.View):
                 )
                 return
 
-            # Build dict for changes
-            changes_dict = {"pokemon": {}, "held_items": {}, "fishing": {}}
-            for r in changed_rarities:
-                new_state = r in self.selection_changed
-                if self.category == "pokemon":
-                    changes_dict["pokemon"][r] = new_state
-                elif self.category == "held_items":
-                    changes_dict["held_items"][r] = new_state
-                elif self.category == "fishing":
-                    changes_dict["fishing"][r] = new_state
-                else:
-                    changes_dict[self.category][r] = new_state
+            # ✅ FIX: Get current data from database to preserve display_mode
+            user_rec = await fetch_user_rec(interaction.client, self.user_id) or {}
+            current_category_data = user_rec.get(self.category, {})
 
-            # Update rarities in database
+            if isinstance(current_category_data, str):
+                current_category_data = json.loads(current_category_data)
+            elif not isinstance(current_category_data, dict):
+                current_category_data = {}
+
+            # ✅ Build new data while preserving display_mode
+            new_category_data = current_category_data.copy()
+
+            # Update rarities
+            for r in self.rarities:
+                new_category_data[r] = (r in self.selection_changed)
+
+            # Preserve or update display_mode
+            if "display_mode" not in new_category_data:
+                new_category_data["display_mode"] = self.display_mode
+            elif display_mode_changed:
+                new_category_data["display_mode"] = self.display_mode
+
+            # ✅ Update database with complete data (rarities + display_mode)
             if self.update_db_func:
                 await self.update_db_func(
                     interaction.client,
                     self.user_id,
-                    {r: (r in self.selection_changed) for r in self.rarities},
+                    new_category_data  # ✅ Pass complete object instead of just rarities
                 )
 
-            # Update display mode in DB if changed
-            if display_mode_changed:
-                from group_func.toggle.ball_recon.ball_recon_db_func import (
-                    update_display_mode,
-                )
-
-                await update_display_mode(
-                    bot=interaction.client,
-                    user_id=self.user_id,
-                    category=self.category,
-                    mode=self.display_mode,
-                )
+            # Build changes dict for embed
+            changes_dict = {"pokemon": {}, "held_items": {}, "fishing": {}}
+            for r in changed_rarities:
+                new_state = r in self.selection_changed
+                changes_dict[self.category][r] = new_state
 
             # Refresh baseline
             self.user_subs = set(self.selection_changed)
@@ -353,8 +378,6 @@ class RaritySelectView(discord.ui.View):
             }
             title = title_map.get(self.category, "Subscription Updated")
 
-            from utils.embeds.embed_settings_summary import build_summary_settings_embed
-
             embed = build_summary_settings_embed(
                 user=interaction.user,
                 title=title,
@@ -371,7 +394,6 @@ class RaritySelectView(discord.ui.View):
 
             # Reload cache
             from utils.cache.ball_reco_cache import load_ball_reco_cache
-
             await load_ball_reco_cache(interaction.client)
 
         except Exception as e:
@@ -388,7 +410,6 @@ class RaritySelectView(discord.ui.View):
                 ephemeral=True,
             )
 
-
 # ─────────────────────────────
 # Dropdown to choose category
 # ─────────────────────────────
@@ -396,6 +417,7 @@ class RarityDropdown(discord.ui.Select):
     def __init__(self, bot, user_id: int):
         self.bot = bot
         self.user_id = user_id
+        self.last_interaction = 0  # ✅ Add this line
 
         # Get current enabled state
         # You'll need to fetch this from your cache or database
@@ -433,6 +455,12 @@ class RarityDropdown(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction):
+        # ✅ Add this cooldown check at the very beginning
+        now = time.time()
+        if now - self.last_interaction < 1.0:
+            return  # Silently ignore rapid clicks
+        self.last_interaction = now
+
         try:
             user_id = interaction.user.id
             user_rec = await fetch_user_rec(interaction.client, user_id) or {}
@@ -450,6 +478,7 @@ class RarityDropdown(discord.ui.Select):
                 await update_enabled(interaction.client, user_id, new_enabled)
 
                 from utils.cache.ball_reco_cache import load_ball_reco_cache
+
                 await load_ball_reco_cache(interaction.client)
 
                 # ✅ REFRESH user_rec after cache reload
@@ -457,7 +486,9 @@ class RarityDropdown(discord.ui.Select):
                 user_rec.setdefault("pokemon", {})
                 user_rec.setdefault("held_items", {})
                 user_rec.setdefault("fishing", {})
-                user_rec.setdefault("enabled", new_enabled)  # ✅ Use new_enabled instead of True
+                user_rec.setdefault(
+                    "enabled", new_enabled
+                )  # ✅ Use new_enabled instead of True
 
                 changes_dict = {}
                 for sub in ["pokemon", "held_items", "fishing"]:
