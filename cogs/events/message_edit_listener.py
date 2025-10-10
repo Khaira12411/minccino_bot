@@ -29,7 +29,7 @@ from utils.listener_func.explore_caught_listener import explore_caught_listener
 FISHING_COLOR = 0x87CEFA
 
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
-explore_trigger = "Your explore session has ended!"
+explore_trigger = ":stopwatch: Your explore session has ended!"
 class MessageEditListener(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -98,10 +98,16 @@ class MessageEditListener(commands.Cog):
 
                 #Process for Explore Caught
                 if after.content and explore_trigger in after.content:
+                    pretty_log(
+                        "info",
+                        f"Detected explore caught edit by {after.author} ({after.author.id})",
+                        label="💠 EXPLORE",
+                        bot=self.bot,
+                    )
                     await explore_caught_listener(
                         bot=self.bot, before=before, after=after
                     )
-                    
+
                 # Process for Feeling Lucky rarespawn
                 if after.channel.id == STRAYMONS__TEXT_CHANNELS.feeling_lucky:
                     await fl_rs_checker(bot=self.bot, message=after)
