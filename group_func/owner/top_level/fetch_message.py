@@ -180,12 +180,16 @@ async def fetch_message_from_link_func(
 
                 # Author
                 if emb.get("author") and emb["author"].get("name"):
-                    author_line = emb["author"]["name"]
-                    if emb["author"].get("url"):
-                        author_line += f" ({emb['author']['url']})"
                     parts.append("👤 Author:")
-                    parts.append(f"   🔹 {author_line}")
+                    parts.append(f"   🔹 {emb['author']['name']}")
 
+                    # ✅ Add author URL if present
+                    if emb["author"].get("url"):
+                        parts.append(f"   🔗 {emb['author']['url']}")
+
+                    # ✅ Add author icon URL if present
+                    if emb["author"].get("icon_url"):
+                        parts.append(f"   🖼 {emb['author']['icon_url']}")
                 # Description
                 if emb.get("description"):
                     parts.append("📝 Description:")
