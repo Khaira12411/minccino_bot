@@ -48,17 +48,22 @@ def fetch_straymon_member_cache(user_id: int):
     return straymon_member_cache.get(user_id)
 
 
-def fetch_straymon_member_cache_by_name(user_name: str):
+def fetch_straymon_member_cache_by_name(user_name: str) -> dict | None:
     """
-    Fetch a straymon member from cache by Discord username (no duplicates expected).
-    Returns a dict with user_id, user_name, channel_id, or None if not found.
+    Fetch a member's info from the Straymon cache by their user_name.
     """
+    if not user_name:
+        return None
+
     lowered_name = user_name.lower()
-    for uid, data in straymon_member_cache.items():
-        if data.get("user_name", "").lower() == lowered_name:
-            return {
-                "user_id": uid,
-                "user_name": data.get("user_name"),
-                "channel_id": data.get("channel_id"),
-            }
+
+    for user_id, data in straymon_member_cache.items():
+        if not data or not isinstance(data, dict):
+            continue
+
+        # ✅ FIX: Safe string conversion and comparison
+        cached_user_name = data.get("user_name")
+        if cached_user_name and str(cached_user_name).lower() == lowered_name:
+            return data
+
     return None
