@@ -72,10 +72,11 @@ async def pokemon_caught_listener(
         if new_fish_caught >= 500 and not weekly_goal_cache[member_id].get(
             "weekly_angler_mark", False
         ):
+            update_weekly_angler_mark(member.id, True)
             await message.channel.send(
                 f"Congratulations {member.display_name}! You've reached the weekly angler goal of catching 500 fish! 🎉 We are also giving you the role of Weekly Angler"
             )
-            update_weekly_angler_mark(member.id, True)
+
             weekly_angler_role = message.guild.get_role(STRAYMONS__ROLES.weekly_angler)
             if weekly_angler_role and weekly_angler_role not in member.roles:
                 await member.add_roles(
@@ -99,10 +100,11 @@ async def pokemon_caught_listener(
         if new_caught >= 175 and not weekly_goal_cache[member_id].get(
             "weekly_requirement_mark", False
         ):
+            update_weekly_requirement_mark(member.id, True)
             await message.channel.send(
                 f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉"
             )
-            update_weekly_requirement_mark(member.id, True)
+
             goal_tracker_channel = message.guild.get_channel(
                 STRAYMONS__TEXT_CHANNELS.goal_tracker
             )
@@ -115,10 +117,11 @@ async def pokemon_caught_listener(
         if new_caught >= 2000 and not weekly_goal_cache[member_id].get(
             "weekly_grinder_mark", False
         ):
+            update_weekly_grinder_mark(member.id, True)
             await message.channel.send(
                 f"🎉 Wow {member.display_name}! You've caught over 2000 Pokémon this week and earned the **Weekly Grinder** role! Check /active-giveaways for any current Weekly Grinder giveaways."
             )
-            update_weekly_grinder_mark(member.id, True)
+
             weekly_grinder_role = message.guild.get_role(
                 STRAYMONS__ROLES.weekly_grinder
             )
