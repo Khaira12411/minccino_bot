@@ -19,6 +19,7 @@ from config.current_setup import (
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.listener_func.ball_reco_ping import recommend_ball
 from utils.listener_func.battle_timer import detect_pokemeow_battle
+from utils.listener_func.battle_won_listener import battle_won_listener
 from utils.listener_func.boosted_channel_listener import (
     newly_boosted_channel_listener,
     remove_boosted_channel_listener,
@@ -32,10 +33,8 @@ from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
 from utils.listener_func.waterstate_listener import on_waterstate_message
-from utils.loggers.pretty_logs import pretty_log
-from utils.listener_func.battle_won_listener import battle_won_listener
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
-
+from utils.loggers.pretty_logs import pretty_log
 
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
@@ -155,14 +154,23 @@ class MessageCreateListener(commands.Cog):
                             "info",
                             f"Matched Weekly Stats trigger  from created message | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
-                        await weekly_stats_syncer(bot=self.bot, message=message)
-
+                        await weekly_stats_syncer(
+                            bot=self.bot, before=message, message=message
+                        )
 
                 # 🛡️ Captcha Alert Listener
                 if first_embed:
                     title = first_embed.title.lower() if first_embed.title else ""
-                    description = first_embed.description.lower() if first_embed.description else ""
-                    if ("captcha" in title or "captcha" in description) and "captcha forgiveness centre" not in title and "captcha forgiveness centre" not in description:
+                    description = (
+                        first_embed.description.lower()
+                        if first_embed.description
+                        else ""
+                    )
+                    if (
+                        ("captcha" in title or "captcha" in description)
+                        and "captcha forgiveness centre" not in title
+                        and "captcha forgiveness centre" not in description
+                    ):
                         pretty_log(
                             tag="info",
                             message=f"🔐 Entered Captcha Alert Listener | message_id={message.id}",

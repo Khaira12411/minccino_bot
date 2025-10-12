@@ -5,12 +5,13 @@ import discord
 from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
 from utils.loggers.pretty_logs import pretty_log
 from config.aesthetic import Emojis
+from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 
 # 🌸───────────────────────────────────────────────🌸
 # 🩷 ⏰ Weekly Stats Syncer Listener               🩷
 # 🌸───────────────────────────────────────────────🌸
-async def weekly_stats_syncer(bot, message: discord.Message):
-    from utils.cache.straymon_member_cache import fetch_straymon_member_cache_by_name
+async def weekly_stats_syncer(bot, before:discord.Message, message: discord.Message):
+    from utils.cache.straymon_member_cache import fetch_straymon_member_cache_by_name, fetch_straymon_member_cache
     from utils.cache.weekly_goal_tracker_cache import (
         fetch_weekly_goal_cache_by_name,
         mark_weekly_goal_dirty,
@@ -60,28 +61,37 @@ async def weekly_stats_syncer(bot, message: discord.Message):
         label="💠 WEEKLY STATS",
         bot=bot,
     )
+    # Get replied member
+    replied_member = await get_pokemeow_reply_member(before)
 
-    # Fetch member and update cache
-    straymon_info = fetch_straymon_member_cache_by_name(user_name)
+    if not replied_member:
+        return
+    # Try to fetch by user ID first
+    straymon_info = fetch_straymon_member_cache(replied_member.id)
+
     if not straymon_info:
-        pretty_log(
-            "warning",
-            f"User '{user_name}' not found in Straymon cache.",
-            label="💠 WEEKLY STATS DEBUG",
-            bot=bot,
-        )
-        return
-
-    user_id = straymon_info.get("user_id")
-    user = message.guild.get_member(user_id)
-    if not user:
-        pretty_log(
-            "warning",
-            f"User '{user_name}' not found in guild members.",
-            label="💠 WEEKLY STATS DEBUG",
-            bot=bot,
-        )
-        return
+        # Try to fetch by user name as fallback
+        straymon_info = fetch_straymon_member_cache_by_name(user_name)
+        if straymon_info:
+            pretty_log(
+                "info",
+                f"Found user '{user_name}' in cache by name fallback.",
+                label="💠 WEEKLY STATS DEBUG",
+                bot=bot,
+            )
+            user_id = straymon_info.get("user_id", replied_member.id)
+            user = message.guild.get_member(user_id) or replied_member
+        else:
+            pretty_log(
+                "warning",
+                f"User '{user_name}' not found in Straymon cache by ID or name.",
+                label="💠 WEEKLY STATS DEBUG",
+                bot=bot,
+            )
+            return
+    else:
+        user = replied_member
+        user_id = user.id
 
     # Update weekly stats
     set_weekly_stats(

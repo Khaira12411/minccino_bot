@@ -18,18 +18,21 @@ from config.current_setup import (
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.listener_func.battle_won_listener import battle_won_listener
 from utils.listener_func.boosted_channel_listener import handle_boosted_channel_on_edit
+from utils.listener_func.explore_caught_listener import explore_caught_listener
 from utils.listener_func.fish_reco_ping import recommend_fishing_ball
 from utils.listener_func.fl_rs import fl_rs_checker
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.pokemon_caught import pokemon_caught_listener
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
-from utils.loggers.pretty_logs import pretty_log
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
-from utils.listener_func.explore_caught_listener import explore_caught_listener
+from utils.loggers.pretty_logs import pretty_log
+
 FISHING_COLOR = 0x87CEFA
 
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 explore_trigger = ":stopwatch: Your explore session has ended!"
+
+
 class MessageEditListener(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -90,13 +93,15 @@ class MessageEditListener(commands.Cog):
                             bot=self.bot, before_message=before, message=after
                         )
 
-                #Process for Clan Weekly Stats
+                # Process for Clan Weekly Stats
                 if after.embeds:
                     embed_title = after.embeds[0].title or ""
                     if weekly_stats_trigger in embed_title:
-                        await weekly_stats_syncer(bot=self.bot, message=after)
+                        await weekly_stats_syncer(
+                            bot=self.bot, before=before, message=after
+                        )
 
-                #Process for Explore Caught
+                # Process for Explore Caught
                 if after.content and explore_trigger in after.content:
                     pretty_log(
                         "info",
