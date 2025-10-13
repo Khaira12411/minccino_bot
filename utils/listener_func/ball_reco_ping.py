@@ -9,6 +9,10 @@ from utils.loggers.pretty_logs import pretty_log
 from utils.cache.boosted_channels_cache import boosted_channels_cache
 from utils.cache.water_state_cache import get_water_state, update_water_state
 from utils.loggers.debug_log import debug_log, enable_debug
+from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache
+from utils.cache.daily_fa_ball_cache import daily_faction_ball_cache
+from utils.cache.straymon_member_cache import straymon_member_cache
+
 
 # -------------------- Regex + constants --------------------
 HELD_ITEM_PATTERN = re.compile(
@@ -198,6 +202,8 @@ async def recommend_ball(message: discord.Message, bot):
             return None
 
         user_id = spawn_info["user_id"]
+        user_name = user_settings.get("user_name")
+        display_pokemon = spawn_info.get("pokemon").title() if spawn_info.get("pokemon") else "This Pokemon"
 
         # --- EARLY EXIT: user not in cache or disabled ---
         if not user_id or user_id not in ball_reco_cache:
@@ -213,11 +219,26 @@ async def recommend_ball(message: discord.Message, bot):
 
         if not is_enabled:
             return None
+        if message.embeds[0].description and "<:team_logo:" in message.embeds[0].description:
+            #Check if user has faction ball alert on and for daily ball
+            user_faction_alert_type = faction_ball_alert_cache.get(user_id, "off")
+            user_faction = straymon_member_cache.get(user_id, {}).get("faction")
+            daily_ball = daily_faction_ball_cache.get(user_faction) if user_faction else None
+            if user_faction_alert_type in ("on", "on_no_pings", "react") and daily_ball:
+                ball_emoji = Emojis_Balls.get(daily_ball.lower())
+                if ball_emoji:
+                    if user_faction_alert_type == "on":
+                        content = f"<@{user_id}>, {display_pokemon} is a daily {user_faction.title()} ball! {ball_emoji}"
+
+
+        #TODO CONTINUE LATER
+
+        #    if user_faction_alert_type == "on":
 
         # --- Masterball bypass ---
         embed = message.embeds[0]
         if embed.color and embed.color.value == 15345163:
-            user_name = user_settings.get("user_name")
+
             rarity = spawn_info.get("rarity")  # can be None
 
             ball = "masterball"

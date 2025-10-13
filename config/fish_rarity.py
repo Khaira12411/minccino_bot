@@ -29,6 +29,7 @@ FISH_RARITY = {
         "poliwhirl": {"dex": 61},
         "tentacool": {"dex": 72},
         "slowpoke": {"dex": 79},
+        "seadra": {"dex": 117},
         "omanyte": {"dex": 138},
         "kabuto": {"dex": 140},
         "marill": {"dex": 183},
@@ -91,7 +92,6 @@ FISH_RARITY = {
     },
     "superrare": {
         "eiscue": {"dex": 875},
-        "seadra": {"dex": 117},
         "lapras": {"dex": 131},
         "wailord": {"dex": 321},
         "milotic": {"dex": 350},

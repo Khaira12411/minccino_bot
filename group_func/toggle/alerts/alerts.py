@@ -11,6 +11,10 @@ from utils.database.res_fossil_alert_db_func import (
     fetch_user_res_fossils_alert,
     upsert_user_res_fossils_alert,
 )
+from utils.database.faction_ball_alert_db_func import (
+    fetch_user_faction_ball_alert,
+    upsert_user_faction_ball_alert,
+)
 from utils.essentials.safe_response import safe_respond
 from utils.loggers.pretty_logs import pretty_log
 
@@ -24,13 +28,15 @@ async def alert_settings_func(bot: commands.Bot, interaction: discord.Interactio
     try:
         captcha_alert = await fetch_user_captcha_alert(bot, interaction.user.id)
         res_fossils_alert = await fetch_user_res_fossils_alert(bot, interaction.user.id)
+        faction_ball_alert = await fetch_user_faction_ball_alert(bot, interaction.user.id)
 
         # ✅ Fallback defaults to prevent NoneType issues
         captcha_alert = captcha_alert or {"notify": "off"}
         res_fossils_alert = res_fossils_alert or {"notify": "off"}
+        faction_ball_alert = faction_ball_alert or {"notify": "off"}
 
         view = AlertSettingsView(
-            bot, interaction.user, captcha_alert, res_fossils_alert
+            bot, interaction.user, captcha_alert, res_fossils_alert, faction_ball_alert
         )
 
         message = await safe_respond(
@@ -80,16 +86,16 @@ def get_captcha_button_style(captcha_alert):
 # 💗────────────────────────────────────────────
 class AlertSettingsView(discord.ui.View):
     def __init__(
-        self, bot: commands.Bot, user: discord.Member, captcha_alert, res_fossils_alert
+        self, bot: commands.Bot, user: discord.Member, captcha_alert, res_fossils_alert, faction_ball_alert
     ):
         super().__init__(timeout=180)
         self.bot = bot
         self.user = user
         self.captcha_alert = captcha_alert
         self.res_fossils_alert = res_fossils_alert
+        self.faction_ball_alert = faction_ball_alert
         self.message = None  # set later
         self.update_button_styles()
-
 
     # 💫────────────────────────────────────
     # [🧩 BUTTON] Captcha Alerts (3-State Cycle)
@@ -194,6 +200,74 @@ class AlertSettingsView(discord.ui.View):
                 "⚠️ An error occurred while updating Research Fossils Alerts.",
                 ephemeral=True,
             )
+    # 💫────────────────────────────────────
+    # [🎯 BUTTON] Faction Ball Alert (4-State Cycle)
+    # 💫────────────────────────────────────
+    @discord.ui.button(
+        label="Faction Ball Alert: OFF", style=ButtonStyle.secondary, emoji="🎯"
+    )
+    async def faction_ball_alert_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        if interaction.user != self.user:
+            await interaction.response.send_message(
+                "You cannot interact with this button.", ephemeral=True
+            )
+            return
+
+        await interaction.response.defer()
+        try:
+            current_state = (
+                str(self.faction_ball_alert.get("notify", "off")).lower()
+                if self.faction_ball_alert
+                else "off"
+            )
+
+            # 🔹 4-State Cycle: off → on → on_no_pings → react → off
+            if current_state == "off":
+                new_state = "on"
+            elif current_state == "on":
+                new_state = "on_no_pings"
+            elif current_state == "on_no_pings":
+                new_state = "react"
+            else:  # react or any other state
+                new_state = "off"
+
+            await upsert_user_faction_ball_alert(self.bot, self.user, new_state)
+            self.faction_ball_alert = {"notify": new_state}
+
+            # 🔹 Refresh buttons
+            self.update_button_styles()
+
+            # 🔹 Display friendly text
+            display_text = {
+                "off": "OFF",
+                "on": "ON",
+                "on_no_pings": "ON (No Pings)",
+                "react": "REACT",
+            }.get(new_state, "OFF")
+
+            await interaction.edit_original_response(
+                content=f"Modify your Timer Settings:\n🎯 Faction Ball Alert set to **{display_text}**",
+                view=self,
+            )
+
+            pretty_log(
+                tag="ui",
+                message=f"{self.user.display_name} set Faction Ball Alert to {display_text}",
+                bot=self.bot,
+            )
+
+        except Exception as e:
+            pretty_log(
+                tag="error",
+                message=f"Error toggling Faction Ball Alert: {e}",
+                bot=self.bot,
+            )
+            await interaction.followup.send(
+                "⚠️ An error occurred while updating Faction Ball Alert.",
+                ephemeral=True,
+            )
 
     # 💫────────────────────────────────────
     # [🎨 STYLE UPDATE FUNCTION]
@@ -232,6 +306,29 @@ class AlertSettingsView(discord.ui.View):
         self.res_fossils_button.label = (
             f"Research Fossils: {'ON' if res_enabled else 'OFF'}"
         )
+
+        # 🎯 Faction Ball Alert Button (4 states)
+        faction_ball_alert_state = (
+            str(self.faction_ball_alert.get("notify", "off")).lower()
+            if self.faction_ball_alert
+            else "off"
+        )
+
+        if faction_ball_alert_state == "off":
+            self.faction_ball_alert_button.style = ButtonStyle.secondary
+            self.faction_ball_alert_button.label = "Faction Ball Alert: OFF"
+        elif faction_ball_alert_state == "on":
+            self.faction_ball_alert_button.style = ButtonStyle.success
+            self.faction_ball_alert_button.label = "Faction Ball Alert: ON"
+        elif faction_ball_alert_state == "on_no_pings":
+            self.faction_ball_alert_button.style = ButtonStyle.primary
+            self.faction_ball_alert_button.label = "Faction Ball Alert: ON (No Pings)"
+        elif faction_ball_alert_state == "react":
+            self.faction_ball_alert_button.style = ButtonStyle.danger
+            self.faction_ball_alert_button.label = "Faction Ball Alert: REACT"
+        else:
+            self.faction_ball_alert_button.style = ButtonStyle.secondary
+            self.faction_ball_alert_button.label = "Faction Ball Alert: OFF"
 
     # 💫────────────────────────────────────
     # [⏰ TIMEOUT HANDLER]

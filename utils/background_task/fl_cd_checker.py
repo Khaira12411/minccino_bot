@@ -49,6 +49,10 @@ async def fl_cd_checker(bot: discord.Client):
                 message_text = (
                     f"🍀 {user_name}, you can now use ;find again in <#{FEELING_LUCKY_CHANNEL_ID}>!"
                 )
+                #Remove role
+                fl_cd_role = guild.get_role(STRAYMONS__ROLES.fl_cd)
+                if member and fl_cd_role in member.roles:
+                    await member.remove_roles(fl_cd_role, reason="Feeling Lucky cooldown expired")
 
                 if reminder_type == "channel":
                     target_channel = bot.get_channel(

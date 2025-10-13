@@ -8,7 +8,9 @@ straymon_member_cache: dict[int, dict] = {}
 # user_id -> {
 #   "user_name": str,
 #   "channel_id": int
+#   "faction": str
 # }
+
 
 async def load_straymon_member_cache(bot):
     """
@@ -23,6 +25,7 @@ async def load_straymon_member_cache(bot):
         straymon_member_cache[row["user_id"]] = {
             "user_name": row.get("user_name"),
             "channel_id": row.get("channel_id"),
+            "faction": row.get("faction"),
         }
 
     try:
