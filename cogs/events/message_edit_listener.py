@@ -19,6 +19,7 @@ from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.listener_func.battle_won_listener import battle_won_listener
 from utils.listener_func.boosted_channel_listener import handle_boosted_channel_on_edit
 from utils.listener_func.explore_caught_listener import explore_caught_listener
+from utils.listener_func.faction_ball_alert import faction_ball_alert
 from utils.listener_func.fish_reco_ping import recommend_fishing_ball
 from utils.listener_func.fl_rs import fl_rs_checker
 from utils.listener_func.held_item_ping import held_item_ping_handler
@@ -117,6 +118,26 @@ class MessageEditListener(commands.Cog):
                 if after.channel.id == STRAYMONS__TEXT_CHANNELS.feeling_lucky:
                     await fl_rs_checker(bot=self.bot, message=after)
 
+                # Faction Ball Alert
+                if after.embeds:
+                    desc = after.embeds[0].description
+                    color = after.embeds[0].color
+                    if (
+                        desc
+                        and "<:team_logo:" in desc
+                        and "fished a wild" in desc
+                        and (
+                            color == FISHING_COLOR
+                            or getattr(color, "value", None) == FISHING_COLOR
+                        )
+                    ):
+                        pretty_log(
+                            "info",
+                            f"Detected faction ball alert in fish embed",
+                            label="🛡️ FACTION BALL ALERT",
+                            bot=self.bot,
+                        )
+                        await faction_ball_alert(before=before, after=after)
         except Exception as e:
             pretty_log(
                 tag="critical",

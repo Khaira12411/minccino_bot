@@ -59,6 +59,16 @@ class Emojis_Balls:
     pokeball = "<:pokeball:1411999795110744145>"
     diveball = "<:diveball:1412001883639517275>"
 
+class Emojis_Factions:
+    aqua = "<:aqua:1427123081083617442>"
+    flare = "<:flare:1427123113770090697>"
+    galactic = "<:galatic:1427123130660425860>"
+    magma = "<:magma:1427123144660877332>"
+    plasma = "<:plasma:1427123159106195549>"
+    rocket = "<:rocket:1427123179003969566>"
+    skull = "<:skull:1427123189410042027>"
+    yell = "<:yell:1427123204664590366>"
+
 class MINC_Thumbnails:
     goal = "https://media.discordapp.net/attachments/1394913073520967680/1425339641846042624/image.png?ex=68e73a7c&is=68e5e8fc&hm=497750b9566e5bb377654f90a8b23d1963c186127f2af7e3e78c3b6c6c4ad347&=&format=webp&quality=lossless&width=640&height=640"
     captcha_alert = "https://media.discordapp.net/attachments/1394913073520967680/1422761285422157905/image.png?ex=68ddd934&is=68dc87b4&hm=3eda2aa450903858d789b543495a6054c1b44a2e3ec731d3c4f0c13ece9ce473&=&format=webp&quality=lossless&width=576&height=576"

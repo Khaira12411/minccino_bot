@@ -35,7 +35,8 @@ from utils.listener_func.reminder_embed_handler import handle_reminder_embed
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
-
+from utils.listener_func.faction_ball_alert import faction_ball_alert
+from utils.listener_func.faction_ball_listener import extract_faction_ball_from_daily, extract_faction_ball_from_fa
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
 CC_BOT_LOG_ID = 1413576563559239931
@@ -59,7 +60,7 @@ captcha_description_trigger = (
     "you must type your answer to the captcha below to continue playing"
 )
 
-
+FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
 class MessageCreateListener(commands.Cog):
     # 💜────────────────────────────────────────────
     # [🟣 INIT] Cog Initialization
@@ -157,7 +158,20 @@ class MessageCreateListener(commands.Cog):
                         await weekly_stats_syncer(
                             bot=self.bot, before=message, message=message
                         )
+                # Faction Ball Alert
+                if first_embed:
+                    if first_embed.description and "<:team_logo:" in first_embed.description:
+                        await faction_ball_alert(before=message, after=message)
+                # Faction Ball Listener from ;fa command
+                if first_embed:
+                    if first_embed.author and any(f in first_embed.author.name.lower() for f in FACTIONS):
+                        await extract_faction_ball_from_fa(bot=self.bot, message=message)
 
+                # Daily Faction Ball Listener
+                if first_embed:
+                    if first_embed.description and "daily streak" in first_embed.description.lower():
+                        await extract_faction_ball_from_daily(bot=self.bot, message=message)
+                        
                 # 🛡️ Captcha Alert Listener
                 if first_embed:
                     title = first_embed.title.lower() if first_embed.title else ""

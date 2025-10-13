@@ -323,6 +323,8 @@ async def startup_checklist(bot: commands.Bot):
         res_fossils_alert_cache,
         straymon_member_cache,
         weekly_goal_cache,
+        daily_faction_ball_cache,
+        faction_ball_alert_cache,
     )
 
     print("\n★━━━━━━━━━━━━━━━━━━━━★")
@@ -335,9 +337,11 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {len(ball_reco_cache)} 🍚 Ball Recommendation Users")
     print(f"✅ {len(user_reminders_cache)} ⚾ User Reminders")
     print(f"✅ {len(boosted_channels_cache)} 💒 Boosted Channels")
+    print(f"✅ {len(daily_faction_ball_cache)} 🎯 Daily Faction Balls")
     print(f"✅ {len(feeling_lucky_cache)} 🍀 Feeling Lucky Cooldowns")
     print(f"✅ {len(user_captcha_alert_cache)} 🛡️  Captcha Alert Users")
     print(f"✅ {len(res_fossils_alert_cache)} 🦴  Research Fossils Alert Users")
+    print(f"✅ {len(faction_ball_alert_cache)} 🥟  Faction Ball Alert Users")
     print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
     print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
     pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"

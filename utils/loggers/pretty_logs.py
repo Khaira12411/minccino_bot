@@ -28,6 +28,7 @@ TAGS = {
     "skip": "🤍 SKIP",
     "sent": "📨 SENT",
     "captcha": "📢 CAPTCHA",
+    "background_task": "🫒  BACKGROUND TASK",
 }
 
 # -------------------- 🎨 ANSI Colors --------------------

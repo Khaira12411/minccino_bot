@@ -146,9 +146,9 @@ def parse_pokemeow_spawn(message: discord.Message):
         if rarity == "shiny" and footer_text:
             footer_lower = footer_text.lower()
             if "full-odds" in footer_lower:
-                rarity = "full_odds_shiny_0"
+                rarity = "full_odds"
             elif "event" in footer_lower:
-                rarity = "event_shiny_0"
+                rarity = "shiny"
 
         # --- get trainer id from reply ---
         trainer_id = None
@@ -171,7 +171,7 @@ def parse_pokemeow_spawn(message: discord.Message):
             if "<:held_item:" in description_text:
                 spawn_type = "held_item"
                 # You can still extract the pokemon name if needed with a simpler regex
-                pokemon_match = re.search(r'\*\*([A-Za-z_]+)\*\*', description_text)
+                pokemon_match = re.search(r"\*\*([A-Za-z_]+)\*\*", description_text)
                 if pokemon_match:
                     held_pokemon = pokemon_match.group(1)
 
@@ -203,7 +203,11 @@ async def recommend_ball(message: discord.Message, bot):
 
         user_id = spawn_info["user_id"]
 
-        display_pokemon = spawn_info.get("pokemon").title() if spawn_info.get("pokemon") else "This Pokemon"
+        display_pokemon = (
+            spawn_info.get("pokemon").title()
+            if spawn_info.get("pokemon")
+            else "This Pokemon"
+        )
 
         # --- EARLY EXIT: user not in cache or disabled ---
         if not user_id or user_id not in ball_reco_cache:
@@ -220,20 +224,6 @@ async def recommend_ball(message: discord.Message, bot):
 
         if not is_enabled:
             return None
-        if message.embeds[0].description and "<:team_logo:" in message.embeds[0].description:
-            # Check if user has faction ball alert on and for daily ball
-            user_faction_alert_type = faction_ball_alert_cache.get(user_id, "off")
-            user_faction = straymon_member_cache.get(user_id, {}).get("faction")
-            daily_ball = daily_faction_ball_cache.get(user_faction) if user_faction else None
-            if user_faction_alert_type in ("on", "on_no_pings", "react") and daily_ball:
-                ball_emoji = Emojis_Balls.get(daily_ball.lower())
-                if ball_emoji:
-                    if user_faction_alert_type == "on":
-                        content = f"<@{user_id}>, {display_pokemon} is a daily {user_faction.title()} ball! {ball_emoji}"
-
-        # TODO CONTINUE LATER
-
-        #    if user_faction_alert_type == "on":
 
         # --- Masterball bypass ---
         embed = message.embeds[0]
@@ -280,8 +270,8 @@ async def recommend_ball(message: discord.Message, bot):
                 "rare": "rare_37",
                 "superrare": "super_rare_20",
                 "legendary": "legendary_5",
-                "shiny": "full_odds_shiny_64",
-                "golden": "event_shiny_0",
+                "shiny": "event_shiny_0",
+                "full_odds": "full_odds_shiny_64",
             }
         elif spawn_type == "held_item":
             enabled = (
@@ -294,8 +284,8 @@ async def recommend_ball(message: discord.Message, bot):
                 "rare": "rare_15",
                 "superrare": "super_rare_10",
                 "legendary": "legendary_0",
-                "shiny": "full_odds_shiny_0",
-                "golden": "event_shiny_0",
+                "shiny": "event_shiny_0",
+                "full_odds": "full_odds_shiny_0",
             }
         else:
             return None
