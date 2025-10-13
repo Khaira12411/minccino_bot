@@ -202,7 +202,7 @@ async def recommend_ball(message: discord.Message, bot):
             return None
 
         user_id = spawn_info["user_id"]
-        user_name = user_settings.get("user_name")
+
         display_pokemon = spawn_info.get("pokemon").title() if spawn_info.get("pokemon") else "This Pokemon"
 
         # --- EARLY EXIT: user not in cache or disabled ---
@@ -210,6 +210,7 @@ async def recommend_ball(message: discord.Message, bot):
             return None
 
         user_settings = ball_reco_cache[user_id]
+        user_name = user_settings.get("user_name")
         enabled_val = user_settings.get("enabled", False)
 
         if isinstance(enabled_val, str):
@@ -220,7 +221,7 @@ async def recommend_ball(message: discord.Message, bot):
         if not is_enabled:
             return None
         if message.embeds[0].description and "<:team_logo:" in message.embeds[0].description:
-            #Check if user has faction ball alert on and for daily ball
+            # Check if user has faction ball alert on and for daily ball
             user_faction_alert_type = faction_ball_alert_cache.get(user_id, "off")
             user_faction = straymon_member_cache.get(user_id, {}).get("faction")
             daily_ball = daily_faction_ball_cache.get(user_faction) if user_faction else None
@@ -230,8 +231,7 @@ async def recommend_ball(message: discord.Message, bot):
                     if user_faction_alert_type == "on":
                         content = f"<@{user_id}>, {display_pokemon} is a daily {user_faction.title()} ball! {ball_emoji}"
 
-
-        #TODO CONTINUE LATER
+        # TODO CONTINUE LATER
 
         #    if user_faction_alert_type == "on":
 
