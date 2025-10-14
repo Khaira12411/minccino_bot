@@ -160,7 +160,7 @@ class MessageCreateListener(commands.Cog):
                         )
                 # Faction Ball Alert
                 if first_embed:
-                    if first_embed.description and "<:team_logo:" in first_embed.description:
+                    if first_embed.description and "<:team_logo:" in first_embed.description and "found a wild" in first_embed.description:
                         await faction_ball_alert(before=message, after=message)
                 # Faction Ball Listener from ;fa command
                 if first_embed:
@@ -171,7 +171,7 @@ class MessageCreateListener(commands.Cog):
                 if first_embed:
                     if first_embed.description and "daily streak" in first_embed.description.lower():
                         await extract_faction_ball_from_daily(bot=self.bot, message=message)
-                        
+
                 # 🛡️ Captcha Alert Listener
                 if first_embed:
                     title = first_embed.title.lower() if first_embed.title else ""
