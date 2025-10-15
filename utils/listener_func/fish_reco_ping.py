@@ -14,13 +14,13 @@ from utils.loggers.pretty_logs import pretty_log
 from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache
 from utils.cache.daily_fa_ball_cache import daily_faction_ball_cache
 from utils.cache.straymon_member_cache import straymon_member_cache
-# enable_debug(f"{__name__}.recommend_fishing_ball")
+enable_debug(f"{__name__}.recommend_fishing_ball")
 # enable_debug(f"{__name__}.extract_water_state_from_author")
 
 
 DEBUG = False
 FISHING_COLOR = 0x87CEFA  # sky blue
-
+processed_fishing_messages = set()
 NAME_PATTERN = re.compile(r"\*\*(?:(Shiny|Golden)\s+)?([A-Za-z_]+)\*\*", re.IGNORECASE)
 
 WILD_SPAWN_PATTERN = re.compile(
@@ -119,6 +119,7 @@ def parse_pokemeow_fishing_spawn(message: discord.Message):
 
 async def recommend_fishing_ball(message: discord.Message, bot):
     # --- Parse spawn info using dedicated parser ---
+    debug_log(f"recommend_fishing_ball called for message {message.id}")
     spawn_info = parse_pokemeow_fishing_spawn(message)
     if not spawn_info:
         debug_log(f"No valid spawn info in message {message.id}")
@@ -174,6 +175,11 @@ async def recommend_fishing_ball(message: discord.Message, bot):
     if "You caught a" in embed_desc:
         debug_log(f"Ignored caught message {message.id}")
         return None
+
+    if message.id in processed_fishing_messages:
+        debug_log(f"Already processed message {message.id}, skipping.")
+        return None
+    processed_fishing_messages.add(message.id)
 
     # --- Determine if channel has boost ---
     channel_boost = message.channel.id in boosted_channels_cache
