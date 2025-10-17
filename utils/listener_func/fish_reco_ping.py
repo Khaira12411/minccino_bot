@@ -14,7 +14,7 @@ from utils.loggers.pretty_logs import pretty_log
 from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache
 from utils.cache.daily_fa_ball_cache import daily_faction_ball_cache
 from utils.cache.straymon_member_cache import straymon_member_cache
-enable_debug(f"{__name__}.recommend_fishing_ball")
+#enable_debug(f"{__name__}.recommend_fishing_ball")
 # enable_debug(f"{__name__}.extract_water_state_from_author")
 
 

@@ -106,7 +106,7 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                     fetch_straymon_member_cache_by_username,
                 )
 
-                print(straymon_member_cache)
+                #print(straymon_member_cache)
                 debug_log(f"straymon_member_cache keys: {list(straymon_member_cache.keys())}")
                 debug_log(f"straymon_member_cache values: {[data.get('user_name') for data in straymon_member_cache.values()]}")
                 result = fetch_straymon_member_cache_by_username(trainer_name)

@@ -37,6 +37,7 @@ from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
 from utils.listener_func.faction_ball_alert import faction_ball_alert
 from utils.listener_func.faction_ball_listener import extract_faction_ball_from_daily, extract_faction_ball_from_fa
+from utils.listener_func.special_battle_npc_listener import special_battle_npc_listener
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
 CC_BOT_LOG_ID = 1413576563559239931
@@ -171,6 +172,18 @@ class MessageCreateListener(commands.Cog):
                 if first_embed:
                     if first_embed.description and "daily streak" in first_embed.description.lower():
                         await extract_faction_ball_from_daily(bot=self.bot, message=message)
+                # Special Battle NPC Listener
+                if first_embed:
+                    if (
+                        first_embed.description
+                        and "challenged <:irida:1428149067673767996> **Irida** to a battle!"
+                        in first_embed.description
+                    ):
+                        pretty_log(
+                            "info",
+                            f"🔹 Matched Special Battle NPC Listener for Irida | message_id={message.id}",
+                        )
+                        await special_battle_npc_listener(bot=self.bot, message=message)
 
                 # 🛡️ Captcha Alert Listener
                 if first_embed:
