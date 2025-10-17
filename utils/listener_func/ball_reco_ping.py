@@ -25,7 +25,7 @@ HELD_ITEM_PATTERN = re.compile(
 # enable_debug(f"{__name__}.extract_water_state_from_author")
 # enable_debug(f"{__name__}.parse_pokemeow_spawn")
 FISHING_COLOR = 0x87CEFA  # sky blue
-
+HALLOWEEN_COLOR = 0xFFA500  # orange
 embed_rarity_color = {
     "common": 546299,
     "uncommon": 1291495,
@@ -128,14 +128,14 @@ def parse_pokemeow_spawn(message: discord.Message):
 
         # -------------------- Rarity by color --------------------
         rarity = None
-        if embed.color:
+        if embed.color and embed.color != HALLOWEEN_COLOR:
             for r, c in embed_rarity_color.items():
                 if embed.color.value == c:
                     rarity = r
                     break
 
         # --- Fallback: parse rarity from footer if color not recognized ---
-        if not rarity and footer_text:
+        if not rarity and footer_text or embed.color == HALLOWEEN_COLOR:
             footer_lower = footer_text.lower()
             for r_key in embed_rarity_color.keys():
                 if r_key in footer_lower:
@@ -200,7 +200,7 @@ async def recommend_ball(message: discord.Message, bot):
         embed_footer_text = embed.footer.text if embed.footer else ""
         if "PokeMeow | Egg Hatch" in embed_footer_text:
             return None  # 🚪 early exit for egg hatches
-        
+
         spawn_info = parse_pokemeow_spawn(message)
         if not spawn_info:
             return None
