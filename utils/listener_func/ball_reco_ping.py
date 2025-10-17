@@ -130,6 +130,7 @@ def parse_pokemeow_spawn(message: discord.Message):
         # -------------------- Rarity by color --------------------
         rarity = None
         if embed.color and embed.color != HALLOWEEN_COLOR:
+            pretty_log("debug", f"Embed color value: {embed.color.value}")
             for r, c in embed_rarity_color.items():
                 if embed.color.value == c:
                     rarity = r
@@ -137,6 +138,7 @@ def parse_pokemeow_spawn(message: discord.Message):
 
         # --- Fallback: parse rarity from footer if color not recognized ---
         if footer_text or embed.color == HALLOWEEN_COLOR or embed.color == EVENT_EXCL_COLOR:
+            pretty_log("debug", f"Using footer text for rarity parsing: {footer_text}")
             match = re.search(r"Rarity:\s*([A-Za-z]+)", footer_text)
             if match:
                 rarity = match.group(1).lower()
