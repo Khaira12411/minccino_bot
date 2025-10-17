@@ -7,6 +7,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
 
 FISHING_COLOR = 0x87CEFA
+processed_caught_messages = set()
 
 
 # 💠────────────────────────────────────────────
@@ -63,6 +64,11 @@ async def pokemon_caught_listener(
     embed_color = embed.color.value if embed.color else None
     embed_description = embed.description or ""
 
+    #Prevent double processing
+    if message.id in processed_caught_messages:
+        return
+    processed_caught_messages.add(message.id)
+    
     # Fish catch
     if embed_color == FISHING_COLOR:
         increment_fish_caught(member)

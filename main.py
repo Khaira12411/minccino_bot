@@ -25,6 +25,7 @@ from utils.loggers.pretty_logs import pretty_log, set_minccino_bot
 from utils.loggers.rate_limit_logger import setup_rate_limit_logging
 from utils.background_task.scheduler import setup_scheduler
 from utils.listener_func.fish_reco_ping import processed_fishing_messages
+from utils.listener_func.pokemon_caught import processed_caught_messages
 # ╭───────────────────────────────╮
 # │   🤎  Suppress Logs  🤍      │
 # ╰───────────────────────────────╯
@@ -216,7 +217,8 @@ async def refresh_all_caches():
 
     await load_all_caches(bot)
     processed_fishing_messages.clear()
-    pretty_log(tag="", message="Processed Fishing Message has been cleared", label="🧸 Cache Refresher")
+    processed_caught_messages.clear()
+    pretty_log(tag="", message="Processed Fishing and Caught Messages has been cleared", label="🧸 Cache Refresher")
 
 
 # ╭───────────────────────────────╮

@@ -25,7 +25,7 @@ async def special_battle_timer_checker(bot: discord.Client):
             member = channel.guild.get_member(user_id)
             if member:
                 # Remove timer from database
-                content = f"⏰ {member.mention}, you can now battle {npc_name} again!"
+                content = f"⏰ {member.mention}, you can now battle {npc_name.title()} again!"
                 desc = f";b npc {npc_name}"
                 embed = discord.Embed(description=desc, color=0x00FF00)
                 try:
