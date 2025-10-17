@@ -140,6 +140,7 @@ def parse_pokemeow_spawn(message: discord.Message):
             match = re.search(r"Rarity:\s*([A-Za-z]+)", footer_text)
             if match:
                 rarity = match.group(1).lower()
+                pretty_log("debug", f"Parsed rarity from footer: {rarity}")
                 if rarity == "super rare":
                     rarity = "superrare"
 
