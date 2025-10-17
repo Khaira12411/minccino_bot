@@ -196,7 +196,11 @@ async def recommend_ball(message: discord.Message, bot):
     try:
         if not message.embeds:
             return None
-
+        embed = message.embeds[0]
+        embed_footer_text = embed.footer.text if embed.footer else ""
+        if "PokeMeow | Egg Hatch" in embed_footer_text:
+            return None  # 🚪 early exit for egg hatches
+        
         spawn_info = parse_pokemeow_spawn(message)
         if not spawn_info:
             return None
