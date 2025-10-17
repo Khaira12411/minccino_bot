@@ -26,6 +26,7 @@ HELD_ITEM_PATTERN = re.compile(
 # enable_debug(f"{__name__}.parse_pokemeow_spawn")
 FISHING_COLOR = 0x87CEFA  # sky blue
 HALLOWEEN_COLOR = 0xFFA500  # orange
+EVENT_EXCL_COLOR = 0xEA260B  # red
 embed_rarity_color = {
     "common": 546299,
     "uncommon": 1291495,
@@ -135,12 +136,12 @@ def parse_pokemeow_spawn(message: discord.Message):
                     break
 
         # --- Fallback: parse rarity from footer if color not recognized ---
-        if not rarity and footer_text or embed.color == HALLOWEEN_COLOR:
-            footer_lower = footer_text.lower()
-            for r_key in embed_rarity_color.keys():
-                if r_key in footer_lower:
-                    rarity = r_key
-                    break
+        if footer_text or embed.color == HALLOWEEN_COLOR or embed.color == EVENT_EXCL_COLOR:
+            match = re.search(r"Rarity:\s*([A-Za-z]+)", footer_text)
+            if match:
+                rarity = match.group(1).lower()
+                if rarity == "super rare":
+                    rarity = "superrare"
 
         # Special case: Shiny embeds
         if rarity == "shiny" and footer_text:
