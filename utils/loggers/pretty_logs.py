@@ -29,6 +29,7 @@ TAGS = {
     "sent": "📨 SENT",
     "captcha": "📢 CAPTCHA",
     "background_task": "🫒  BACKGROUND TASK",
+    "debug": "🔧 DEBUG",
 }
 
 # -------------------- 🎨 ANSI Colors --------------------

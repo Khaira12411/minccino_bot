@@ -4,15 +4,15 @@ import discord
 
 from config.aesthetic import Emojis_Balls
 from config.fish_rarity import FISH_RARITY
-from utils.listener_func.catch_rate import *
-from utils.loggers.pretty_logs import pretty_log
 from utils.cache.boosted_channels_cache import boosted_channels_cache
-from utils.cache.water_state_cache import get_water_state, update_water_state
-from utils.loggers.debug_log import debug_log, enable_debug
-from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache
 from utils.cache.daily_fa_ball_cache import daily_faction_ball_cache
+from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache
 from utils.cache.straymon_member_cache import straymon_member_cache
-
+from utils.cache.water_state_cache import get_water_state, update_water_state
+from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.listener_func.catch_rate import *
+from utils.loggers.debug_log import debug_log, enable_debug
+from utils.loggers.pretty_logs import pretty_log
 
 # -------------------- Regex + constants --------------------
 HELD_ITEM_PATTERN = re.compile(
@@ -129,22 +129,33 @@ def parse_pokemeow_spawn(message: discord.Message):
 
         # -------------------- Rarity by color --------------------
         rarity = None
-        if embed.color and embed.color != HALLOWEEN_COLOR:
-            pretty_log("debug", f"Embed color value: {embed.color.value}")
+        if embed.color and embed.color.value != HALLOWEEN_COLOR:
+            # pretty_log("debug", f"Embed color value: {embed.color.value}")
             for r, c in embed_rarity_color.items():
                 if embed.color.value == c:
                     rarity = r
                     break
 
         # --- Fallback: parse rarity from footer if color not recognized ---
-        if footer_text or embed.color == HALLOWEEN_COLOR or embed.color == EVENT_EXCL_COLOR:
-            pretty_log("debug", f"Using footer text for rarity parsing: {footer_text}")
-            match = re.search(r"Rarity:\s*([A-Za-z]+)", footer_text)
+        elif (
+            not rarity
+            and footer_text
+            or (embed.color and embed.color.value == HALLOWEEN_COLOR)
+            or (embed.color and embed.color.value == EVENT_EXCL_COLOR)
+        ):
+            pretty_log(
+                "debug",
+                f"Using footer text for rarity parsing, embed color: {embed.color.value if embed.color else 'None'}, footer_text: {footer_text!r}",
+            )
+            match = re.match(r"([A-Za-z ]+)", footer_text)
             if match:
-                rarity = match.group(1).lower()
+                rarity = match.group(1).strip().lower().replace(" ", "")
                 pretty_log("debug", f"Parsed rarity from footer: {rarity}")
-                if rarity == "super rare":
-                    rarity = "superrare"
+            else:
+                pretty_log(
+                    "debug",
+                    f"Rarity regex did not match. Footer text: {footer_text!r}"
+                )
 
         # Special case: Shiny embeds
         if rarity == "shiny" and footer_text:
@@ -204,6 +215,13 @@ async def recommend_ball(message: discord.Message, bot):
         embed_footer_text = embed.footer.text if embed.footer else ""
         if "PokeMeow | Egg Hatch" in embed_footer_text:
             return None  # 🚪 early exit for egg hatches
+
+        user_id = None
+        member = await get_pokemeow_reply_member(message)
+        if member:
+            user_id = member.id
+            if user_id not in ball_reco_cache:
+                return  # Exit Early if not in cache
 
         spawn_info = parse_pokemeow_spawn(message)
         if not spawn_info:

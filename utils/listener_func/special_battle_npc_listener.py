@@ -31,3 +31,4 @@ async def special_battle_npc_listener(bot: discord.Client, message: discord.Mess
     await upsert_special_battle_timer(
         bot, user_id, user_name, npc_name, ends_on, channel_id
     )
+    await message.reference.resolved.add_reaction("📅")
