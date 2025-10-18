@@ -15,7 +15,7 @@ from utils.cache.reminders_cache import user_reminders_cache
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log
 from utils.loggers.pretty_logs import pretty_log
-
+from config.aesthetic import Emojis
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 🔹 Regex Patterns
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -66,7 +66,7 @@ async def handle_cb_checklist_message(bot: commands.Bot, message: discord.Messag
     # 📅 React only if new schedule
     if result == "added":
         try:
-            await message.reference.resolved.add_reaction("📅")
+            await message.reference.resolved.add_reaction(Emojis.calendar)
         except Exception as e:
             pretty_log(
                 "warn", f"[CB CHECKLIST] Failed to add 📅 reaction: {e}", bot=bot
@@ -135,7 +135,7 @@ async def handle_cb_command_embed(bot: commands.Bot, message: discord.Message):
     # 📅 React only if new schedule
     if result == "added":
         try:
-            await message.reference.resolved.add_reaction("📅")
+            await message.reference.resolved.add_reaction(Emojis.calendar)
         except Exception as e:
             pretty_log("warn", f"[CB EMBED] Failed to add 📅 reaction: {e}", bot=bot)
 
@@ -178,7 +178,7 @@ async def handle_cb_run_message(bot, message: discord.Message):
         # 📅 React if new schedule added
         if result == "added":
             try:
-                await message.reference.resolved.add_reaction("📅")
+                await message.reference.resolved.add_reaction(Emojis.calendar)
             except Exception as e:
                 pretty_log("warn", f"[CB RUN] Failed to add 📅 reaction: {e}", bot=bot)
 

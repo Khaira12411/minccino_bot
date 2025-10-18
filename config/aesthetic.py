@@ -1,4 +1,9 @@
 class Emojis:
+    brown_bear_two = "<a:brown_bear_2:1429112220918485173>"
+    brown_check = "<:brown_check:1429111417977442345>"
+    brown_biscuits = "<a:brown_biscuits:1429107820485415002>"
+    brown_coffee = "<a:brown_coffee:1429106274464829440>"
+    calendar = "<:calendar:1429104557799247923>"
     brown_mouse = "<:brown_mouse:1425335928897147023>"
     heart_cheese = "<:heart_cheese:1425335919153643520>"
     gray_swords = "<:gray_swords:1425329896774959145>"

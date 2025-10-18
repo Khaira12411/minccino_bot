@@ -72,14 +72,14 @@ async def detect_pokemeow_reply(message: discord.Message):
 
                 if setting == "on":
                     await message.channel.send(
-                        f"{member.mention}, your Pokemon command is ready! {Emojis.Minccino_Hug}"
+                        f"{Emojis.brown_bear_two} {member.mention}, your Pokemon command is ready! {Emojis.Minccino_Hug}"
                     )
                 elif setting == "on w/o pings":
                     await message.channel.send(
-                        f"{member.display_name}, your Pokemon command is ready! {Emojis.Minccino_Hug}"
+                        f"{Emojis.brown_bear_two} {member.display_name}, your Pokemon command is ready! {Emojis.Minccino_Hug}"
                     )
                 elif setting == "react":
-                    await message.add_reaction(Emojis.gray_check)
+                    await message.add_reaction(Emojis.brown_check)
 
             except asyncio.CancelledError:
                 # 💙 [CANCELLED] Scheduled ready notification cancelled

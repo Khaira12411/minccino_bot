@@ -11,8 +11,8 @@ from utils.cache.timers_cache import timer_cache
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-#enable_debug(f"{__name__}.detect_pokemeow_battle")
-#enable_debug(f"{__name__}.grab_enemy_id")
+# enable_debug(f"{__name__}.detect_pokemeow_battle")
+# enable_debug(f"{__name__}.grab_enemy_id")
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 battle_ready_tasks = {}
 
@@ -154,13 +154,13 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 if setting == "on":
                     debug_log("Sending notification (ping)")
                     await message.channel.send(
-                        content=f"{challenger.mention}, your battle timer is ready! {Emojis.Minccino_Hug}",
+                        content=f"{Emojis.brown_biscuits} {challenger.mention}, your battle timer is ready! {Emojis.Minccino_Hug}",
                         embed=battle_embed,
                     )
                 elif setting == "on w/o pings":
                     debug_log("Sending notification (no ping)")
                     await message.channel.send(
-                        content=f"{challenger.display_name}, your battle timer is ready! {Emojis.Minccino_Hug}",
+                        content=f"{Emojis.brown_biscuits} {challenger.display_name}, your battle timer is ready! {Emojis.Minccino_Hug}",
                         embed=battle_embed,
                     )
                 elif setting == "react":

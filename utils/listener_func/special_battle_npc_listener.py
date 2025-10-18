@@ -8,7 +8,7 @@ from utils.database.special_npc_timer_db_func import (
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
-
+from config.aesthetic import Emojis
 BATTLE_TIMER = 30 * 60  # 30 minutes in seconds
 
 
@@ -31,4 +31,4 @@ async def special_battle_npc_listener(bot: discord.Client, message: discord.Mess
     await upsert_special_battle_timer(
         bot, user_id, user_name, npc_name, ends_on, channel_id
     )
-    await message.reference.resolved.add_reaction("📅")
+    await message.reference.resolved.add_reaction(Emojis.calendar)

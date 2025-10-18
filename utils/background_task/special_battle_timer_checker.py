@@ -1,5 +1,6 @@
 import discord
 
+from config.aesthetic import Emojis
 from utils.database.special_npc_timer_db_func import (
     fetch_due_special_battle_timers,
     remove_special_battle_timer,
@@ -25,9 +26,9 @@ async def special_battle_timer_checker(bot: discord.Client):
             member = channel.guild.get_member(user_id)
             if member:
                 # Remove timer from database
-                content = f"⏰ {member.mention}, you can now battle {npc_name.title()} again!"
+                content = f"{Emojis.brown_coffee} {member.mention}, you can now battle {npc_name.title()} again!"
                 desc = f";b npc {npc_name}"
-                embed = discord.Embed(description=desc, color=0x00FF00)
+                embed = discord.Embed(description=desc, color=0xC1B1A5)
                 try:
                     await channel.send(content=content, embed=embed)
                     pretty_log(
