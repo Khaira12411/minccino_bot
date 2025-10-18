@@ -137,7 +137,16 @@ class HELD_ITEM_POKEMON:
 
     silverpowder = ["butterfree", "venonat", "venomoth", "surskit", "masquerain"]
 
-    softsand = ["diglett", "dugtrio", "nincada", "trapinch", "sandshrew", "sandslash", "trapinch"]
+    softsand = [
+        "diglett",
+        "dugtrio",
+        "nincada",
+        "trapinch",
+        "sandshrew",
+        "sandslash",
+        "trapinch",
+        "stunfisk",
+    ]
 
     spelltag = [
         "gastly",
