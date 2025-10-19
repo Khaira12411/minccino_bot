@@ -296,7 +296,7 @@ class AlertSettingsView(discord.ui.View):
     # [🎃 BUTTON] Halloween Contest Score Alert (3 -State Cycle)
     # 💫────────────────────────────────────
     @discord.ui.button(
-        label="Halloween Contest Alerts: OFF", style=ButtonStyle.secondary, emoji="🎃"
+        label="Halloween Contest Alert: OFF", style=ButtonStyle.secondary, emoji="🎃"
     )
     async def halloween_contest_alert_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
@@ -428,22 +428,22 @@ class AlertSettingsView(discord.ui.View):
         if halloween_contest_alert_state == "off":
             self.halloween_contest_alert_button.style = ButtonStyle.secondary
             self.halloween_contest_alert_button.label = (
-                "Halloween Contest Alerts: OFF"
+                "Halloween Contest Alert: OFF"
             )
         elif halloween_contest_alert_state == "on":
             self.halloween_contest_alert_button.style = ButtonStyle.success
             self.halloween_contest_alert_button.label = (
-                "Halloween Contest Alerts: ON"
+                "Halloween Contest Alert: ON"
             )
         elif halloween_contest_alert_state == "on_no_pings":
             self.halloween_contest_alert_button.style = ButtonStyle.primary
             self.halloween_contest_alert_button.label = (
-                "Halloween Contest Alerts: ON (No Pings)"
+                "Halloween Contest Alert: ON (No Pings)"
             )
         else:
             self.halloween_contest_alert_button.style = ButtonStyle.secondary
             self.halloween_contest_alert_button.label = (
-                "Halloween Contest Alerts: OFF"
+                "Halloween Contest Alert: OFF"
             )
     # 💫────────────────────────────────────
     # [⏰ TIMEOUT HANDLER]

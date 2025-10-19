@@ -354,7 +354,7 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {len(res_fossils_alert_cache)} 🦴  Research Fossils Alert Users")
     print(f"✅ {len(faction_ball_alert_cache)} 🥟  Faction Ball Alert Users")
     print(f"✅ {len(halloween_contests_alert_cache)} 🎃  Halloween Contest Alert Users")
-    print(f"✅ {fourth_place_score} 🎃  Halloween Con Fourth Place Score")
+    print(f"✅ {fourth_place_score:,} 🎃  Halloween Con Fourth Place Score")
     print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
     print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
     pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"
