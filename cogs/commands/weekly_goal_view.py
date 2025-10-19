@@ -68,7 +68,7 @@ class WeeklyGoalPaginator(View):
                 user_pokemon_caught = r.get("pokemon_caught", 0)
                 user_fish_caught = r.get("fish_caught", 0)
                 user_battles_won = r.get("battles_won", 0)
-
+                total = user_pokemon_caught + user_fish_caught
                 if user_id == self.user.id:
                     name_line = f"{Emojis.heart_cheese} {user.mention}"
                 else:
@@ -79,6 +79,7 @@ class WeeklyGoalPaginator(View):
                     f"> {Emojis.gray_ball} Pokémon: **{user_pokemon_caught:,}**\n"
                     f"> {Emojis.gray_fishrod} Fish: **{user_fish_caught:,}**\n"
                     f"> {Emojis.gray_swords} Battles: **{user_battles_won:,}**"
+                    f"> {Emojis.brown_flower} **Total:** **{total:,}**"
                 )
                 field_values.append(value)
 
@@ -135,10 +136,13 @@ class WeeklyGoalView(commands.Cog):
             member_fish_caught = member_stats.get("fish_caught", 0)
             member_battles_won = member_stats.get("battles_won", 0)
 
+            total = member_pokemon_caught + member_fish_caught
+
             desc = (
                 f"> - {Emojis.gray_ball} Pokémon Caught: **{member_pokemon_caught:,}**\n"
                 f"> - {Emojis.gray_fishrod} Fish Caught: **{member_fish_caught:,}**\n"
                 f"> - {Emojis.gray_swords} Battles Won: **{member_battles_won:,}**\n\n"
+                f"> - {Emojis.brown_flower} **Total Catches:** **{total:,}**"
             )
             embed = discord.Embed(
                 title="🎯 Your Weekly Goal Progress",
@@ -161,13 +165,29 @@ class WeeklyGoalView(commands.Cog):
         if not goals:
             await handler.error("No weekly goals found.")
             return
-
+        user_id = interaction.user.id
         # Ensure requesting user's stats are first
         goals.sort(key=lambda g: g["user_id"] != interaction.user.id)
+        # Compute total for each goal
+        for g in goals:
+            g["total"] = g.get("pokemon_caught", 0) + g.get("fish_caught", 0)
+
+        # Separate user's goal and others
+        user_goal = next((g for g in goals if g["user_id"] == user_id), None)
+        other_goals = [g for g in goals if g["user_id"] != user_id]
+
+        # Sort others by total descending
+        other_goals.sort(key=lambda g: g["total"], reverse=True)
+
+        # Combine: user's goal first, then others
+        if user_goal:
+            sorted_goals = [user_goal] + other_goals
+        else:
+            sorted_goals = other_goals
 
         # Wrap paginator in try/except
         try:
-            paginator = WeeklyGoalPaginator(self.bot, interaction.user, goals)
+            paginator = WeeklyGoalPaginator(self.bot, interaction.user, sorted_goals)
             embed = await paginator.get_embed()
             sent = await handler.success(embed=embed, view=paginator, content="")
             paginator.message = sent
@@ -182,6 +202,7 @@ class WeeklyGoalView(commands.Cog):
                     f"> - Pokémon Caught: **{r.get('pokemon_caught', 0)}**\n"
                     f"> - Fish Caught: **{r.get('fish_caught', 0)}**\n"
                     f"> - Battles Won: **{r.get('battles_won', 0)}**\n"
+                    f"> - **Total Catches:** **{r.get('pokemon_caught', 0) + r.get('fish_caught', 0)}**"
                 )
                 embed.add_field(name="\u200b", value=field_value, inline=False)
 

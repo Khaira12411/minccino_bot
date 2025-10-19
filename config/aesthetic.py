@@ -1,4 +1,5 @@
 class Emojis:
+    brown_flower = "<:brown_flower:1429304987690991646>"
     brown_bear_two = "<a:brown_bear_2:1429112220918485173>"
     brown_check = "<:brown_check:1429111417977442345>"
     brown_biscuits = "<a:brown_biscuits:1429107820485415002>"

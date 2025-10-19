@@ -68,7 +68,7 @@ async def pokemon_caught_listener(
     if message.id in processed_caught_messages:
         return
     processed_caught_messages.add(message.id)
-    
+
     # Fish catch
     if embed_color == FISHING_COLOR:
         increment_fish_caught(member)
@@ -151,16 +151,6 @@ async def pokemon_caught_listener(
                     f"{Emojis.medal} {member.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon! {Emojis.celebrate}"
                 )
 
-    """if member_id in res_fossils_alert_cache:
-        user_name = res_fossils_alert_cache[member_id].get("user_name", "")
-        notify = str(res_fossils_alert_cache[member_id].get("notify", "off")).lower()
-        pretty_log(
-            "debug",
-            f"Res Fossil Alert check for {member_name} ({member_id}): user_name='{user_name}', notify='{notify}'",
-            label="🦴 RESEARCH FOSSILS ALERT",
-            bot=bot,
-        )
-        """
     # Plume fossil alert
     if ":plume_fossil" in embed_description and member_id in res_fossils_alert_cache:
         user_data = res_fossils_alert_cache[member_id]
