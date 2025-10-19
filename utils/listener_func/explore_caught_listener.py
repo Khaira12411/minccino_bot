@@ -11,7 +11,7 @@ from utils.loggers.pretty_logs import pretty_log
 
 # Enable debug for this function
 #enable_debug(f"{__name__}.explore_caught_listener")
-
+processed_explore_caught_messages = set()
 
 # 💠────────────────────────────────────────────
 #           👂 Explore Caught Listener Event
@@ -32,6 +32,10 @@ async def explore_caught_listener(
 
     # ✅ DEBUG: Log that function was called
     debug_log(f"Function called - Message ID: {after.id}")
+    if after.id in processed_explore_caught_messages:
+        debug_log(f"❌ Message {after.id} already processed - skipping")
+        return
+    processed_explore_caught_messages.add(after.id)
 
     member = await get_pokemeow_reply_member(before)
     if not member:
