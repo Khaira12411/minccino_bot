@@ -10,7 +10,7 @@ from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
 # Enable debug for this function
-#enable_debug(f"{__name__}.explore_caught_listener")
+# enable_debug(f"{__name__}.explore_caught_listener")
 processed_explore_caught_messages = set()
 
 # 💠────────────────────────────────────────────
@@ -134,7 +134,7 @@ async def explore_caught_listener(
     ):
         update_weekly_requirement_mark(member.id)
         await after.channel.send(
-            f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉"
+            f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉\nDouble-check your stats by running `;clan stats w` and finding your name."
         )
         goal_tracker_channel = after.guild.get_channel(
             STRAYMONS__TEXT_CHANNELS.goal_tracker

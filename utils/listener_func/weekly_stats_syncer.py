@@ -108,7 +108,7 @@ async def weekly_stats_syncer(bot, before:discord.Message, message: discord.Mess
     ):
         update_weekly_requirement_mark(user.id)
         await message.channel.send(
-            f"Congratulations {user.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉"
+            f"Congratulations {user.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉\nDouble-check your stats by running `;clan stats w` and finding your name."
         )
         goal_tracker_channel = message.guild.get_channel(
             STRAYMONS__TEXT_CHANNELS.goal_tracker

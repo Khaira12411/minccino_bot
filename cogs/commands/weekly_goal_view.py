@@ -78,7 +78,7 @@ class WeeklyGoalPaginator(View):
                     f"{name_line}\n"
                     f"> {Emojis.gray_ball} Pokémon: **{user_pokemon_caught:,}**\n"
                     f"> {Emojis.gray_fishrod} Fish: **{user_fish_caught:,}**\n"
-                    f"> {Emojis.gray_swords} Battles: **{user_battles_won:,}**"
+                    f"> {Emojis.gray_swords} Battles: **{user_battles_won:,}**\n"
                     f"> {Emojis.brown_flower} **Total:** **{total:,}**"
                 )
                 field_values.append(value)

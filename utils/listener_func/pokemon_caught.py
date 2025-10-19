@@ -108,7 +108,7 @@ async def pokemon_caught_listener(
         ):
             update_weekly_requirement_mark(member.id, True)
             await message.channel.send(
-                f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉"
+                f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉\nDouble-check your stats by running `;clan stats w` and finding your name."
             )
 
             goal_tracker_channel = message.guild.get_channel(
