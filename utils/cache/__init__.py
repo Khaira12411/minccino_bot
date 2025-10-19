@@ -19,5 +19,7 @@ from .water_state_cache import (
     waterstate_cache,
 )
 from .weekly_goal_tracker_cache import load_weekly_goal_cache, weekly_goal_cache
+from .halloween_con_top_cache import halloween_con_top_cache
+from .halloween_contest_cache import halloween_contests_alert_cache
 
 __all__ = ["load_timer_cache"]

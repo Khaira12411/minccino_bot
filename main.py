@@ -27,6 +27,7 @@ from utils.background_task.scheduler import setup_scheduler
 from utils.listener_func.fish_reco_ping import processed_fishing_messages
 from utils.listener_func.pokemon_caught import processed_caught_messages
 from utils.listener_func.explore_caught_listener import processed_explore_caught_messages
+from utils.listener_func.halloween_contest_listener import processed_halloween_score_message_ids
 # ╭───────────────────────────────╮
 # │   🤎  Suppress Logs  🤍      │
 # ╰───────────────────────────────╯
@@ -220,7 +221,8 @@ async def refresh_all_caches():
     processed_fishing_messages.clear()
     processed_caught_messages.clear()
     processed_explore_caught_messages.clear()
-    pretty_log(tag="", message="Processed Fishing, Explore and Caught Messages has been cleared", label="🧸 Cache Refresher")
+    processed_halloween_score_message_ids.clear()
+    pretty_log(tag="", message="All caches refreshed and processed messages are cleared.", label="🧸 Cache Refresher")
 
 
 # ╭───────────────────────────────╮
@@ -332,8 +334,10 @@ async def startup_checklist(bot: commands.Bot):
         weekly_goal_cache,
         daily_faction_ball_cache,
         faction_ball_alert_cache,
+        halloween_con_top_cache,
+        halloween_contests_alert_cache,
     )
-
+    fourth_place_score = halloween_con_top_cache.get("fourth_place", {}).get("score", 0)
     print("\n★━━━━━━━━━━━━━━━━━━━━★")
     print(f"✅ {len(bot.cogs)} 🌼 Cogs Loaded")
     print(f"✅ 🌊 {get_water_state()} Waterstate")  # use getter
@@ -349,6 +353,8 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {len(user_captcha_alert_cache)} 🛡️  Captcha Alert Users")
     print(f"✅ {len(res_fossils_alert_cache)} 🦴  Research Fossils Alert Users")
     print(f"✅ {len(faction_ball_alert_cache)} 🥟  Faction Ball Alert Users")
+    print(f"✅ {len(halloween_contests_alert_cache)} 🎃  Halloween Contest Alert Users")
+    print(f"✅ {fourth_place_score} 🎃  Halloween Con Fourth Place Score")
     print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
     print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
     pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"

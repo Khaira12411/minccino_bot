@@ -38,6 +38,7 @@ from utils.loggers.pretty_logs import pretty_log
 from utils.listener_func.faction_ball_alert import faction_ball_alert
 from utils.listener_func.faction_ball_listener import extract_faction_ball_from_daily, extract_faction_ball_from_fa
 from utils.listener_func.special_battle_npc_listener import special_battle_npc_listener
+from utils.listener_func.halloween_contest_listener import halloween_contest_embed_listener
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
 CC_BOT_LOG_ID = 1413576563559239931
@@ -253,6 +254,16 @@ class MessageCreateListener(commands.Cog):
                                 bot=self.bot, message=message
                             )
 
+
+                # 🎃 Halloween Contest Embed Listener
+                if first_embed:
+                    embed_author = first_embed.author.name if first_embed.author else ""
+                    if embed_author and "halloween catch contest" in embed_author.lower():
+                        pretty_log(
+                            "info",
+                            f"🎃 Matched Halloween Contest Embed Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
+                        await halloween_contest_embed_listener(bot=self.bot, message=message)
             # 🌊 Waterstate channel processing ---
             if message.channel.id == WATERSTATE_CHANNEL_ID:
                 await on_waterstate_message(message)

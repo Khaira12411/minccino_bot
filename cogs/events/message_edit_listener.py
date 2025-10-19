@@ -22,6 +22,9 @@ from utils.listener_func.explore_caught_listener import explore_caught_listener
 from utils.listener_func.faction_ball_alert import faction_ball_alert
 from utils.listener_func.fish_reco_ping import recommend_fishing_ball
 from utils.listener_func.fl_rs import fl_rs_checker
+from utils.listener_func.halloween_contest_listener import (
+    halloween_contest_score_listener,
+)
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.pokemon_caught import pokemon_caught_listener
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
@@ -138,6 +141,21 @@ class MessageEditListener(commands.Cog):
                             bot=self.bot,
                         )
                         await faction_ball_alert(before=before, after=after)
+
+                # 🎃 Halloween Contest Score Listener
+                content = after.content
+                if (
+                    content
+                    and ":jack_o_lantern: your catch earned a score of"
+                    in content.lower()
+                ):
+                    """pretty_log(
+                        "info",
+                        f"🎃 Matched Halloween Contest Score Listener | Message ID: {after.id} | Channel: {after.channel.name}",
+                    )"""
+                    await halloween_contest_score_listener(
+                        bot=self.bot, before_message=before, message=after
+                    )
         except Exception as e:
             pretty_log(
                 tag="critical",

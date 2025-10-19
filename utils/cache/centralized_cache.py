@@ -23,6 +23,8 @@ from utils.cache.straymon_member_cache import straymon_member_cache, load_straym
 from utils.cache.weekly_goal_tracker_cache import weekly_goal_cache, load_weekly_goal_cache
 from utils.cache.daily_fa_ball_cache import daily_faction_ball_cache, load_daily_faction_ball_cache
 from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache, load_faction_ball_alert_cache
+from utils.cache.halloween_con_top_cache import load_halloween_con_top_cache, halloween_con_top_cache
+from utils.cache.halloween_contest_cache import load_halloween_contest_alert_cache, halloween_contests_alert_cache
 # 🐾────────────────────────────────────────────
 #     💜 Load Everything in One Go
 # 🐾────────────────────────────────────────────
@@ -71,6 +73,12 @@ async def load_all_caches(bot):
         # 🎯 Faction Ball Alert
         await load_faction_ball_alert_cache(bot)
 
+        # 🎃 Halloween Contest Alert Cache
+        await load_halloween_contest_alert_cache(bot)
+
+        # 🎃 Halloween Con Top Cache
+        await load_halloween_con_top_cache(bot)
+
         # 🎀 Unified single-line log with all caches
         pretty_log(
             tag="",
@@ -87,6 +95,8 @@ async def load_all_caches(bot):
                 f"Captcha Alerts: {len(user_captcha_alert_cache)},"
                 f"Faction Ball Alerts: {len(faction_ball_alert_cache)},"
                 f"Res Fossils Alerts: {len(res_fossils_alert_cache)})"
+                f"Halloween Contest Alerts: {len(halloween_contests_alert_cache)},"
+                f"Halloween Con Fourth Place Score: {halloween_con_top_cache.get('fourth_place', {}).get('score', 0)}"
 
             ),
             label="🥨 CENTRAL CACHE",
