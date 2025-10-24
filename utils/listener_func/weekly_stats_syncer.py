@@ -2,10 +2,10 @@ import re
 
 import discord
 
-from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
 from utils.loggers.pretty_logs import pretty_log
-from config.aesthetic import Emojis
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from config.current_setup import STRAYMONS_GUILD_ID
+from utils.listener_func.pokemon_caught import weekly_goal_checker
 
 # 🌸───────────────────────────────────────────────🌸
 # 🩷 ⏰ Weekly Stats Syncer Listener               🩷
@@ -16,10 +16,6 @@ async def weekly_stats_syncer(bot, before:discord.Message, message: discord.Mess
         fetch_weekly_goal_cache_by_name,
         mark_weekly_goal_dirty,
         set_weekly_stats,
-        update_weekly_angler_mark,
-        update_weekly_grinder_mark,
-        update_weekly_requirement_mark,
-        update_weekly_guardian_mark,
         weekly_goal_cache,
     )
     pretty_log(
@@ -103,78 +99,12 @@ async def weekly_stats_syncer(bot, before:discord.Message, message: discord.Mess
     mark_weekly_goal_dirty(user_id)
 
     # Check if user is eligible for roles
-    if pokemon_caught >= 175 and not weekly_goal_cache[user_id].get(
-        "weekly_requirement_mark"
-    ):
-        update_weekly_requirement_mark(user.id)
-        await message.channel.send(
-            f"Congratulations {user.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉\nDouble-check your stats by running `;clan stats w` and finding your name."
-        )
-        goal_tracker_channel = message.guild.get_channel(
-            STRAYMONS__TEXT_CHANNELS.goal_tracker
-        )
-        if goal_tracker_channel:
-            await goal_tracker_channel.send(
-                f"{Emojis.gray_star} {user.display_name} has reached the Weekly requirement catch goal of 175!"
-            )
-    if pokemon_caught >= 2000 and not weekly_goal_cache[user_id].get(
-        "weekly_grinder_mark"
-    ):
-        update_weekly_grinder_mark(user.id)
-        await message.channel.send(
-            f"🎉 Wow {user.display_name}! You've caught over 2000 Pokémon this week and earned the **Weekly Grinder** role! Check /active-giveaways for any current Weekly Grinder giveaways."
-        )
-        weekly_grinder_role = message.guild.get_role(STRAYMONS__ROLES.weekly_grinder)
-        if weekly_grinder_role and weekly_grinder_role not in user.roles:
-            await user.add_roles(
-                weekly_grinder_role, reason="Reached 2000 Pokémon caught in Weekly Goal"
-            )
-        goal_tracker_channel = message.guild.get_channel(
-            STRAYMONS__TEXT_CHANNELS.goal_tracker
-        )
-        if goal_tracker_channel:
-            await goal_tracker_channel.send(
-                f"{Emojis.medal} {user.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon! {Emojis.celebrate}"
-            )
-
-        pretty_log(
-            "info",
-            f"Assigned Weekly Grinder role to {user.display_name} ({user_id})",
-            label="💠 WEEKLY GOAL",
+    guild = bot.get_guild(STRAYMONS_GUILD_ID)
+    if guild:
+        await weekly_goal_checker(
             bot=bot,
-        )
-    if fish_caught >= 500 and not weekly_goal_cache[user_id].get("weekly_angler_mark"):
-        update_weekly_angler_mark(user.id)
-        await message.channel.send(
-            f"Congratulations {user.display_name}! You've reached the weekly angler goal of catching 500 fish! 🎉 We are also giving you the role of Weekly Angler"
-        )
-        weekly_angler_role = message.guild.get_role(STRAYMONS__ROLES.weekly_angler)
-        if weekly_angler_role and weekly_angler_role not in user.roles:
-            await user.add_roles(
-                weekly_angler_role, reason="Reached 500 fish caught in Weekly Goal"
-            )
-        pretty_log(
-            "info",
-            f"Assigned Weekly Angler role to {user.display_name} ({user_id})",
-            label="💠 WEEKLY GOAL",
-            bot=bot,
-        )
-    if battles_won >= 300 and not weekly_goal_cache[user_id].get(
-        "weekly_guardian_mark"
-    ):
-        await message.channel.send(
-            f"🏆 **{user.display_name}** has reached **300 Battles Won** this week "
-            f"and earned the **Weekly Guardian** role!"
-        )
-        weekly_guardian_role = message.guild.get_role(STRAYMONS__ROLES.weekly_guardian)
-        if weekly_guardian_role and weekly_guardian_role not in user.roles:
-            await user.add_roles(
-                weekly_guardian_role, reason="Reached 300 battles won in Weekly Goal"
-            )
-        update_weekly_guardian_mark(user.id)
-        pretty_log(
-            "info",
-            f"Assigned Weekly Guardian role to {user.display_name} ({user_id})",
-            label="💠 WEEKLY GOAL",
-            bot=bot,
+            guild=guild,
+            member=user,
+            member_info=weekly_goal_cache.get(user_id),
+            channel=message.channel,
         )

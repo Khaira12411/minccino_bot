@@ -3,15 +3,17 @@ import re
 import discord
 
 from config.aesthetic import *
-from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
+from config.current_setup import STRAYMONS_GUILD_ID
 from utils.database.weekly_goal_tracker_db_func import upsert_weekly_goal
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.listener_func.pokemon_caught import weekly_goal_checker
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
 # Enable debug for this function
 # enable_debug(f"{__name__}.explore_caught_listener")
 processed_explore_caught_messages = set()
+
 
 # 💠────────────────────────────────────────────
 #           👂 Explore Caught Listener Event
@@ -21,12 +23,8 @@ async def explore_caught_listener(
 ):
     from utils.cache.straymon_member_cache import fetch_straymon_member_cache
     from utils.cache.weekly_goal_tracker_cache import (
-        increment_fish_caught,
         mark_weekly_goal_dirty,
         set_pokemon_caught,
-        update_weekly_angler_mark,
-        update_weekly_grinder_mark,
-        update_weekly_requirement_mark,
         weekly_goal_cache,
     )
 
@@ -95,7 +93,10 @@ async def explore_caught_listener(
         return
 
     caught_count = int(match.group(1))
-    debug_log(f"🎯 Explore Caught detected for {member_name}: {caught_count} Pokémon", highlight=True)
+    debug_log(
+        f"🎯 Explore Caught detected for {member_name}: {caught_count} Pokémon",
+        highlight=True,
+    )
 
     # ✅ DEBUG: Log current cache state
     current_caught = weekly_goal_cache[member_id].get("pokemon_caught", 0)
@@ -128,43 +129,14 @@ async def explore_caught_listener(
 
     total_caught = weekly_goal_cache[member_id].get("pokemon_caught", 0)
 
-    # Announce Grinder milestone if reached
-    if total_caught >= 175 and not weekly_goal_cache[member_id].get(
-        "weekly_requirement_mark"
-    ):
-        update_weekly_requirement_mark(member.id)
-        await after.channel.send(
-            f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉\nDouble-check your stats by running `;clan stats w` and finding your name."
+    # Check for weekly goal milestones
+    member_info = weekly_goal_cache.get(member_id)
+    guild = bot.get_guild(STRAYMONS_GUILD_ID)
+    if guild:
+        await weekly_goal_checker(
+            bot=bot,
+            guild=guild,
+            member=member,
+            member_info=member_info,
+            channel=after.channel,
         )
-        goal_tracker_channel = after.guild.get_channel(
-            STRAYMONS__TEXT_CHANNELS.goal_tracker
-        )
-        if goal_tracker_channel:
-            await goal_tracker_channel.send(
-                f"{Emojis.gray_star} {member.display_name} has reached the Weekly requirement catch goal of 175!"
-            )
-    if total_caught >= 2000 and not weekly_goal_cache[member_id].get(
-        "weekly_grinder_mark"
-    ):
-        update_weekly_grinder_mark(member.id)
-        await after.channel.send(
-            f"🎉 Wow {member.display_name}! You've caught over 2000 Pokémon this week and earned the **Weekly Grinder** role! Check /active-giveaways for any current Weekly Grinder giveaways."
-        )
-        weekly_grinder_role = after.guild.get_role(STRAYMONS__ROLES.weekly_grinder)
-        if weekly_grinder_role and weekly_grinder_role not in member.roles:
-            await member.add_roles(
-                weekly_grinder_role, reason="Reached 2000 Pokémon caught in Weekly Goal"
-            )
-            pretty_log(
-                "info",
-                f"Assigned Weekly Grinder role to {member_name} ({member_id})",
-                label="💠 WEEKLY GOAL",
-                bot=bot,
-            )
-        goal_tracker_channel = after.guild.get_channel(
-            STRAYMONS__TEXT_CHANNELS.goal_tracker
-        )
-        if goal_tracker_channel:
-            await goal_tracker_channel.send(
-                f"{Emojis.medal} {member.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon! {Emojis.celebrate}"
-            )
