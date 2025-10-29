@@ -195,15 +195,15 @@ async def startup_tasks():
         refresh_all_caches.start()
 
     # ── 🤎🐾 Status Rotator 🐾🤎 ──
-    if not status_rotator.is_running():
+    """if not status_rotator.is_running():
         status_rotator.start()
-    activity_type, message = pick_status_tuple()
+    activity_type, message = pick_status_tuple()"""
     await bot.change_presence(
-        activity=discord.Activity(type=activity_type, name=message)
+        activity=discord.Activity(type=discord.ActivityType.playing, name="🐭 /commands")
     )
     pretty_log(
         tag="",
-        message=f"Initial presence set: {activity_type} {message}",
+        message=f"Initial presence set: 🐭 /commands",
         label="🍵 Status Rotator",
     )
     await startup_checklist(bot)
