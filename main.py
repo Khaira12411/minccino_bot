@@ -314,8 +314,7 @@ async def setup_hook():
 
     # ── 🤎 Scheduler Setup ──
     await setup_scheduler(bot)
-    # Optional: store scheduler manager on bot for easy access later
-    bot.scheduler_manager = bot.scheduler_manager or None
+
 # ╭───────────────────────────────╮
 # │     🤎  Startup Checklist  🤍  │
 # ╰───────────────────────────────╯
@@ -361,14 +360,6 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {pg_status} 🧀  PostgreSQL Pool")
     total_slash_commands = sum(1 for _ in bot.tree.walk_commands())
     print(f"✅ {total_slash_commands} 🍞 Slash Commands Synced")
-    # Check weekly goals reset job
-    scheduler_status = "Not Scheduled"
-    if hasattr(bot, "scheduler_manager") and bot.scheduler_manager:
-        job = bot.scheduler_manager.jobs.get("weekly_goals_reset")
-        if job:
-            scheduler_status = f"Scheduled ✅ next run: {job.next_run_time}"
-
-    print(f"✅ {scheduler_status} ⏰ Weekly Goals Reset")
     print("★━━━━━━━━━━━━━━━━━━━━★\n")
 
 
