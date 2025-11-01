@@ -140,8 +140,8 @@ def parse_pokemeow_spawn(message: discord.Message):
         elif (
             not rarity
             and footer_text
-            or (embed.color and embed.color.value == HALLOWEEN_COLOR)
-            or (embed.color and embed.color.value == EVENT_EXCL_COLOR)
+            and embed.color
+            and embed.color.value not in embed_rarity_color.values()
         ):
             pretty_log(
                 "debug",
@@ -153,8 +153,7 @@ def parse_pokemeow_spawn(message: discord.Message):
                 pretty_log("debug", f"Parsed rarity from footer: {rarity}")
             else:
                 pretty_log(
-                    "debug",
-                    f"Rarity regex did not match. Footer text: {footer_text!r}"
+                    "debug", f"Rarity regex did not match. Footer text: {footer_text!r}"
                 )
 
         # Special case: Shiny embeds

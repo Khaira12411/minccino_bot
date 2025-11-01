@@ -80,7 +80,7 @@ async def weekly_goal_checker(
                 reason="Reached 2000 Pokémon caught in Weekly Goal",
             )
         await channel.send(
-            f"🎉 Wow {member.display_name}! You've caught over 2000 Pokémon this week and earned the **Weekly Grinder** role! Check /active-giveaways for any current Weekly Grinder giveaways."
+            f"🎉 Wow {member.display_name}! You've caught over 2000 Pokémon this week and earned the **Weekly Grinder** role!\n\nCheck /active-giveaways for any current Weekly Grinder giveaways."
         )
         pretty_log(
             "info",
