@@ -119,7 +119,12 @@ class MessageEditListener(commands.Cog):
 
                 # Process for Feeling Lucky rarespawn
                 if after.channel.id == STRAYMONS__TEXT_CHANNELS.feeling_lucky:
-                    await fl_rs_checker(bot=self.bot, message=after)
+                    if after.embeds:
+                        embed_description = after.embeds[0].description or ""
+                        if embed_description and "You caught a" in embed_description:
+                            await fl_rs_checker(bot=self.bot, message=after)
+
+
 
                 # Faction Ball Alert
                 if after.embeds:
