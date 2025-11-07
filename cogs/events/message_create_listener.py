@@ -173,8 +173,9 @@ class MessageCreateListener(commands.Cog):
                 if first_embed:
                     if first_embed.description and "daily streak" in first_embed.description.lower():
                         await extract_faction_ball_from_daily(bot=self.bot, message=message)
-                # Special Battle NPC Listener
-                if first_embed:
+
+                # Special Battle NPC Listener (Disabled for now)
+                """if first_embed:
                     if (
                         first_embed.description
                         and "challenged <:irida:1428149067673767996> **Irida** to a battle!"
@@ -184,7 +185,7 @@ class MessageCreateListener(commands.Cog):
                             "info",
                             f"🔹 Matched Special Battle NPC Listener for Irida | message_id={message.id}",
                         )
-                        await special_battle_npc_listener(bot=self.bot, message=message)
+                        await special_battle_npc_listener(bot=self.bot, message=message)"""
 
                 # 🛡️ Captcha Alert Listener
                 if first_embed:

@@ -22,8 +22,8 @@ async def daily_ball_reset(bot):
             bot=bot,
         )
 
-    #todo remove after november 7
-    try:
+    #Disable Halloween contest top data clear for now
+    """try:
         await clear_halloween_con_top(bot)
         pretty_log(
             tag="background_task",
@@ -35,4 +35,4 @@ async def daily_ball_reset(bot):
             tag="error",
             message=f"Failed to clear halloween contest top data: {e}",
             bot=bot,
-        )
+        )"""

@@ -74,10 +74,10 @@ async def load_all_caches(bot):
         await load_faction_ball_alert_cache(bot)
 
         # 🎃 Halloween Contest Alert Cache
-        await load_halloween_contest_alert_cache(bot)
+        #await load_halloween_contest_alert_cache(bot)
 
-        # 🎃 Halloween Con Top Cache
-        await load_halloween_con_top_cache(bot)
+        # 🎃 Halloween Con Top Cache Disabled for now
+        #await load_halloween_con_top_cache(bot)
 
         # 🎀 Unified single-line log with all caches
         pretty_log(
@@ -95,8 +95,8 @@ async def load_all_caches(bot):
                 f"Captcha Alerts: {len(user_captcha_alert_cache)},"
                 f"Faction Ball Alerts: {len(faction_ball_alert_cache)},"
                 f"Res Fossils Alerts: {len(res_fossils_alert_cache)})"
-                f"Halloween Contest Alerts: {len(halloween_contests_alert_cache)},"
-                f"Halloween Con Fourth Place Score: {halloween_con_top_cache.get('fourth_place', {}).get('score', 0)}"
+                #f"Halloween Contest Alerts: {len(halloween_contests_alert_cache)},"
+                #f"Halloween Con Fourth Place Score: {halloween_con_top_cache.get('fourth_place', {}).get('score', 0)}"
 
             ),
             label="🥨 CENTRAL CACHE",

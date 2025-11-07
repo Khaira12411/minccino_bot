@@ -147,20 +147,16 @@ class MessageEditListener(commands.Cog):
                         )
                         await faction_ball_alert(before=before, after=after)
 
-                # 🎃 Halloween Contest Score Listener
-                content = after.content
+                # 🎃 Halloween Contest Score Listener (Disabled for now)
+                """content = after.content
                 if (
                     content
                     and ":jack_o_lantern: your catch earned a score of"
                     in content.lower()
                 ):
-                    """pretty_log(
-                        "info",
-                        f"🎃 Matched Halloween Contest Score Listener | Message ID: {after.id} | Channel: {after.channel.name}",
-                    )"""
                     await halloween_contest_score_listener(
                         bot=self.bot, before_message=before, message=after
-                    )
+                    )"""
         except Exception as e:
             pretty_log(
                 tag="critical",

@@ -53,8 +53,8 @@ class CentralLoop(commands.Cog):
                 # 💠 Flush any dirty weekly goal stats to DB
                 await flush_weekly_goal_cache(self.bot)
 
-                # ⏰ Check if any special battle timers are due
-                await special_battle_timer_checker(bot=self.bot)
+                # ⏰ Check if any special battle timers are due  (Disabled for now)
+                #await special_battle_timer_checker(bot=self.bot)
 
             except Exception as e:
                 pretty_log(
