@@ -25,6 +25,12 @@ legendary_color = rarity_meta.get("legendary")["color"]
 event_exclusive_color = rarity_meta.get("event_exclusive")["color"]
 
 RARE_COLORS = {shiny_color, legendary_color, event_exclusive_color}
+NON_RARE_COLORS = {
+    rarity_meta.get("common")["color"],
+    rarity_meta.get("uncommon")["color"],
+    rarity_meta.get("rare")["color"],
+    rarity_meta.get("superrare")["color"],
+}
 
 
 # ❀─────────────────────────────────────────❀
@@ -49,7 +55,11 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
 
     embed = message.embeds[0]
     embed_color = embed.color
-    if embed.color and embed.color.value not in RARE_COLORS:
+    if (
+        embed.color
+        and embed.color.value not in RARE_COLORS
+        and embed.color.value in NON_RARE_COLORS
+    ):
         pretty_log(
             tag="info",
             message="Feeling Lucky spawn is not rare. Exiting FL RS Checker.",
@@ -58,9 +68,39 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
         )
         return
 
+    rarity = "unknown"
     member = await get_pokemeow_reply_member(message=message)
     if not member:
         return
+
+    # If unknown color, extract rarity from footer
+    if embed.color and embed.color.value not in RARE_COLORS:
+        if embed.footer and embed.footer.text:
+            pretty_log(
+                tag="info",
+                message="Feeling Lucky spawn has unknown color. Attempting to extract rarity from footer.",
+                label="🍀 FL RS CHECKER",
+                bot=bot,
+            )
+            extracted_rarity = extract_rarity_from_footer(embed.footer.text)
+            if extracted_rarity:
+                rarity = extracted_rarity
+
+                if rarity.lower() != "legendary":
+                    pretty_log(
+                        tag="info",
+                        message=f"Extracted rarity from footer: {rarity}. Exiting FL RS Checker.",
+                        label="🍀 FL RS CHECKER",
+                        bot=bot,
+                    )
+                    return
+                else:
+                    pretty_log(
+                        tag="info",
+                        message="Extracted rarity is legendary. Continuing FL RS Checker.",
+                        label="🍀 FL RS CHECKER",
+                        bot=bot,
+                    )
 
     # Extract Pokémon name
     pokemon_name = None
@@ -69,19 +109,20 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
         if catch_match:
             pokemon_name = catch_match.group(1).strip()
 
-    if embed.color.value == legendary_color:
-        rarity = "legendary"
-    elif embed.color.value == shiny_color:
-        rarity = "shiny"
-        pokemon_name = pokemon_name.replace("Shiny ", "")
-    elif embed.color.value == event_exclusive_color:
-        # Extract rarity from footer for event exclusive
-        if embed.footer and embed.footer.text:
-            rarity = extract_rarity_from_footer(embed.footer.text)
-            if rarity.lower() == "super rare":
-                rarity = "superrare"
-        else:
-            rarity = "event_exclusive"
+    if rarity == "unknown":
+        if embed.color.value == legendary_color:
+            rarity = "legendary"
+        elif embed.color.value == shiny_color:
+            rarity = "shiny"
+            pokemon_name = pokemon_name.replace("Shiny ", "")
+        elif embed.color.value == event_exclusive_color:
+            # Extract rarity from footer for event exclusive
+            if embed.footer and embed.footer.text:
+                rarity = extract_rarity_from_footer(embed.footer.text)
+                if rarity.lower() == "super rare":
+                    rarity = "superrare"
+            else:
+                rarity = "event_exclusive"
 
     image_url = embed.image.url if embed.image else None
 
