@@ -1,3 +1,6 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 import discord
 
 from config.aesthetic import *
@@ -11,6 +14,15 @@ FISHING_COLOR = 0x87CEFA
 processed_caught_messages = set()
 
 
+def is_saturday_1155pm_est():
+    """
+    Returns True if the current time in America/New_York is Saturday at 11:55 PM or later (before midnight).
+    """
+    nyc = ZoneInfo("America/New_York")
+    now_nyc = datetime.now(nyc)
+    return now_nyc.weekday() == 5 and now_nyc.hour == 23 and now_nyc.minute >= 55
+
+
 async def weekly_goal_checker(
     bot: discord.Client,
     member: discord.Member,
@@ -21,9 +33,18 @@ async def weekly_goal_checker(
     from utils.cache.weekly_goal_tracker_cache import (
         update_weekly_angler_mark,
         update_weekly_grinder_mark,
+        update_weekly_guardian_mark,
         update_weekly_requirement_mark,
-        update_weekly_guardian_mark
     )
+
+    if is_saturday_1155pm_est():
+        pretty_log(
+            "info",
+            f"Skipping weekly goal check for {member.name} ({member.id}) as it's Saturday 11:55 PM EST or later.",
+            label="💠 WEEKLY GOAL",
+            bot=bot,
+        )
+        return
 
     pokemon_caught = member_info.get("pokemon_caught", 0)
     fish_caught = member_info.get("fish_caught", 0)
@@ -112,8 +133,9 @@ async def weekly_goal_checker(
         pretty_log(
             "info",
             f"Assigned Weekly Guardian role to {member.name} ({member.id})",
-            label="💠 WEEKLY GOAL"
+            label="💠 WEEKLY GOAL",
         ),
+
 
 # 💠────────────────────────────────────────────
 #           👂 Pokemon Caught Listener Event
