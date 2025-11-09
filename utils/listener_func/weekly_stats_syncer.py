@@ -2,22 +2,27 @@ import re
 
 import discord
 
-from utils.loggers.pretty_logs import pretty_log
-from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from config.current_setup import STRAYMONS_GUILD_ID
+from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.listener_func.pokemon_caught import weekly_goal_checker
+from utils.loggers.pretty_logs import pretty_log
+
 
 # 🌸───────────────────────────────────────────────🌸
 # 🩷 ⏰ Weekly Stats Syncer Listener               🩷
 # 🌸───────────────────────────────────────────────🌸
-async def weekly_stats_syncer(bot, before:discord.Message, message: discord.Message):
-    from utils.cache.straymon_member_cache import fetch_straymon_member_cache_by_name, fetch_straymon_member_cache
+async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Message):
+    from utils.cache.straymon_member_cache import (
+        fetch_straymon_member_cache,
+        fetch_straymon_member_cache_by_name,
+    )
     from utils.cache.weekly_goal_tracker_cache import (
         fetch_weekly_goal_cache_by_name,
         mark_weekly_goal_dirty,
         set_weekly_stats,
         weekly_goal_cache,
     )
+
     pretty_log(
         "info",
         f"Weekly Stats Syncer triggered by message ID {message.id} in channel {message.channel.id}",
@@ -89,6 +94,21 @@ async def weekly_stats_syncer(bot, before:discord.Message, message: discord.Mess
         user = replied_member
         user_id = user.id
 
+    # Get top line catches
+    user_top_line_match = re.search(
+        r"You're Rank \d+ in your clan's monthly stats — with ([\d,]+) catches!",
+        embed_description,
+    )
+    top_line_catches = 0
+    if user_top_line_match:
+        top_line_catches = int(user_top_line_match.group(1).replace(",", ""))
+        pretty_log(
+            "info",
+            f"Top line catches for {user_name}: {top_line_catches}",
+            label="💠 WEEKLY STATS DEBUG",
+            bot=bot,
+        )
+
     # Update weekly stats
     set_weekly_stats(
         user=user,
@@ -107,4 +127,5 @@ async def weekly_stats_syncer(bot, before:discord.Message, message: discord.Mess
             member=user,
             member_info=weekly_goal_cache.get(user_id),
             channel=message.channel,
+            top_line_catches=top_line_catches,
         )

@@ -29,6 +29,7 @@ async def weekly_goal_checker(
     member_info: dict,
     channel: discord.TextChannel,
     guild: discord.Guild,
+    top_line_catches: int = None,
 ):
     from utils.cache.weekly_goal_tracker_cache import (
         update_weekly_angler_mark,
@@ -76,48 +77,54 @@ async def weekly_goal_checker(
                 bot=bot,
             )
     # Check if they have reached Weekly Requirement
-    if (pokemon_caught >= 175 or total_caught >= 175) and not weekly_requirement_mark:
-        update_weekly_requirement_mark(member.id, True)
-        await channel.send(
-            f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉\nDouble-check your stats by running `;clan stats w` and finding your name."
-        )
-        if goal_tracker_channel:
-            await goal_tracker_channel.send(
-                f"{Emojis.gray_star} {member.display_name} has reached the Weekly requirement catch goal of 175!"
+    if not weekly_requirement_mark:
+        if (pokemon_caught >= 175 or total_caught >= 175) or (
+            top_line_catches and top_line_catches >= 175
+        ):
+            update_weekly_requirement_mark(member.id, True)
+            await channel.send(
+                f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉\nDouble-check your stats by running `;clan stats w` and finding your name."
             )
-        pretty_log(
-            "info",
-            f"{member.name} ({member.id}) has reached the Weekly Requirement goal | Pokémon Caught: {pokemon_caught}, Total Caught: {total_caught}",
-            label="💠 WEEKLY GOAL",
-        )
+            if goal_tracker_channel:
+                await goal_tracker_channel.send(
+                    f"{Emojis.gray_star} {member.display_name} has reached the Weekly requirement catch goal of 175!"
+                )
+            pretty_log(
+                "info",
+                f"{member.name} ({member.id}) has reached the Weekly Requirement goal | Pokémon Caught: {pokemon_caught}, Total Caught: {total_caught}",
+                label="💠 WEEKLY GOAL",
+            )
 
     # Check if they have reached Weekly Grinder
-    if (pokemon_caught >= 2000 or total_caught >= 2000) and not weekly_grinder_mark:
-        update_weekly_grinder_mark(member.id, True)
-        weekly_grinder_role = member.guild.get_role(STRAYMONS__ROLES.weekly_grinder)
-        if weekly_grinder_role and weekly_grinder_role not in member.roles:
-            await member.add_roles(
-                weekly_grinder_role,
-                reason="Reached 2000 Pokémon caught in Weekly Goal",
+    if not weekly_grinder_mark:
+        if (pokemon_caught >= 2000 or total_caught >= 2000) or (
+            top_line_catches and top_line_catches >= 2000
+        ):
+            update_weekly_grinder_mark(member.id, True)
+            weekly_grinder_role = member.guild.get_role(STRAYMONS__ROLES.weekly_grinder)
+            if weekly_grinder_role and weekly_grinder_role not in member.roles:
+                await member.add_roles(
+                    weekly_grinder_role,
+                    reason="Reached 2000 Pokémon caught in Weekly Goal",
+                )
+            await channel.send(
+                f"🎉 Wow {member.display_name}! You've caught over 2000 Pokémon this week and earned the **Weekly Grinder** role!\n\nCheck /active-giveaways for any current Weekly Grinder giveaways."
             )
-        await channel.send(
-            f"🎉 Wow {member.display_name}! You've caught over 2000 Pokémon this week and earned the **Weekly Grinder** role!\n\nCheck /active-giveaways for any current Weekly Grinder giveaways."
-        )
-        pretty_log(
-            "info",
-            f"Assigned Weekly Grinder role to {member.name} ({member.id})",
-            label="💠 WEEKLY GOAL",
-            bot=bot,
-        )
-        if goal_tracker_channel:
-            await goal_tracker_channel.send(
-                f"{Emojis.medal} {member.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon! {Emojis.celebrate}"
+            pretty_log(
+                "info",
+                f"Assigned Weekly Grinder role to {member.name} ({member.id})",
+                label="💠 WEEKLY GOAL",
+                bot=bot,
             )
-        pretty_log(
-            "info",
-            f"{member.name} ({member.id}) has reached the Weekly Grinder goal | Pokémon Caught: {pokemon_caught}, Total Caught: {total_caught}",
-            label="💠 WEEKLY GOAL",
-        )
+            if goal_tracker_channel:
+                await goal_tracker_channel.send(
+                    f"{Emojis.medal} {member.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon! {Emojis.celebrate}"
+                )
+            pretty_log(
+                "info",
+                f"{member.name} ({member.id}) has reached the Weekly Grinder goal | Pokémon Caught: {pokemon_caught}, Total Caught: {total_caught}",
+                label="💠 WEEKLY GOAL",
+            )
 
     # Check if they have reached Weekly Guardian
     if battles_won >= 300 and not weekly_guardian_mark:
