@@ -105,7 +105,6 @@ class MessageEditListener(commands.Cog):
                             bot=self.bot,
                             before=before,
                             message=after,
-                            context="edit message",
                         )
 
                 # Process for Explore Caught

@@ -169,7 +169,6 @@ class MessageCreateListener(commands.Cog):
                             bot=self.bot,
                             before=message,
                             message=message,
-                            context="create message",
                         )
                 # Faction Ball Alert
                 if first_embed:

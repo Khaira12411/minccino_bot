@@ -4,14 +4,17 @@ import discord
 
 from config.current_setup import STRAYMONS_GUILD_ID
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
-from utils.listener_func.pokemon_caught import weekly_goal_checker
+from utils.listener_func.pokemon_caught import (
+    is_saturday_1155pm_est,
+    weekly_goal_checker,
+)
 from utils.loggers.pretty_logs import pretty_log
 
 
 # 🌸───────────────────────────────────────────────🌸
 # 🩷 ⏰ Weekly Stats Syncer Listener               🩷
 # 🌸───────────────────────────────────────────────🌸
-async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Message, context: str):
+async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Message):
     from utils.cache.straymon_member_cache import (
         fetch_straymon_member_cache,
         fetch_straymon_member_cache_by_name,
@@ -33,12 +36,20 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
     embed = message.embeds[0]
     embed_description = embed.description or ""
 
+    if is_saturday_1155pm_est():
+        pretty_log(
+            "info",
+            f"Skipping weekly goal check as it's Saturday 11:55 PM EST or later.",
+            label="💠 WEEKLY GOAL",
+            bot=bot,
+        )
+        return
+
     # Get replied member
     replied_member = await get_pokemeow_reply_member(before)
 
     if not replied_member:
         return
-
     # Try to fetch by user ID first
     straymon_info = fetch_straymon_member_cache(replied_member.id)
 
@@ -66,63 +77,42 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
         user = replied_member
         user_id = user.id
 
-    # Initialize stats
-    rank = 0
+    # Initialize stats variables
     pokemon_caught = 0
     fish_caught = 0
     battles_won = 0
+    rank = 0
     top_line_catches = 0
 
-    if context == "create message":
-        # Get top line catches
-        user_top_line_match = re.search(
-            r"You're Rank \d+ in your clan's monthly stats — with ([\d,]+) catches!",
-            embed_description,
-        )
-        top_line_catches = 0
-        if user_top_line_match:
-            top_line_catches = int(user_top_line_match.group(1).replace(",", ""))
-            pretty_log(
-                "info",
-                f"Top line catches for {user_name}: {top_line_catches}",
-                label="💠 WEEKLY STATS DEBUG",
-                bot=bot,
-            )
-            # Check if top line catches is elgible for checking
-            if top_line_catches >= 2000 or top_line_catches >= 175:
-                pretty_log(
-                    "info",
-                    f"Top line catches {top_line_catches} is eligible for Weekly Goal Checker.",
-                    label="💠 WEEKLY STATS DEBUG",
-                    bot=bot,
-                )
-                # Update weekly stats
-                set_weekly_stats(
-                    user=user,
-                    pokemon_caught=pokemon_caught,
-                    fish_caught=fish_caught,
-                    battles_won=battles_won,
-                )
-                mark_weekly_goal_dirty(user_id)
-                return
-
-    elif context == "edit message":
-        # Updated regex to handle the actual bolded format
-        # Format: **1** **empyyy_ (newline) stats line ending with **
-        bolded_pattern = re.compile(
-            r"\*\*(\d+)\*\* \*\*(.+?)\n<:dexcaught:[^>]+> (\d+(?:,\d+)*) • <:oldrod:[^>]+> (\d+(?:,\d+)*) • <:poke_egg:[^>]+> \d+ • :tickets: \d+ • :robot: \d+ • :crossed_swords: (\d+(?:,\d+)*)\*\*"
+    # Get top line catches
+    user_top_line_match = re.search(
+        r"You're Rank \d+ in your clan's monthly stats — with ([\d,]+) catches!",
+        embed_description,
+    )
+    top_line_catches = 0
+    if user_top_line_match:
+        top_line_catches = int(user_top_line_match.group(1).replace(",", ""))
+        pretty_log(
+            "info",
+            f"Top line catches for {user_name}: {top_line_catches}",
+            label="💠 WEEKLY STATS DEBUG",
+            bot=bot,
         )
 
-        match = bolded_pattern.search(embed_description)
-        if not match:
-            pretty_log(
-                "warning",
-                "No bolded weekly stats line found - this means the user's own stats are not visible in this embed.",
-                label="💠 WEEKLY STATS DEBUG",
-                bot=bot,
-            )
-            return
+    # Updated regex to handle the actual bolded format
+    # Format: **1** **empyyy_ (newline) stats line ending with **
+    bolded_pattern = re.compile(
+        r"\*\*(\d+)\*\* \*\*(.+?)\n<:dexcaught:[^>]+> (\d+(?:,\d+)*) • <:oldrod:[^>]+> (\d+(?:,\d+)*) • <:poke_egg:[^>]+> \d+ • :tickets: \d+ • :robot: \d+ • :crossed_swords: (\d+(?:,\d+)*)\*\*"
+    )
 
+    match = bolded_pattern.search(embed_description)
+    if match:
+        pretty_log(
+            "info",
+            f"Weekly Stats regex matched for user {user_name}.",
+            label="💠 WEEKLY STATS DEBUG",
+            bot=bot,
+        )
         rank = int(match.group(1))
         user_name = match.group(2).strip()
         pokemon_caught = int(match.group(3).replace(",", ""))
@@ -155,5 +145,20 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
                 member=user,
                 member_info=weekly_goal_cache.get(user_id),
                 channel=message.channel,
-                top_line_catches=top_line_catches,
+            )
+    elif not match and top_line_catches >= 175:
+        pretty_log(
+            "info",
+            f"Weekly Stats regex did not match, but top line catches {top_line_catches} >= 175 for user {user_name}.",
+            label="💠 WEEKLY STATS DEBUG",
+        )
+        # Check if user is eligible for roles based on top line catches
+        guild = bot.get_guild(STRAYMONS_GUILD_ID)
+        if guild:
+            await weekly_goal_checker(
+                bot=bot,
+                guild=guild,
+                member=user,
+                member_info=weekly_goal_cache.get(user_id),
+                channel=message.channel,
             )
