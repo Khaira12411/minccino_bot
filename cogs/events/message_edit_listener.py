@@ -102,7 +102,10 @@ class MessageEditListener(commands.Cog):
                     embed_title = after.embeds[0].title or ""
                     if weekly_stats_trigger in embed_title:
                         await weekly_stats_syncer(
-                            bot=self.bot, before=before, message=after
+                            bot=self.bot,
+                            before=before,
+                            message=after,
+                            context="edit message",
                         )
 
                 # Process for Explore Caught
@@ -123,8 +126,6 @@ class MessageEditListener(commands.Cog):
                         embed_description = after.embeds[0].description or ""
                         if embed_description and "You caught a" in embed_description:
                             await fl_rs_checker(bot=self.bot, message=after)
-
-
 
                 # Faction Ball Alert
                 if after.embeds:

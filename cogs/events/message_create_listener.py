@@ -26,19 +26,25 @@ from utils.listener_func.boosted_channel_listener import (
 )
 from utils.listener_func.captcha_alert_listener import captcha_alert_handler
 from utils.listener_func.catchbot_listener import *
+from utils.listener_func.faction_ball_alert import faction_ball_alert
+from utils.listener_func.faction_ball_listener import (
+    extract_faction_ball_from_daily,
+    extract_faction_ball_from_fa,
+)
 from utils.listener_func.feeling_lucky import feeling_lucky_cd
+from utils.listener_func.halloween_contest_listener import (
+    halloween_contest_embed_listener,
+)
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.perks_listener import auto_update_catchboost
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
+from utils.listener_func.special_battle_npc_listener import special_battle_npc_listener
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
-from utils.listener_func.faction_ball_alert import faction_ball_alert
-from utils.listener_func.faction_ball_listener import extract_faction_ball_from_daily, extract_faction_ball_from_fa
-from utils.listener_func.special_battle_npc_listener import special_battle_npc_listener
-from utils.listener_func.halloween_contest_listener import halloween_contest_embed_listener
+
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
 CC_BOT_LOG_ID = 1413576563559239931
@@ -63,6 +69,8 @@ captcha_description_trigger = (
 )
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
+
+
 class MessageCreateListener(commands.Cog):
     # 💜────────────────────────────────────────────
     # [🟣 INIT] Cog Initialization
@@ -158,21 +166,37 @@ class MessageCreateListener(commands.Cog):
                             f"Matched Weekly Stats trigger  from created message | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await weekly_stats_syncer(
-                            bot=self.bot, before=message, message=message
+                            bot=self.bot,
+                            before=message,
+                            message=message,
+                            context="create message",
                         )
                 # Faction Ball Alert
                 if first_embed:
-                    if first_embed.description and "<:team_logo:" in first_embed.description and "found a wild" in first_embed.description:
+                    if (
+                        first_embed.description
+                        and "<:team_logo:" in first_embed.description
+                        and "found a wild" in first_embed.description
+                    ):
                         await faction_ball_alert(before=message, after=message)
                 # Faction Ball Listener from ;fa command
                 if first_embed:
-                    if first_embed.author and any(f in first_embed.author.name.lower() for f in FACTIONS):
-                        await extract_faction_ball_from_fa(bot=self.bot, message=message)
+                    if first_embed.author and any(
+                        f in first_embed.author.name.lower() for f in FACTIONS
+                    ):
+                        await extract_faction_ball_from_fa(
+                            bot=self.bot, message=message
+                        )
 
                 # Daily Faction Ball Listener
                 if first_embed:
-                    if first_embed.description and "daily streak" in first_embed.description.lower():
-                        await extract_faction_ball_from_daily(bot=self.bot, message=message)
+                    if (
+                        first_embed.description
+                        and "daily streak" in first_embed.description.lower()
+                    ):
+                        await extract_faction_ball_from_daily(
+                            bot=self.bot, message=message
+                        )
 
                 # Special Battle NPC Listener (Disabled for now)
                 """if first_embed:
@@ -255,16 +279,20 @@ class MessageCreateListener(commands.Cog):
                                 bot=self.bot, message=message
                             )
 
-
                 # 🎃 Halloween Contest Embed Listener
                 if first_embed:
                     embed_author = first_embed.author.name if first_embed.author else ""
-                    if embed_author and "halloween catch contest" in embed_author.lower():
+                    if (
+                        embed_author
+                        and "halloween catch contest" in embed_author.lower()
+                    ):
                         pretty_log(
                             "info",
                             f"🎃 Matched Halloween Contest Embed Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
-                        await halloween_contest_embed_listener(bot=self.bot, message=message)
+                        await halloween_contest_embed_listener(
+                            bot=self.bot, message=message
+                        )
             # 🌊 Waterstate channel processing ---
             if message.channel.id == WATERSTATE_CHANNEL_ID:
                 await on_waterstate_message(message)
