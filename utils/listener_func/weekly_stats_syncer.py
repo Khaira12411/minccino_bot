@@ -52,6 +52,7 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
         return
     # Try to fetch by user ID first
     straymon_info = fetch_straymon_member_cache(replied_member.id)
+    user_name = replied_member.name
 
     if not straymon_info:
         # Try to fetch by user name as fallback
@@ -86,7 +87,7 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
 
     # Get top line catches
     user_top_line_match = re.search(
-        r"You're Rank \d+ in your clan's monthly stats — with ([\d,]+) catches!",
+        r"You're Rank \d+ in your clan's weekly stats — with ([\d,]+) catches!",
         embed_description,
     )
     top_line_catches = 0
@@ -98,6 +99,7 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
             label="💠 WEEKLY STATS DEBUG",
             bot=bot,
         )
+
 
     # Updated regex to handle the actual bolded format
     # Format: **1** **empyyy_ (newline) stats line ending with **
