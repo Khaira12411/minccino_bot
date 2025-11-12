@@ -28,6 +28,7 @@ from utils.listener_func.fish_reco_ping import processed_fishing_messages
 from utils.listener_func.pokemon_caught import processed_caught_messages
 from utils.listener_func.explore_caught_listener import processed_explore_caught_messages
 from utils.listener_func.halloween_contest_listener import processed_halloween_score_message_ids
+from utils.listener_func.ball_reco_ping import processed_pokemon_spawns
 # ╭───────────────────────────────╮
 # │   🤎  Suppress Logs  🤍      │
 # ╰───────────────────────────────╯
@@ -221,7 +222,8 @@ async def refresh_all_caches():
     processed_fishing_messages.clear()
     processed_caught_messages.clear()
     processed_explore_caught_messages.clear()
-    processed_halloween_score_message_ids.clear()
+    processed_pokemon_spawns.clear()
+    #processed_halloween_score_message_ids.clear()
     pretty_log(tag="", message="All caches refreshed and processed messages are cleared.", label="🧸 Cache Refresher")
 
 

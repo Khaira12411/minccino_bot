@@ -14,6 +14,7 @@ from utils.listener_func.catch_rate import *
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
+processed_pokemon_spawns = set()
 # -------------------- Regex + constants --------------------
 HELD_ITEM_PATTERN = re.compile(
     r"(?:<:[^:]+:\d+>\s*)?"  # optional NPC emoji
@@ -223,6 +224,11 @@ async def recommend_ball(message: discord.Message, bot):
             if user_id not in ball_reco_cache:
                 return  # Exit Early if not in cache
 
+        # Prevent double processing
+        if message.id in processed_pokemon_spawns:
+            return
+        processed_pokemon_spawns.add(message.id)
+
         spawn_info = parse_pokemeow_spawn(message)
         if not spawn_info:
             return None
@@ -329,10 +335,10 @@ async def recommend_ball(message: discord.Message, bot):
         if message.channel.id in boosted_channels_cache:
             channel_boost = True  # % boost from PokéMeow
 
-        #--- Revert rarity to full_odds if applicable ---
+        # --- Revert rarity to full_odds if applicable ---
         if true_rarity == "full_odds":
             rarity = "full_odds"
-            
+
         # --- Calculate best ball ---
         rarity_key = rarity_key_map[rarity]
         boost = int(user_settings.get("catch_rate_bonus", 0))
