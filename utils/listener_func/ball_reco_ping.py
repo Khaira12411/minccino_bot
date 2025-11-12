@@ -287,7 +287,12 @@ async def recommend_ball(message: discord.Message, bot):
             return None  # 🚪 hard exit for fishing spawns
 
         # --- Determine category and rarity key map ---
+        true_rarity = None
         if spawn_type == "pokemon":
+            if rarity == "full_odds":
+                true_rarity = "full_odds"
+                rarity = "shiny"  # normalize full_odds to shiny for settings check
+
             enabled = user_settings["pokemon"].get(rarity, False) if rarity else False
             category = "non_patron_gen_1_8"
             rarity_key_map = {
@@ -324,6 +329,11 @@ async def recommend_ball(message: discord.Message, bot):
         if message.channel.id in boosted_channels_cache:
             channel_boost = True  # % boost from PokéMeow
 
+        #--- Revert rarity to full_odds if applicable ---
+        if true_rarity == "full_odds":
+            rarity = "full_odds"
+            
+        # --- Calculate best ball ---
         rarity_key = rarity_key_map[rarity]
         boost = int(user_settings.get("catch_rate_bonus", 0))
         is_patreon = user_settings.get("is_patreon", False)
