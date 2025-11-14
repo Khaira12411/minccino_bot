@@ -13,7 +13,7 @@ from utils.loggers.pretty_logs import pretty_log
 
 #enable_debug(f"{__name__}.faction_ball_alert")
 FISHING_COLOR = 0x87CEFA
-
+processed_faction_ball_alerts = set()
 
 # 🛡️────────────────────────────────────────────
 #      🛡️ Faction Ball Alert Listener
@@ -39,6 +39,9 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                 f"Expected exactly one team_logo emoji, found {len(team_logo_emoji)}. Returning early."
             )
             return
+        if after.id in processed_faction_ball_alerts:
+            return
+        processed_faction_ball_alerts.add(after.id)
 
         embed_faction = (
             get_faction_by_emoji(team_logo_emoji[0]) if team_logo_emoji else None
