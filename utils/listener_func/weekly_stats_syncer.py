@@ -3,6 +3,7 @@ import re
 import discord
 
 from config.current_setup import STRAYMONS_GUILD_ID
+from utils.database.weekly_goal_tracker_db_func import upsert_weekly_goal
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.listener_func.pokemon_caught import (
     is_saturday_1155pm_est,
@@ -78,6 +79,25 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
         user = replied_member
         user_id = user.id
 
+    # Check if they are in the Weekly Goal Cache
+    weekly_goal_info = weekly_goal_cache.get(user_id)
+    if not weekly_goal_info:
+        # Upsert in db
+        channel_id = straymon_info.get("channel_id")
+        await upsert_weekly_goal(
+            bot=bot,
+            user=user,
+            pokemon_caught=0,
+            fish_caught=0,
+            battles_won=0,
+            channel_id=channel_id,
+        )
+        pretty_log(
+            "info",
+            f"Added {user_name} ({user_id}) to Weekly Goal Tracker db and cache",
+            label="💠 WEEKLY GOAL",
+        )
+
     # Initialize stats variables
     pokemon_caught = 0
     fish_caught = 0
@@ -99,7 +119,6 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
             label="💠 WEEKLY STATS DEBUG",
             bot=bot,
         )
-
 
     # Updated regex to handle the actual bolded format
     # Format: **1** **empyyy_ (newline) stats line ending with **
