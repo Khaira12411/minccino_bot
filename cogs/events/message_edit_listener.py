@@ -124,6 +124,12 @@ class MessageEditListener(commands.Cog):
                     if after.embeds:
                         embed_description = after.embeds[0].description or ""
                         if embed_description and "You caught a" in embed_description:
+                            pretty_log(
+                                "info",
+                                f"Detected Feeling Lucky rare spawn caught by {after.author} ({after.author.id})",
+                                label="🍀 FL RS",
+                                bot=self.bot,
+                            )
                             await fl_rs_checker(bot=self.bot, message=after)
 
                 # Faction Ball Alert

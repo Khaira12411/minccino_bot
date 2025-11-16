@@ -73,8 +73,46 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
     if not member:
         return
 
+    # Extract Pokémon name
+    pokemon_name = None
+    if embed.description:
+        catch_match = re.search(r"You caught a.*?\*\*([^*]+)\*\*", embed.description)
+        if catch_match:
+            pokemon_name = catch_match.group(1).strip()
+        else:
+            return
+
+    if embed.color.value == legendary_color:
+        rarity = "legendary"
+        pretty_log(
+            tag="info",
+            message="Feeling Lucky spawn is legendary.",
+            label="🍀 FL RS CHECKER",
+            bot=bot,
+        )
+    elif embed.color.value == shiny_color:
+        rarity = "shiny"
+        pokemon_name = pokemon_name.replace("Shiny ", "")
+        pretty_log(
+            tag="info",
+            message="Feeling Lucky spawn is shiny.",
+            label="🍀 FL RS CHECKER",
+            bot=bot,
+        )
+    elif embed.color.value == event_exclusive_color:
+        # Extract rarity from footer for event exclusive
+        if embed.footer and embed.footer.text:
+            rarity = extract_rarity_from_footer(embed.footer.text)
+            if rarity.lower() == "super rare":
+                rarity = "superrare"
+            pretty_log(
+                tag="info",
+                message=f"Feeling Lucky spawn is event exclusive with rarity: {rarity}.",
+                label="🍀 FL RS CHECKER",
+                bot=bot,
+            )
     # If unknown color, extract rarity from footer
-    if embed.color and embed.color.value not in RARE_COLORS:
+    elif embed.color and embed.color.value not in RARE_COLORS:
         if embed.footer and embed.footer.text:
             pretty_log(
                 tag="info",
@@ -102,31 +140,9 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
                         bot=bot,
                     )
 
-    # Extract Pokémon name
-    pokemon_name = None
-    if embed.description:
-        catch_match = re.search(r"You caught a.*?\*\*([^*]+)\*\*", embed.description)
-        if catch_match:
-            pokemon_name = catch_match.group(1).strip()
-
-    if rarity == "unknown":
-        if embed.color.value == legendary_color:
-            rarity = "legendary"
-        elif embed.color.value == shiny_color:
-            rarity = "shiny"
-            pokemon_name = pokemon_name.replace("Shiny ", "")
-        elif embed.color.value == event_exclusive_color:
-            # Extract rarity from footer for event exclusive
-            if embed.footer and embed.footer.text:
-                rarity = extract_rarity_from_footer(embed.footer.text)
-                if rarity.lower() == "super rare":
-                    rarity = "superrare"
-            else:
-                rarity = "event_exclusive"
-
     image_url = embed.image.url if embed.image else None
 
-    emoji = rarity_meta.get(rarity, rarity_meta["default"])["emoji"]
+    emoji = rarity_meta.get(rarity, rarity_meta["default"]).get("emoji", "❓")
     display_pokemon_name = f"{emoji} {pokemon_name.title()}"
 
     desc = (
