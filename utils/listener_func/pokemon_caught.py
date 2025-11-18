@@ -61,8 +61,9 @@ async def weekly_goal_checker(
     # Check for Weekly Angler role
     if fish_caught >= 500 and not weekly_angler_mark:
         weekly_angler_role = member.guild.get_role(STRAYMONS__ROLES.weekly_angler)
+        update_weekly_angler_mark(member.id, True)
         if weekly_angler_role and weekly_angler_role not in member.roles:
-            update_weekly_angler_mark(member.id, True)
+
             if weekly_angler_role and weekly_angler_role not in member.roles:
                 await member.add_roles(
                     weekly_angler_role, reason="Reached 500 fish caught in Weekly Goal"

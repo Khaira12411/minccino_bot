@@ -41,7 +41,8 @@ async def load_all_caches(bot):
         await load_straymon_member_cache(bot)
 
         # 💠 Weekly Goal Tracker cache
-        await load_weekly_goal_cache(bot)
+        if not weekly_goal_cache:
+            await load_weekly_goal_cache(bot)
 
         # 🍄 Held Item Users Ping cache
         await load_held_item_cache(bot)

@@ -11,6 +11,19 @@ from utils.listener_func.pokemon_caught import (
 )
 from utils.loggers.pretty_logs import pretty_log
 
+processed_weekly_stats_messages = set()
+
+
+def extract_current_page_number(footer_text: str) -> int | None:
+    """
+    Extracts the current page number from a PokéMeow stats embed footer.
+    Returns the page number as an int, or None if not found.
+    Example footer: "Page 1/5 • Stat categories: ;clan stats daily/weekly/monthly/yearly"
+    """
+    match = re.search(r"Page (\d+)", footer_text)
+    if match:
+        return int(match.group(1))
+    return None
 
 # 🌸───────────────────────────────────────────────🌸
 # 🩷 ⏰ Weekly Stats Syncer Listener               🩷
@@ -36,6 +49,7 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
 
     embed = message.embeds[0]
     embed_description = embed.description or ""
+    embed_footer = embed.footer.text or ""
 
     if is_saturday_1155pm_est():
         pretty_log(
@@ -79,6 +93,18 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
         user = replied_member
         user_id = user.id
 
+    if message.id in processed_weekly_stats_messages:
+        pretty_log(
+            "info",
+            f"Message ID {message.id} already processed for weekly stats. Skipping.",
+            label="💠 WEEKLY STATS",
+            bot=bot,
+        )
+        return
+    # Extract page number from footer
+    current_page = None
+    if embed.footer and embed.footer.text:
+        current_page = extract_current_page_number(embed.footer.text)
     # Check if they are in the Weekly Goal Cache
     weekly_goal_info = weekly_goal_cache.get(user_id)
     if not weekly_goal_info:
@@ -134,6 +160,7 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
             label="💠 WEEKLY STATS DEBUG",
             bot=bot,
         )
+        processed_weekly_stats_messages.add(message.id)
         rank = int(match.group(1))
         user_name = match.group(2).strip()
         pokemon_caught = int(match.group(3).replace(",", ""))
@@ -167,7 +194,7 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
                 member_info=weekly_goal_cache.get(user_id),
                 channel=message.channel,
             )
-    elif not match and top_line_catches >= 175:
+    elif not match and top_line_catches >= 175 and (current_page and current_page == 1):
         pretty_log(
             "info",
             f"Weekly Stats regex did not match, but top line catches {top_line_catches} >= 175 for user {user_name}.",
@@ -183,3 +210,4 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
                 member_info=weekly_goal_cache.get(user_id),
                 channel=message.channel,
             )
+            mark_weekly_goal_dirty(user_id)
