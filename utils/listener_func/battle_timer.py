@@ -122,11 +122,13 @@ MC_NPC_ENEMY_ID_MAP = {
     548: [741, 742, 743],  # Latios
 }
 
+
 def find_key_by_npc_id(npc_id: int):
     for key, values in MC_NPC_ENEMY_ID_MAP.items():
         if npc_id in values:
             return key
     return None
+
 
 # 💜────────────────────────────────────────────
 #   Function: detect_pokemeow_battle (with debug)
@@ -261,7 +263,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 if enemy_id and int(enemy_id) in BATTLE_TOWER_NPC_IDS:
                     battle_embed.description = ";b npc bt"
                 # Mega Chamber NPC
-                elif enemy_id and int(enemy_id) in MEGA_CHAMBER_NPC_IDS:
+                elif 600 <= int(enemy_id) <= 743:
                     mc_npc_id = find_key_by_npc_id(int(enemy_id))
                     battle_embed.description = f";b npc {mc_npc_id}"
                 # Regular NPC
