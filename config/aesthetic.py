@@ -1,4 +1,6 @@
 class Emojis:
+    duskball = "<:duskball:1440271335967162368>"
+    moonball = "<:moonball:1440271355340783748>"
     brown_flower = "<:brown_flower:1429304987690991646>"
     brown_bear_two = "<a:brown_bear_2:1429112220918485173>"
     brown_check = "<:brown_check:1429111417977442345>"

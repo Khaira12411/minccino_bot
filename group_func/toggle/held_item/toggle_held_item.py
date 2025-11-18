@@ -269,6 +269,7 @@ class HeldItemDropdown(discord.ui.Select):
             discord.SelectOption(label="Battle Items", value="battle"),
             discord.SelectOption(label="Type Boosters", value="type"),
             discord.SelectOption(label="Evolution Items", value="evolution"),
+            discord.SelectOption(label="Balls", value="balls"),
         ]
         super().__init__(
             placeholder="Choose category...",
@@ -299,6 +300,8 @@ class HeldItemDropdown(discord.ui.Select):
                 items = battle_items
             elif self.values[0] == "type":
                 items = type_boosters
+            elif self.values[0] == "balls":
+                items = balls
             else:
                 items = evolution_items
 
@@ -509,6 +512,7 @@ class HeldItemDropdown(discord.ui.Select):
             discord.SelectOption(label="Battle Items", value="battle"),
             discord.SelectOption(label="Type Boosters", value="type"),
             discord.SelectOption(label="Evolution Items", value="evolution"),
+            discord.SelectOption(label="Balls", value="balls"),
             discord.SelectOption(
                 label="All Held Items 🐭", value="all"
             ),  # New general category
@@ -555,6 +559,12 @@ class HeldItemDropdown(discord.ui.Select):
                     interaction.client, interaction.user.id, items, user_subs
                 )
                 msg_content = f"Select your items for **Evolution Items**:"
+            elif self.values[0] == "balls":
+                items = balls
+                view = ItemSelectView(
+                    interaction.client, interaction.user.id, items, user_subs
+                )
+                msg_content = f"Select your pings for **Balls**:"
             else:  # All Held Items
                 is_subscribed = "all_held_items" in user_subs
                 view = AllHeldItemsView(

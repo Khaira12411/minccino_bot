@@ -1,3 +1,4 @@
+from config.aesthetic import Emojis
 class HELD_ITEM_EMOJI:
     assaultvest = "<:assaultvest:1411663881293529098>"
     dragonscale = "<:dragonscale:1411663914999222392>"
@@ -26,6 +27,8 @@ class HELD_ITEM_EMOJI:
     metalcoat = "<:metalcoat:1411666981874171904>"
     razorclaw = "<:razorclaw:1411667054460665877>"
     blackbelt = "<:black_belt:1411667138858713220>"
+    duskball = Emojis.duskball
+    moonball = Emojis.moonball
 
 
 class HELD_ITEM_POKEMON:
@@ -251,4 +254,10 @@ evolution_items = [
     "dragonscale",
     "razorclaw",
     "razorfang",
+]
+
+# Balls
+balls = [
+    "duskball",
+    "moonball",
 ]
