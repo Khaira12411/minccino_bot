@@ -16,7 +16,8 @@ from utils.loggers.pretty_logs import pretty_log
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 battle_ready_tasks = {}
 
-
+# BATTLE TOWER NPC IDS 400 TO 407
+BATTLE_TOWER_NPC_IDS = [400, 401, 402, 403, 404, 405, 406, 407]
 # 💜────────────────────────────────────────────
 #   Function: detect_pokemeow_battle (with debug)
 # 💜────────────────────────────────────────────
@@ -146,7 +147,9 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 debug_log(f"Timer finished. Enemy ID={enemy_id}")
 
                 battle_embed = discord.Embed(color=MINCCINO_COLOR)
-                if enemy_id:
+                if enemy_id and int(enemy_id) in BATTLE_TOWER_NPC_IDS:
+                    battle_embed.description =";b npc bt"
+                elif enemy_id:
                     battle_embed.description = f";b npc {enemy_id}"
                 else:
                     battle_embed.description = "Your battle command is ready!"
