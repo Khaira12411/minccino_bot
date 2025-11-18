@@ -55,12 +55,9 @@ def is_midnight_est():
 
 
 def is_nighttime_est():
-    """
-    Returns True if the current time in America/New_York is between 7:00 PM and 6:59 AM.
-    """
     nyc = ZoneInfo("America/New_York")
     now_nyc = datetime.now(nyc)
-    return now_nyc.hour >= 19 or now_nyc.hour < 7
+    return now_nyc.hour >= 18 or now_nyc.hour < 7
 
 
 # ─────────────────────────────
