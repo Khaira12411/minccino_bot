@@ -164,7 +164,7 @@ def parse_pokemeow_spawn(message: discord.Message):
                 rarity = "full_odds"
             elif "event" in footer_lower:
                 rarity = "shiny"
-            pretty_log("debug", f"Refined shiny rarity to: {rarity}")
+            #pretty_log("debug", f"Refined shiny rarity to: {rarity}")
 
         # --- get trainer id from reply ---
         trainer_id = None

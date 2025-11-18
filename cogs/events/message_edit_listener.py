@@ -83,8 +83,12 @@ class MessageEditListener(commands.Cog):
                 OKA_SERVER_ID,
                 1154753039685660793,
             ):
+                embed = after.embeds[0] if after.embeds else None
+                embed_description = embed.description if embed else ""
+                
                 # 🔹 Fishing reco ball
-                await recommend_fishing_ball(message=after, bot=self.bot)
+                if embed_description and "fished a wild" in embed_description:
+                    await recommend_fishing_ball(message=after, bot=self.bot)
 
                 # Boosted Channel Listener
                 await handle_boosted_channel_on_edit(bot=self.bot, message=after)
@@ -126,7 +130,7 @@ class MessageEditListener(commands.Cog):
                         if embed_description and "You caught a" in embed_description:
                             pretty_log(
                                 "info",
-                                f"Detected Feeling Lucky rare spawn caught by {after.author} ({after.author.id})",
+                                f"Detected Feeling Lucky rare spawn",
                                 label="🍀 FL RS",
                                 bot=self.bot,
                             )
@@ -145,12 +149,12 @@ class MessageEditListener(commands.Cog):
                             or getattr(color, "value", None) == FISHING_COLOR
                         )
                     ):
-                        pretty_log(
+                        """pretty_log(
                             "info",
                             f"Detected faction ball alert in fish embed",
                             label="🛡️ FACTION BALL ALERT",
                             bot=self.bot,
-                        )
+                        )"""
                         await faction_ball_alert(before=before, after=after)
 
                 # 🎃 Halloween Contest Score Listener (Disabled for now)
