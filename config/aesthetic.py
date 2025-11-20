@@ -1,4 +1,6 @@
 class Emojis:
+    sgmax = "<:shinygmax:1416986057605517393>"
+    gmax = "<:gmax:1440970765418631168>"
     duskball = "<:duskball:1440271335967162368>"
     moonball = "<:moonball:1440271355340783748>"
     brown_flower = "<:brown_flower:1429304987690991646>"

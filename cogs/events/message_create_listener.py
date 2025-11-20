@@ -42,6 +42,7 @@ from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
 from utils.listener_func.special_battle_npc_listener import special_battle_npc_listener
 from utils.listener_func.waterstate_listener import on_waterstate_message
+from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
 
@@ -70,6 +71,7 @@ captcha_description_trigger = (
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
 BANNED_PERKS_PHRASES = {"PokeMeow Clans — Perks Info", "PokeMeow Clans — Rank Info"}
+
 
 class MessageCreateListener(commands.Cog):
     # 💜────────────────────────────────────────────
@@ -205,7 +207,20 @@ class MessageCreateListener(commands.Cog):
                         await extract_faction_ball_from_daily(
                             bot=self.bot, message=message
                         )
-
+                # World Boss Battle Reminder Registration
+                if first_embed:
+                    embed_description = first_embed.description or ""
+                    if (
+                        "<:checkedbox:752302633141665812> You are registered for this fight"
+                        in embed_description
+                        and ";wb fight" in embed_description
+                    ):
+                        pretty_log(
+                            "info",
+                            f"Matched World Boss Battle Reminder Registration | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
+                        await register_wb_battle_reminder(bot=self.bot, message=message)
+                        
                 # Special Battle NPC Listener (Disabled for now)
                 """if first_embed:
                     if (

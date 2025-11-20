@@ -3,6 +3,7 @@ from discord import ButtonStyle
 from discord.ext import commands
 
 from config.aesthetic import Emojis
+from config.straymons_constants import STRAYMONS__EMOJIS
 from utils.database.captcha_alert_db_func import (
     fetch_user_captcha_alert,
     upsert_user_captcha_alert,
@@ -18,6 +19,10 @@ from utils.database.halloween_contest_alert import (
 from utils.database.res_fossil_alert_db_func import (
     fetch_user_res_fossils_alert,
     upsert_user_res_fossils_alert,
+)
+from utils.database.wb_fight_db import (
+    fetch_user_wb_battle_alert,
+    upsert_user_wb_battle_alert,
 )
 from utils.essentials.safe_response import safe_respond
 from utils.loggers.pretty_logs import pretty_log
@@ -39,12 +44,14 @@ async def alert_settings_func(bot: commands.Bot, interaction: discord.Interactio
         halloween_contest_alert = await fetch_user_halloween_contest_alert(
             bot, interaction.user.id
         )
+        wb_battle_alert = await fetch_user_wb_battle_alert(bot, interaction.user.id)
 
         # Fallback defaults
         captcha_alert = captcha_alert or {"notify": "off"}
         res_fossils_alert = res_fossils_alert or {"notify": "off"}
         faction_ball_alert = faction_ball_alert or {"notify": "off"}
         halloween_contest_alert = halloween_contest_alert or {"notify": "off"}
+        wb_battle_alert = wb_battle_alert or {"notify": "off"}
 
         view = AlertSettingsView(
             bot,
@@ -53,6 +60,7 @@ async def alert_settings_func(bot: commands.Bot, interaction: discord.Interactio
             res_fossils_alert,
             faction_ball_alert,
             halloween_contest_alert,
+            wb_battle_alert,
         )
 
         message = await interaction.followup.send(
@@ -108,6 +116,7 @@ class AlertSettingsView(discord.ui.View):
         res_fossils_alert,
         faction_ball_alert,
         halloween_contest_alert,
+        wb_battle_alert,
     ):
         super().__init__(timeout=180)
         self.bot = bot
@@ -116,6 +125,7 @@ class AlertSettingsView(discord.ui.View):
         self.res_fossils_alert = res_fossils_alert
         self.faction_ball_alert = faction_ball_alert
         self.halloween_contest_alert = halloween_contest_alert
+        self.wb_battle_alert = wb_battle_alert
         self.message = None  # set later
         self.update_button_styles()
 
@@ -293,6 +303,65 @@ class AlertSettingsView(discord.ui.View):
             )
 
     # 💫────────────────────────────────────
+    # [🎯 BUTTON] WB Battle Alert (2-State Cycle)
+    # 💫────────────────────────────────────
+    @discord.ui.button(
+        label="World Boss Battle Alert: OFF",
+        style=ButtonStyle.secondary,
+        emoji=STRAYMONS__EMOJIS.world_boss_spawned,
+    )
+    async def wb_battle_alert_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        if interaction.user != self.user:
+            await interaction.response.send_message(
+                "You cannot interact with this button.", ephemeral=True
+            )
+            return
+
+        await interaction.response.defer()
+        try:
+            current_state = (
+                str(self.wb_battle_alert.get("notify", "off")).lower()
+                if self.wb_battle_alert
+                else "off"
+            )
+
+            # 🔹 2-State Cycle: off → on → off
+            new_state = "on" if current_state == "off" else "off"
+
+            await upsert_user_wb_battle_alert(self.bot, self.user, new_state)
+            self.wb_battle_alert = {"notify": new_state}
+
+            # 🔹 Refresh buttons
+            self.update_button_styles()
+
+            # 🔹 Display friendly text
+            display_text = "ON" if new_state == "on" else "OFF"
+
+            await interaction.edit_original_response(
+                content=f"Modify your World Boss Battle Alert Settings:\n🛡️ World Boss Battle Alert set to **{display_text}**",
+                view=self,
+            )
+
+            pretty_log(
+                tag="ui",
+                message=f"{self.user.display_name} set World Boss Battle Alert to {display_text}",
+                bot=self.bot,
+            )
+
+        except Exception as e:
+            pretty_log(
+                tag="error",
+                message=f"Error toggling World Boss Battle Alert: {e}",
+                bot=self.bot,
+            )
+            await interaction.followup.send(
+                "⚠️ An error occurred while updating World Boss Battle Alert.",
+                ephemeral=True,
+            )
+
+    # 💫────────────────────────────────────
     # [🎃 BUTTON] Halloween Contest Score Alert (3 -State Cycle)
     # 💫────────────────────────────────────
     @discord.ui.button(
@@ -427,14 +496,10 @@ class AlertSettingsView(discord.ui.View):
         )
         if halloween_contest_alert_state == "off":
             self.halloween_contest_alert_button.style = ButtonStyle.secondary
-            self.halloween_contest_alert_button.label = (
-                "Halloween Contest Alert: OFF"
-            )
+            self.halloween_contest_alert_button.label = "Halloween Contest Alert: OFF"
         elif halloween_contest_alert_state == "on":
             self.halloween_contest_alert_button.style = ButtonStyle.success
-            self.halloween_contest_alert_button.label = (
-                "Halloween Contest Alert: ON"
-            )
+            self.halloween_contest_alert_button.label = "Halloween Contest Alert: ON"
         elif halloween_contest_alert_state == "on_no_pings":
             self.halloween_contest_alert_button.style = ButtonStyle.primary
             self.halloween_contest_alert_button.label = (
@@ -442,9 +507,24 @@ class AlertSettingsView(discord.ui.View):
             )
         else:
             self.halloween_contest_alert_button.style = ButtonStyle.secondary
-            self.halloween_contest_alert_button.label = (
-                "Halloween Contest Alert: OFF"
-            )
+            self.halloween_contest_alert_button.label = "Halloween Contest Alert: OFF"
+
+        # 🛡️ WB Battle Alert Button (2 states)
+        wb_battle_alert_state = (
+            str(self.wb_battle_alert.get("notify", "off")).lower()
+            if self.wb_battle_alert
+            else "off"
+        )
+        if wb_battle_alert_state == "off":
+            self.wb_battle_alert_button.style = ButtonStyle.secondary
+            self.wb_battle_alert_button.label = "World Boss Battle Alert: OFF"
+        elif wb_battle_alert_state == "on":
+            self.wb_battle_alert_button.style = ButtonStyle.success
+            self.wb_battle_alert_button.label = "World Boss Battle Alert: ON"
+        else:
+            self.wb_battle_alert_button.style = ButtonStyle.secondary
+            self.wb_battle_alert_button.label = "World Boss Battle Alert: OFF"
+
     # 💫────────────────────────────────────
     # [⏰ TIMEOUT HANDLER]
     # 💫────────────────────────────────────

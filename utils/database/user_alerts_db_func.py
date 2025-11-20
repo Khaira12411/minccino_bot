@@ -145,3 +145,42 @@ async def update_user_alert_notify(bot, user_id: int, alert_type: str, notify: b
             f"Failed to update notify for {alert_type} ({user_id}): {e}",
             bot=bot,
         )
+
+
+# 🌸────────────────────────────────────────────
+#     💜 Fetch due timers by alert type
+# 🌸────────────────────────────────────────────
+async def fetch_due_timers_by_alert_type(bot, alert_type: str):
+    """
+    Fetch all user alerts of a given type where the timer is due (i.e., timer <= now()).
+
+    Args:
+        bot: The Discord bot instance containing the PostgreSQL pool.
+        alert_type: The type of alert to filter by.
+
+    Returns:
+        List of asyncpg.Record representing due alerts.
+        Returns [] if none or on error.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            rows = await conn.fetch(
+                f"""
+                SELECT * FROM {TABLE_NAME}
+                WHERE alert_type=$1 AND timer IS NOT NULL AND timer <= NOW()
+                """,
+                alert_type,
+            )
+        pretty_log(
+            "db",
+            f"Fetched {len(rows)} due timers for alert type '{alert_type}'",
+            bot=bot,
+        )
+        return rows
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"Failed to fetch due timers for alert type '{alert_type}': {e}",
+            bot=bot,
+        )
+        return []
