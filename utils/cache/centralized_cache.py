@@ -25,6 +25,7 @@ from utils.cache.daily_fa_ball_cache import daily_faction_ball_cache, load_daily
 from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache, load_faction_ball_alert_cache
 from utils.cache.halloween_con_top_cache import load_halloween_con_top_cache, halloween_con_top_cache
 from utils.cache.halloween_contest_cache import load_halloween_contest_alert_cache, halloween_contests_alert_cache
+from utils.cache.wb_battle_alert_cache import load_wb_battle_alert_cache, wb_battle_alert_cache
 # 🐾────────────────────────────────────────────
 #     💜 Load Everything in One Go
 # 🐾────────────────────────────────────────────
@@ -74,6 +75,9 @@ async def load_all_caches(bot):
         # 🎯 Faction Ball Alert
         await load_faction_ball_alert_cache(bot)
 
+        # ⚔️ World Boss Battle Alert
+        await load_wb_battle_alert_cache(bot)
+
         # 🎃 Halloween Contest Alert Cache
         #await load_halloween_contest_alert_cache(bot)
 
@@ -95,6 +99,7 @@ async def load_all_caches(bot):
                 f"Feeling Lucky Cooldowns: {len(feeling_lucky_cache)},"
                 f"Captcha Alerts: {len(user_captcha_alert_cache)},"
                 f"Faction Ball Alerts: {len(faction_ball_alert_cache)},"
+                f"World Boss Battle Alerts: {len(wb_battle_alert_cache)},"
                 f"Res Fossils Alerts: {len(res_fossils_alert_cache)})"
                 #f"Halloween Contest Alerts: {len(halloween_contests_alert_cache)},"
                 #f"Halloween Con Fourth Place Score: {halloween_con_top_cache.get('fourth_place', {}).get('score', 0)}"
