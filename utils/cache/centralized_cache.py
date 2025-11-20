@@ -69,20 +69,27 @@ async def load_all_caches(bot):
         # 🦴 Research Fossils Alert
         await load_res_fossils_alert_cache(bot)
 
+        # ⚔️ World Boss Battle Alert
+        try:
+            await load_wb_battle_alert_cache(bot)
+        except Exception as e:
+            pretty_log(
+                tag="error",
+                message=f"Error loading World Boss Battle Alert Cache: {e}",
+                label="🥨 CENTRAL CACHE",
+            )
+
         # 🎯 Daily Faction Ball Alert
         await load_daily_faction_ball_cache(bot)
 
         # 🎯 Faction Ball Alert
         await load_faction_ball_alert_cache(bot)
 
-        # ⚔️ World Boss Battle Alert
-        await load_wb_battle_alert_cache(bot)
-
         # 🎃 Halloween Contest Alert Cache
-        #await load_halloween_contest_alert_cache(bot)
+        # await load_halloween_contest_alert_cache(bot)
 
         # 🎃 Halloween Con Top Cache Disabled for now
-        #await load_halloween_con_top_cache(bot)
+        # await load_halloween_con_top_cache(bot)
 
         # 🎀 Unified single-line log with all caches
         pretty_log(

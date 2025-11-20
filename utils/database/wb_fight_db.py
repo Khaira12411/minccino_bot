@@ -169,6 +169,11 @@ async def fetch_all_wb_battle_alerts(bot: discord.Client):
                 """,
                 ALERT_TYPE,
             )
+            pretty_log(
+                "db",
+                f"Fetched all {len(rows)} {ALERT_TYPE} alerts from database.",
+                bot=bot,
+            )
             return [dict(row) for row in rows]
 
     except Exception as e:

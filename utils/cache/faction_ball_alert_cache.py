@@ -38,10 +38,11 @@ async def load_faction_ball_alert_cache(bot):
         )
     except Exception as e:
         # fallback to console if Discord logging fails
-        print(
-            f"[🛡️  faction ball ALERT CACHE] Loaded {len(faction_ball_alert_cache)} entries (pretty_log failed: {e})"
+        pretty_log(
+            "error",
+            f"Failed to log faction ball alert cache load: {e}",
+            label="🛡️  faction ball Alert CACHE",
         )
-
     return faction_ball_alert_cache
 
 

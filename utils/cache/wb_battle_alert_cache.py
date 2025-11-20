@@ -3,11 +3,11 @@ import discord
 from utils.database.wb_fight_db import fetch_all_wb_battle_alerts
 from utils.loggers.pretty_logs import pretty_log
 
-wb_battle_alert_cache = {}
+wb_battle_alert_cache: dict[int, dict] = {}
 # Structure:
-# user_id: {
-#     "user_name": str,
-#     "notify": str,
+# user_id -> {
+#   "user_name": str,
+#   "notify": str
 # }
 
 
@@ -18,25 +18,24 @@ async def load_wb_battle_alert_cache(bot: discord.Client):
     """
 
     wb_battle_alert_cache.clear()
-    try:
-        alerts = await fetch_all_wb_battle_alerts(bot)
-        wb_battle_alert_cache = {
-            alert["user_id"]: {
-                "user_name": alert["user_name"],
-                "notify": alert["notify"],
-            }
-            for alert in alerts
+    rows = await fetch_all_wb_battle_alerts(bot)
+    for row in rows:
+        wb_battle_alert_cache[row["user_id"]] = {
+            "user_name": row.get("user_name"),
+            "notify": row.get("notify"),
         }
+    try:
         pretty_log(
             "info",
-            f"Loaded {len(wb_battle_alert_cache)} world boss battle alerts into cache.",
+            f"Loaded {len(wb_battle_alert_cache)} world boss battle alert entries into cache",
+            label="🛡️  World Boss Battle Alert CACHE",
             bot=bot,
         )
+        #print(wb_battle_alert_cache)
     except Exception as e:
-        pretty_log(
-            "error",
-            f"Failed to load world boss battle alerts into cache: {e}",
-            bot=bot,
+        # fallback to console if Discord logging fails
+        print(
+            f"[🛡️  World Boss Battle ALERT CACHE] Loaded {len(wb_battle_alert_cache)} entries (pretty_log failed: {e})"
         )
     return wb_battle_alert_cache
 
@@ -60,6 +59,7 @@ def upsert_wb_battle_alert_cache(user_id: int, user_name: str, notify: str):
         f"Upserted world boss battle alert for user {user_id} into cache.",
     )
 
+
 def update_wb_battle_alert_cache(user_id: int, notify: str):
     """
     Update the notification preference of a world boss battle alert in the in-memory cache.
@@ -75,6 +75,7 @@ def update_wb_battle_alert_cache(user_id: int, notify: str):
             "info",
             f"Updated world boss battle alert notify for user {user_name} in cache.",
         )
+
 
 def remove_wb_battle_alert_cache(user_id: int):
     """
