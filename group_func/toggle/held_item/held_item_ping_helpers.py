@@ -5,7 +5,7 @@ from config.aesthetic import Emojis
 from config.held_items import HELD_ITEMS_DICT
 from utils.loggers.debug_log import debug_log, enable_debug
 
-enable_debug(f"{__name__}.held_item_message")
+#enable_debug(f"{__name__}.held_item_message")
 # ─────────────────────────────
 #  💎 Pretty names for items
 # ─────────────────────────────

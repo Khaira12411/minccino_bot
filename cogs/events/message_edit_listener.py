@@ -85,7 +85,7 @@ class MessageEditListener(commands.Cog):
             ):
                 embed = after.embeds[0] if after.embeds else None
                 embed_description = embed.description if embed else ""
-                
+
                 # 🔹 Fishing reco ball
                 if embed_description and "fished a wild" in embed_description:
                     await recommend_fishing_ball(message=after, bot=self.bot)

@@ -69,7 +69,7 @@ captcha_description_trigger = (
 )
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
-
+BANNED_PERKS_PHRASES = {"PokeMeow Clans — Perks Info", "PokeMeow Clans — Rank Info"}
 
 class MessageCreateListener(commands.Cog):
     # 💜────────────────────────────────────────────
@@ -142,7 +142,16 @@ class MessageCreateListener(commands.Cog):
                 await handle_relics_message(bot=self.bot, message=message)
 
                 # 🧪 Autoupdate catch boost via ;perks
-                await auto_update_catchboost(bot=self.bot, message=message)
+                if first_embed:
+                    embed_author_name = (
+                        first_embed.author.name
+                        if first_embed.author and first_embed.author.name
+                        else ""
+                    )
+                    if "perks" in embed_author_name.lower() and not any(
+                        phrase in embed_author_name for phrase in BANNED_PERKS_PHRASES
+                    ):
+                        await auto_update_catchboost(bot=self.bot, message=message)
 
                 if message.channel.id == STRAYMONS__TEXT_CHANNELS.feeling_lucky:
                     # 🍀 Feeling Lucky Cooldown
