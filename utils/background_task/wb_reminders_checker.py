@@ -15,6 +15,9 @@ async def check_wb_battle_reminders(bot: discord.Client):
     """
 
     due_reminders = await fetch_due_wb_battle_reminders(bot)
+    if not due_reminders:
+        return # No due reminders
+
     for reminder in due_reminders:
         user_id = reminder["user_id"]
         user_name = reminder["user_name"]
