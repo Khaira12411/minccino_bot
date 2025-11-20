@@ -84,7 +84,7 @@ async def register_wb_battle_reminder(
     boss_name = extract_wb_boss_name(embed.description)
 
     # Check if member already has a reminder for this
-    wb_reminder_info = await fetch_wb_battle_reminder(bot, member.id)
+    wb_reminder_info = await fetch_wb_battle_reminder(bot, member.id, boss_name)
     if wb_reminder_info:
         return  # Already has a reminder
 
