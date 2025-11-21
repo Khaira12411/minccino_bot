@@ -33,7 +33,7 @@ async def check_wb_battle_reminders(bot: discord.Client):
         try:
             channel = bot.get_channel(channel_id)
             if channel:
-                content = f"{user.mention}, You can now join the World Boss Battle"
+                content = f"{user.mention}, You can now join the World Boss Battle for **{wb_name}**!"
                 embed = discord.Embed(
                     description=";wb f",
                     color=MINCCINO_COLOR,
