@@ -90,11 +90,12 @@ async def register_wb_battle_reminder(
 
     if unix_seconds and boss_name:
         await upsert_wb_battle_reminder(
-            bot,
-            member,
-            channel_id,
-            boss_name,
-            unix_seconds,
+            bot=bot,
+            user_id=member.id,
+            user_name=member.name,
+            channel_id=channel_id,
+            wb_name=boss_name,
+            remind_on=unix_seconds,
         )
         pretty_log(
             "info",
