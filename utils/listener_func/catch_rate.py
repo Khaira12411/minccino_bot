@@ -32,6 +32,85 @@ ball_emojis = {
 }
 
 
+def compute_final_catch_rate(
+    base_rate: int,
+    ball: str,
+    boost: int = 0,
+    is_patreon: bool = False,
+    channel_boost: bool = False,
+    ultra_beast: bool = False,
+) -> int:
+    """
+    Compute the final catch rate given a base rate and modifiers.
+    - base_rate: int, the base catch rate for the ball
+    - ball: str, ball type (e.g. 'beastball')
+    - boost: int, flat % boost
+    - is_patreon: bool, adds +5% if True
+    - channel_boost: bool, adds +5% if True
+    - ultra_beast: bool, Beast Ball auto 80% if True
+    Returns: int (0-100)
+    """
+    rate = base_rate
+
+    # Ultra Beast special rule
+    if ball == "beastball" and ultra_beast:
+        rate = 80
+
+    if is_patreon:
+        rate += 5
+    if channel_boost:
+        rate += 5
+    rate += boost
+
+    return max(0, min(100, rate))
+
+ball_catch_rate = {
+    "pokeball": 10,
+    "greatball": 25,
+    "ultraball": 35,
+    "premierball": 50,
+    "masterball": 100,
+    "beastball": 0,
+    "diveball": 30,
+}
+catch_rate_map = {
+    "common": {
+        "non_patron_gen_1_8": 70,
+        "held_item_pokemon": 25,
+        "fishing": 45,
+    },
+    "uncommon": {
+        "non_patron_gen_1_8": 60,
+        "held_item_pokemon": 20,
+        "fishing": 35,
+    },
+    "rare": {
+        "non_patron_gen_1_8": 37,
+        "held_item_pokemon": 15,
+        "fishing": 25,
+    },
+    "superrare": {
+        "non_patron_gen_1_8": 20,
+        "held_item_pokemon": 10,
+        "fishing": 15,
+    },
+    "legendary": {
+        "non_patron_gen_1_8": 5,
+        "held_item_pokemon": 0,
+        "fishing": 5,
+    },
+    "shiny": {
+        "non_patron_gen_1_8": 0,
+        "held_item_pokemon": 0,
+        "fishing": 0,
+    },
+    "golden": {
+        "non_patron_gen_1_8": 0,
+        "held_item_pokemon": 0,
+        "fishing": 0,
+    },
+}
+
 catch_rates = {
     "non_patron_gen_1_8": {
         "common_70": {
@@ -75,17 +154,17 @@ catch_rates = {
             "beastball": 5,
         },
         "event_shiny_0": {
-            "pokeball": 0,
-            "greatball": 0,
-            "ultraball": 0,
-            "premierball": 0,
+            "pokeball": 10,
+            "greatball": 25,
+            "ultraball": 35,
+            "premierball": 50,
             "masterball": 100,
             "beastball": 0,
         },
         "full_odds_shiny_64": {
             "pokeball": 74,
             "greatball": 89,
-            "ultraball": 95,
+            "ultraball": 99,
             "premierball": 100,
             "masterball": 100,
             "beastball": 64,
@@ -133,10 +212,10 @@ catch_rates = {
             "beastball": 0,
         },
         "event_shiny_0": {
-            "pokeball": 0,
-            "greatball": 0,
-            "ultraball": 0,
-            "premierball": 0,
+            "pokeball": 10,
+            "greatball": 25,
+            "ultraball": 35,
+            "premierball": 50,
             "masterball": 100,
             "beastball": 0,
         },

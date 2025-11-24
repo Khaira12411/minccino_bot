@@ -49,6 +49,17 @@ class Emojis:
     pokeball_unlocked = "<:pokeball_unlocked:1413697494155526195>"
     gray_check_animated = "<a:gray_check_animated:1415094434785132668>"
     gray_shield = "<:gray_shield:1422760941652545568>"
+    netball = "<:netball:1442417071928639549>"
+    lureball = "<:lureball:1442417025308950600>"
+    fastball = "<:fastball:1442416866290044938>"
+    heavyball = "<:heavyball:1442416814003847190>"
+    moonball_unlocked = "<:small_moonball:1442415560884228138>"
+    lureball_unlocked = "<:small_lureball:1442415249381920830>"
+    duskball_unlocked = "<:small_duskball:1442415193643679795>"
+    heavyball_unlocked = "<:small_heavyball:1442415080989003940>"
+    netball_unlocked = "<:small_netball:1442415028920782940>"
+    fastball_unlocked = "<:small_fastball:1442414806438248541>"
+
 
 class Emojis_Rarity:
     common = "<:common:1412000858329321482>"
@@ -68,6 +79,7 @@ class Emojis_Balls:
     greatball = "<:greatball:1411999846835159081>"
     pokeball = "<:pokeball:1411999795110744145>"
     diveball = "<:diveball:1412001883639517275>"
+
 
 class Emojis_Factions:
     aqua = "<:aqua:1427123081083617442>"
