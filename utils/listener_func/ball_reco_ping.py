@@ -304,6 +304,10 @@ async def recommend_ball(message: discord.Message, bot):
             debug_log(f"User ID {user_id} not found in ball reco cache, exiting recommender")
             return None"""
 
+        if not user_id:
+            debug_log("No user_id extracted, exiting recommender")
+            return None
+        
         user_settings = ball_reco_cache[user_id]
         user_name = user_settings.get("user_name")
         enabled_val = user_settings.get("enabled", False)
