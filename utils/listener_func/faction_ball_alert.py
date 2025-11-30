@@ -10,7 +10,7 @@ from utils.cache.straymon_member_cache import straymon_member_cache
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-
+from utils.listener_func.ball_reco_ping import extract_trainer_name_from_description
 #enable_debug(f"{__name__}.faction_ball_alert")
 FISHING_COLOR = 0x87CEFA
 processed_faction_ball_alerts = set()
@@ -87,9 +87,21 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                 if not trainer_id and not trainer_name:
                     debug_log("Could not extract trainer ID or name, returning early")
                     return
-            else:
-                debug_log("Embed color does not match fishing color, returning early")
-                return
+
+            elif embed_color and embed_color.value != FISHING_COLOR:
+                debug_log("No member found, using fallback")
+                trainer_name = extract_trainer_name_from_description(description_text)
+                debug_log(f"Fallback extracted trainer name: {trainer_name}")
+
+                from utils.cache.ball_reco_cache import get_user_id_by_name
+                user_id = get_user_id_by_name(trainer_name) if trainer_name else None
+                debug_log(f"Fallback found user_id: {user_id} from trainer_name: {trainer_name}")
+                member = after.guild.get_member(user_id) if user_id else None
+                debug_log(f"Fetched member from guild: {member}")
+                if not member:
+                    debug_log("No member found for user_id, returning early")
+                    return
+
         #
         if member:
             user_id = member.id
@@ -109,7 +121,7 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                     fetch_straymon_member_cache_by_username,
                 )
 
-                #print(straymon_member_cache)
+                # print(straymon_member_cache)
                 debug_log(f"straymon_member_cache keys: {list(straymon_member_cache.keys())}")
                 debug_log(f"straymon_member_cache values: {[data.get('user_name') for data in straymon_member_cache.values()]}")
                 result = fetch_straymon_member_cache_by_username(trainer_name)

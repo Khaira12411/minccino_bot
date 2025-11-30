@@ -14,6 +14,7 @@ from utils.listener_func.catch_rate import *
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
+
 processed_pokemon_spawns = set()
 # -------------------- Regex + constants --------------------
 HELD_ITEM_PATTERN = re.compile(
@@ -24,7 +25,8 @@ HELD_ITEM_PATTERN = re.compile(
     r"\*\*(?P<pokemon>[A-Za-z_]+)\*\*"
 )
 # enable_debug(f"{__name__}.extract_water_state_from_author")
-# enable_debug(f"{__name__}.parse_pokemeow_spawn")
+#enable_debug(f"{__name__}.parse_pokemeow_spawn")
+#enable_debug(f"{__name__}.recommend_ball")
 FISHING_COLOR = 0x87CEFA  # sky blue
 HALLOWEEN_COLOR = 0xFFA500  # orange
 EVENT_EXCL_COLOR = 0xEA260B  # red
@@ -37,6 +39,16 @@ embed_rarity_color = {
     "shiny": 16751052,
     "golden": 14940164,
 }
+def extract_trainer_name_from_description(description: str) -> str | None:
+    """
+    Extracts the trainer name (e.g. 'khy.09') from a PokéMeow embed description.
+    Example line:
+    '<:irida:1428149067673767996>  **khy.09** found a wild <:517:721586120692989992><:dexcaught:667082939632189451>**Munna**!'
+    """
+    match = re.search(r"\*\*(.+?)\*\*\s+found a wild", description)
+    if match:
+        return match.group(1).strip()
+    return None
 
 
 def extract_water_state_from_author(author_name: str) -> str:
@@ -119,6 +131,8 @@ def parse_pokemeow_spawn(message: discord.Message):
 
         # -------------------- MUST BE A SPAWN --------------------
         if description_text and "found a wild" not in description_text.lower():
+            debug_log("Embed description does not indicate a spawn, exiting parser")
+            debug_log(f"Description text: {description_text!r}")
             return None
 
         # --- Ignore Research Lab messages ---
@@ -164,7 +178,7 @@ def parse_pokemeow_spawn(message: discord.Message):
                 rarity = "full_odds"
             elif "event" in footer_lower:
                 rarity = "shiny"
-            #pretty_log("debug", f"Refined shiny rarity to: {rarity}")
+            # pretty_log("debug", f"Refined shiny rarity to: {rarity}")
 
         # --- get trainer id from reply ---
         trainer_id = None
@@ -211,29 +225,73 @@ async def recommend_ball(message: discord.Message, bot):
 
     try:
         if not message.embeds:
+            debug_log(
+                f"recommend_ball: No embeds found in message in {message.channel.name}"
+            )
             return None
         embed = message.embeds[0]
         embed_footer_text = embed.footer.text if embed.footer else ""
+        embed_description = embed.description or ""
         if "PokeMeow | Egg Hatch" in embed_footer_text:
+            debug_log("recommend_ball: Detected egg hatch message, exiting recommender")
             return None  # 🚪 early exit for egg hatches
 
         user_id = None
         member = await get_pokemeow_reply_member(message)
         if member:
             user_id = member.id
-            if user_id not in ball_reco_cache:
+
+        elif not member:
+            debug_log(
+                f"No replied member found in {message.channel.name} tryin to extract trainer name as fallback"
+            )
+            trainer_name = extract_trainer_name_from_description(embed_description)
+            if trainer_name:
+                # Try to find user_id by name in cache
+                from utils.cache.ball_reco_cache import get_user_id_by_name
+                user_id = get_user_id_by_name(trainer_name)
+                debug_log(f"Fallback extracted trainer name: '{trainer_name}' → user_id: {user_id}")
+                member = message.guild.get_member(user_id) if user_id else None
+                debug_log(f"Fallback found member: {member}")
+                if not user_id and not member:
+                    debug_log(
+                        f"Trainer name '{trainer_name}' not found in ball reco cache, exiting recommender in {message.channel.name}"
+                    )
+                    return  # Exit Early if name not found
+
+        # Check if its in cache
+        if user_id:
+            debug_log(f"Extracted user_id: {user_id} for ball recommendation")
+            from utils.cache.ball_reco_cache import check_if_id_in_ball_reco_cache
+            user_in_cache = check_if_id_in_ball_reco_cache(user_id)
+            if not user_in_cache:
+                debug_log(
+                    f"User ID {user_id} not in ball reco cache, exiting recommender in {message.channel.name}"
+                )
                 return  # Exit Early if not in cache
+            elif user_in_cache:
+                debug_log(f"User ID {user_id} found in ball reco cache, proceeding")
+
+            """if user_id not in ball_reco_cache:
+                debug_log(
+                    f"User ID {user_id} not in ball reco cache, exiting recommender in {message.channel.name}"
+                )
+                return  # Exit Early if not in cache"""
 
         # Prevent double processing
         if message.id in processed_pokemon_spawns:
+            debug_log(f"Message ID {message.id} already processed, exiting recommender")
             return
         processed_pokemon_spawns.add(message.id)
 
         spawn_info = parse_pokemeow_spawn(message)
         if not spawn_info:
+            debug_log("No valid spawn info parsed, exiting recommender")
             return None
 
-        user_id = spawn_info["user_id"]
+        """user_id = spawn_info["user_id"]
+        debug_log(f"Extracted user_id: {user_id} from spawn info")
+        debug_log(f"Parsed spawn info: {spawn_info}")"""
 
         display_pokemon = (
             spawn_info.get("pokemon").title()
@@ -241,9 +299,10 @@ async def recommend_ball(message: discord.Message, bot):
             else "This Pokemon"
         )
 
-        # --- EARLY EXIT: user not in cache or disabled ---
+        """# --- EARLY EXIT: user not in cache or disabled ---
         if not user_id or user_id not in ball_reco_cache:
-            return None
+            debug_log(f"User ID {user_id} not found in ball reco cache, exiting recommender")
+            return None"""
 
         user_settings = ball_reco_cache[user_id]
         user_name = user_settings.get("user_name")

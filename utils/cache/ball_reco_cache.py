@@ -48,3 +48,28 @@ async def load_ball_reco_cache(bot):
         }
 
     return ball_reco_cache
+
+def get_user_id_by_name(trainer_name: str) -> int | None:
+    """
+    Retrieve user ID from ball_reco_cache by trainer name.
+
+    Args:
+        trainer_name: The Discord trainer name to look up.
+    Returns:
+        The user ID if found, otherwise None.
+    """
+    for user_id, settings in ball_reco_cache.items():
+        if settings.get("user_name") == trainer_name:
+            return user_id
+    return None
+
+def check_if_id_in_ball_reco_cache(user_id: int) -> bool:
+    """
+    Check if a user ID exists in the ball recommendation cache.
+
+    Args:
+        user_id: The Discord user ID to check.
+    Returns:
+        True if the user ID exists in the cache, otherwise False.
+    """
+    return user_id in ball_reco_cache

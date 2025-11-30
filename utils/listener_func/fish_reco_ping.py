@@ -104,10 +104,8 @@ def parse_pokemeow_fishing_spawn(message: discord.Message):
 
     if not valid_fish:
         return None
-    pretty_log(
-        "debug",
+    debug_log(
         f"Parsed fishing spawn: Trainer ID={trainer_id}, Trainer Name={trainer_name}, Pokemon={pokemon_name}, Form={form}, Rarity={rarity}, Water State={water_state}",
-        label="🎣 FISH RECO PARSER",
     )
     return {
         "type": "fishing",
@@ -125,7 +123,7 @@ def parse_pokemeow_fishing_spawn(message: discord.Message):
 async def recommend_fishing_ball(message: discord.Message, bot):
     # --- Parse spawn info using dedicated parser ---
     debug_log(f"recommend_fishing_ball called for message {message.id}")
-    
+
     if message.id in processed_fishing_messages:
         debug_log(f"Already processed message {message.id}, skipping.")
         return None
