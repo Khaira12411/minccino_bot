@@ -91,3 +91,23 @@ def fetch_straymon_member_cache_by_username(user_name: str) -> tuple[int, dict] 
             return user_id, data
 
     return None
+
+def fetch_straymon_user_id_by_username(user_name: str) -> int | None:
+    """
+    Fetch a member's user_id from the Straymon cache by their user_name.
+    Strips whitespace and compares case-insensitively.
+    """
+    if not user_name:
+        return None
+
+    lowered_name = user_name.strip().lower()
+
+    for user_id, data in straymon_member_cache.items():
+        if not data or not isinstance(data, dict):
+            continue
+
+        cached_user_name = data.get("user_name")
+        if cached_user_name and str(cached_user_name).strip().lower() == lowered_name:
+            return user_id
+
+    return None

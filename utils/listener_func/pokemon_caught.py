@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from zoneinfo import ZoneInfo
 
 import discord
@@ -9,7 +10,6 @@ from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNEL
 from utils.database.weekly_goal_tracker_db_func import upsert_weekly_goal
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
-
 FISHING_COLOR = 0x87CEFA
 processed_caught_messages = set()
 
@@ -145,6 +145,27 @@ async def weekly_goal_checker(
         ),
 
 
+def extract_member_username_from_embed(embed: discord.Embed) -> str | None:
+    """
+    Extracts the username from the embed author name, e.g. "Congratulations, frayl!" -> "frayl".
+    Returns None if not found.
+    """
+    if embed.author and embed.author.name:
+        # Try 'Congratulations, username!' first
+        match = re.search(r"Congratulations, ([^!]+)!", embed.author.name)
+        if match:
+            return match.group(1).strip()
+        # Fallback: 'Well done, username!'
+        match = re.search(r"Well done, ([^!]+)!", embed.author.name)
+        if match:
+            return match.group(1).strip()
+        # Fallback: 'Great work, username!'
+        match = re.search(r"Great work, ([^!]+)!", embed.author.name)
+        if match:
+            return match.group(1).strip()
+    return None
+
+
 # 💠────────────────────────────────────────────
 #           👂 Pokemon Caught Listener Event
 # 💠────────────────────────────────────────────
@@ -152,17 +173,50 @@ async def pokemon_caught_listener(
     bot: discord.Client, before_message: discord.Message, message: discord.Message
 ):
     from utils.cache.res_fossil_cache import res_fossils_alert_cache
-    from utils.cache.straymon_member_cache import fetch_straymon_member_cache
+    from utils.cache.straymon_member_cache import fetch_straymon_member_cache, fetch_straymon_user_id_by_username
     from utils.cache.weekly_goal_tracker_cache import (
         increment_fish_caught,
         mark_weekly_goal_dirty,
         set_pokemon_caught,
         weekly_goal_cache,
     )
+    # Process message embeds
+    if not message.embeds:
+        return
+
+    embed = message.embeds[0]
 
     member = await get_pokemeow_reply_member(before_message)
     if not member:
-        return
+        # Fall back to username extraction from embed
+        username = extract_member_username_from_embed(embed)
+        if not username:
+            pretty_log(
+                "info",
+                f"Could not extract username from embed or reply for message ID {message.id}",
+                label="💠 POKÉMON CAUGHT LISTENER",
+                bot=bot,
+            )
+            return
+        user_id = fetch_straymon_user_id_by_username(username)
+        if not user_id:
+            pretty_log(
+                "info",
+                f"Could not find user ID for username '{username}' from embed for message ID {message.id}",
+                label="💠 POKÉMON CAUGHT LISTENER",
+                bot=bot,
+            )
+            return
+        member = message.guild.get_member(user_id)
+        if not member:
+            pretty_log(
+                "info",
+                f"Could not find member in guild for user ID {user_id} (username: '{username}') for message ID {message.id}",
+                label="💠 POKÉMON CAUGHT LISTENER",
+                bot=bot,
+            )
+            return
+
 
     member_id = member.id
     member_name = member.name
@@ -188,11 +242,6 @@ async def pokemon_caught_listener(
             bot=bot,
         )
 
-    # Process message embeds
-    if not message.embeds:
-        return
-
-    embed = message.embeds[0]
     embed_color = embed.color.value if embed.color else None
     embed_description = embed.description or ""
 
