@@ -45,11 +45,9 @@ async def fl_cd_checker(bot: discord.Client):
                 guild = bot.get_guild(STRAYMONS_GUILD_ID)
                 if guild:
                     member = guild.get_member(user_id)
-
-                message_text = (
-                    f"🍀 {user_name}, you can now use ;find again in <#{FEELING_LUCKY_CHANNEL_ID}>!"
-                )
-                #Remove role
+                member_name = member.display_name if member else user_name
+                message_text = f"🍀 {member_name}, you can now use ;find again in <#{FEELING_LUCKY_CHANNEL_ID}>!"
+                # Remove role
                 fl_cd_role = guild.get_role(STRAYMONS__ROLES.fl_cd)
                 if member and fl_cd_role in member.roles:
                     await member.remove_roles(fl_cd_role, reason="Feeling Lucky cooldown expired")

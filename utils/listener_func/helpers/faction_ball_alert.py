@@ -11,14 +11,16 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 from utils.listener_func.ball_reco_ping import extract_trainer_name_from_description
-#enable_debug(f"{__name__}.faction_ball_alert")
+
+# enable_debug(f"{__name__}.faction_ball_alert")
 FISHING_COLOR = 0x87CEFA
 processed_faction_ball_alerts = set()
+
 
 # 🛡️────────────────────────────────────────────
 #      🛡️ Faction Ball Alert Listener
 # 🛡️────────────────────────────────────────────
-async def faction_ball_alert(before: discord.Message, after: discord.Message):
+async def new_faction_ball_alert_message(member:discord.Member, after: discord.Message):
     try:
         debug_log("Function called")
         if not after.embeds or not after.embeds[0].description:
@@ -56,7 +58,7 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
         user_id = None
         fishing_user = None
 
-        member = await get_pokemeow_reply_member(before)
+        member = await get_pokemeow_reply_member(after)
         debug_log(f"Reply member: {member}")
         if not member:
             debug_log("No replied member found, attempting fallback extraction")
@@ -73,7 +75,9 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                     debug_log(f"Extracted trainer ID from reference: {trainer_id}")
 
                 if not trainer_id and after.embeds[0].description:
-                    name_match = re.search(r"\*\*(.+?)\*\*", after.embeds[0].description)
+                    name_match = re.search(
+                        r"\*\*(.+?)\*\*", after.embeds[0].description
+                    )
                     if name_match:
                         trainer_name = name_match.group(1)
                         debug_log(f"Extracted trainer name: {trainer_name}")
@@ -94,8 +98,11 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                 debug_log(f"Fallback extracted trainer name: {trainer_name}")
 
                 from utils.cache.ball_reco_cache import get_user_id_by_name
+
                 user_id = get_user_id_by_name(trainer_name) if trainer_name else None
-                debug_log(f"Fallback found user_id: {user_id} from trainer_name: {trainer_name}")
+                debug_log(
+                    f"Fallback found user_id: {user_id} from trainer_name: {trainer_name}"
+                )
                 member = after.guild.get_member(user_id) if user_id else None
                 debug_log(f"Fetched member from guild: {member}")
                 if not member:
@@ -108,7 +115,9 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
         elif trainer_id:
             user_id = trainer_id
         elif trainer_name:
-            user = discord.utils.find(lambda m: m.display_name == trainer_name, after.guild.members)
+            user = discord.utils.find(
+                lambda m: m.display_name == trainer_name, after.guild.members
+            )
             user_id = user.id if user else None
 
         user_faction_ball_alert = faction_ball_alert_cache.get(user_id)
@@ -122,8 +131,12 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                 )
 
                 # print(straymon_member_cache)
-                debug_log(f"straymon_member_cache keys: {list(straymon_member_cache.keys())}")
-                debug_log(f"straymon_member_cache values: {[data.get('user_name') for data in straymon_member_cache.values()]}")
+                debug_log(
+                    f"straymon_member_cache keys: {list(straymon_member_cache.keys())}"
+                )
+                debug_log(
+                    f"straymon_member_cache values: {[data.get('user_name') for data in straymon_member_cache.values()]}"
+                )
                 result = fetch_straymon_member_cache_by_username(trainer_name)
                 if result:
                     user_id, straymon_info = result
@@ -156,8 +169,16 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
             else embed_faction.title()
         )
 
-        user_name = member.display_name if member else fishing_user.display_name if fishing_user else "Trainer"
-        user_mention = member.mention if member else fishing_user.mention if fishing_user else "Trainer"
+        user_name = (
+            member.display_name
+            if member
+            else fishing_user.display_name if fishing_user else "Trainer"
+        )
+        user_mention = (
+            member.mention
+            if member
+            else fishing_user.mention if fishing_user else "Trainer"
+        )
 
         user_faction = straymon_member_cache.get(user_id, {}).get("faction")
         debug_log(f"User faction: {user_faction}")
@@ -215,7 +236,3 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
             label="FACTION_BALL_ALERT",
         )
         debug_log(f"Exception occurred: {e}", highlight=True)
-
-
-
-
