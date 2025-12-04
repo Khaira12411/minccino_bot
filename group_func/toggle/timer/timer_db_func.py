@@ -39,12 +39,14 @@ async def set_timer(
                 battle_setting,
             )
 
-        pretty_log(
-            tag="db",
-            message=f"Set timer settings for user {user_id} ({user_name})",
-            label="STRAYMONS",
-            bot=bot,
-        )
+            pretty_log(
+                tag="db",
+                message=f"Set timer settings for user {user_id} ({user_name})",
+                label="STRAYMONS",
+                bot=bot,
+            )
+
+
     except Exception as e:
         pretty_log(
             tag="error",
@@ -54,6 +56,76 @@ async def set_timer(
         )
 
 
+async def update_pokemon_setting(bot, user_id: int, pokemon_setting: str):
+    """
+    Update only the pokemon_setting field for a user.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE timers
+                SET pokemon_setting = $2
+                WHERE user_id = $1
+                """,
+                user_id,
+                pokemon_setting,
+            )
+
+            pretty_log(
+                tag="db",
+                message=f"Updated pokemon_setting for user {user_id} to {pokemon_setting}",
+                label="STRAYMONS",
+                bot=bot,
+            )
+
+            # Update cache
+            from utils.cache.timers_cache import update_pokemon_setting_in_cache
+            update_pokemon_setting_in_cache(user_id, pokemon_setting)
+
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to update pokemon_setting for user {user_id}: {e}",
+            label="STRAYMONS",
+            bot=bot,
+        )
+
+
+
+async def update_battle_setting(bot, user_id: int, battle_setting: str):
+    """
+    Update only the battle_setting field for a user.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE timers
+                SET battle_setting = $2
+                WHERE user_id = $1
+                """,
+                user_id,
+                battle_setting,
+            )
+
+            pretty_log(
+                tag="db",
+                message=f"Updated battle_setting for user {user_id} to {battle_setting}",
+                label="STRAYMONS",
+                bot=bot,
+            )
+            # Update cache
+            from utils.cache.timers_cache import update_battle_setting_in_cache
+            update_battle_setting_in_cache(user_id, battle_setting)
+            
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to update battle_setting for user {user_id}: {e}",
+            label="STRAYMONS",
+            bot=bot,
+        )
 # --------------------
 #  Fetch all rows
 # --------------------

@@ -522,7 +522,7 @@ class RarityDropdown(discord.ui.Select):
                 await safe_respond(
                     interaction,
                     method="edit",
-                    content="Pick a category to manage your ball recommendation settings:\n (If you are new, select the enabled/disabled first!)",
+                    content="Pick a category to manage your ball recommendation settings:\n (If you are new or want to turn all off, select **__Master Toggle__**)",
                     embed=embed,
                     view=new_view,
                 )
@@ -631,7 +631,7 @@ async def toggle_ball_rec_func(bot: commands.Bot, interaction: discord.Interacti
 
         await safe_respond(
             interaction,
-            content="Pick a category to manage your ball recommendation settings:\n (If you are new, select the enabled/disabled first!)",
+            content="Pick a category to manage your ball recommendation settings:\n (If you are new or want to turn all off, select **__Master Toggle__**)",
             view=RarityDropdownView(bot, interaction.user.id),
             ephemeral=True,
             method="edit",

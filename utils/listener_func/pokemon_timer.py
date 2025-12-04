@@ -69,12 +69,15 @@ async def detect_pokemeow_reply(message: discord.Message):
             # 💜────────────────────────────────────────────
             try:
                 await asyncio.sleep(11)
-
+                pretty_log(
+                    tag="info",
+                    message=f"Sending Pokemon timer ready notification to {member} (setting: {setting})",
+                )
                 if setting == "on":
                     await message.channel.send(
                         f"{Emojis.brown_bear_two} {member.mention}, your </pokemon:1015311085441654824> command is ready! {Emojis.Minccino_Hug}"
                     )
-                elif setting == "on w/o pings":
+                elif setting == "on w/o pings" or setting == "on_no_pings":
                     await message.channel.send(
                         f"{Emojis.brown_bear_two} {member.display_name}, your </pokemon:1015311085441654824> command is ready! {Emojis.Minccino_Hug}"
                     )

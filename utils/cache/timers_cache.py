@@ -34,3 +34,46 @@ async def load_timer_cache(bot):
     )
 
     return timer_cache
+
+def set_timer_cache(
+    user_id: int,
+    user_name: str,
+    pokemon_setting: str,
+    fish_setting: str,
+    battle_setting: str,
+):
+    """
+    Update the in-memory timer cache for a specific user.
+    """
+    timer_cache[user_id] = {
+        "user_name": user_name,
+        "pokemon_setting": pokemon_setting,
+        "fish_setting": fish_setting,
+        "battle_setting": battle_setting,
+    }
+    pretty_log(
+        message=f"Updated timer cache for user {user_id} ({user_name})",
+        label="⌚ TIMER CACHE",
+    )
+
+def update_pokemon_setting_in_cache(user_id: int, pokemon_setting: str):
+    """
+    Update only the pokemon_setting field in the timer cache for a specific user.
+    """
+    if user_id in timer_cache:
+        timer_cache[user_id]["pokemon_setting"] = pokemon_setting
+        pretty_log(
+            message=f"Updated pokemon_setting in timer cache for user {user_id} to {pokemon_setting}",
+            label="⌚ TIMER CACHE",
+        )
+
+def update_battle_setting_in_cache(user_id: int, battle_setting: str):
+    """
+    Update only the battle_setting field in the timer cache for a specific user.
+    """
+    if user_id in timer_cache:
+        timer_cache[user_id]["battle_setting"] = battle_setting
+        pretty_log(
+            message=f"Updated battle_setting in timer cache for user {user_id} to {battle_setting}",
+            label="⌚ TIMER CACHE",
+        )

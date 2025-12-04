@@ -39,7 +39,7 @@ class ToggleGroup(commands.Cog):
     # attach subgroup to parent group
     toggle_group.add_command(ping_group)
 
-    # 🟣────────────────────────────────────────────
+    """# 🟣────────────────────────────────────────────
     #     💜 Toggle Timer 💜
     # ─────────────────────────────────────────────
     @toggle_group.command(
@@ -62,6 +62,29 @@ class ToggleGroup(commands.Cog):
             command_func=timer_set_func,
             type=type,
             mode=mode,
+        )
+
+    timer_pokemon_set.extras = {"category": "Public"}"""
+    # 🟣────────────────────────────────────────────
+    #     💜 Toggle Timers 💜
+    # ─────────────────────────────────────────────
+    @toggle_group.command(
+        name="timers",
+        description="Opens your timer settings",
+    )
+    @espeon_roles_only()
+    async def timer_pokemon_set(
+        self,
+        interaction: discord.Interaction,
+
+    ):
+        slash_cmd_name = "toggle timer"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=timer_settings_func,
         )
 
     timer_pokemon_set.extras = {"category": "Public"}

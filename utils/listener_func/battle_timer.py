@@ -278,7 +278,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                         content=f"{Emojis.brown_biscuits} {challenger.mention}, your battle timer is ready! {Emojis.Minccino_Hug}",
                         embed=battle_embed,
                     )
-                elif setting == "on w/o pings":
+                elif setting == "on w/o pings" or setting == "on_no_pings":
                     debug_log("Sending notification (no ping)")
                     await message.channel.send(
                         content=f"{Emojis.brown_biscuits} {challenger.display_name}, your battle timer is ready! {Emojis.Minccino_Hug}",

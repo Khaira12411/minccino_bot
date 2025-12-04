@@ -274,14 +274,14 @@ class AlertSettingsView(discord.ui.View):
 
             # 🔹 Display friendly text
             display_text = {
-                "off": "OFF",
-                "on": "ON",
-                "on_no_pings": "ON (No Pings)",
-                "react": "REACT",
+                "off": "Off",
+                "on": "On",
+                "on_no_pings": "On (No Pings)",
+                "react": "React",
             }.get(new_state, "OFF")
 
             await interaction.edit_original_response(
-                content=f"Modify your Timer Settings:\n🎯 Faction Ball Alert set to **{display_text}**",
+                content=f"Modify your Alert Settings:\n🎯 Faction Ball Alert set to **{display_text}**",
                 view=self,
             )
 
