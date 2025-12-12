@@ -69,7 +69,7 @@ async def load_all_caches(bot):
         # 🦴 Research Fossils Alert
         await load_res_fossils_alert_cache(bot)
 
-        """# ⚔️ World Boss Battle Alert
+        # ⚔️ World Boss Battle Alert
         try:
             await load_wb_battle_alert_cache(bot)
         except Exception as e:
@@ -77,7 +77,7 @@ async def load_all_caches(bot):
                 tag="error",
                 message=f"Error loading World Boss Battle Alert Cache: {e}",
                 label="🥨 CENTRAL CACHE",
-            )"""
+            )
 
         # 🎯 Daily Faction Ball Alert
         await load_daily_faction_ball_cache(bot)
