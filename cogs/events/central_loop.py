@@ -50,8 +50,8 @@ class CentralLoop(commands.Cog):
                 # 🍀 Check if any Feeling Lucky cd is due
                 await fl_cd_checker(bot=self.bot)
 
-                # 💠 Check if any world boss battle reminders are due
-                await check_wb_battle_reminders(bot=self.bot)
+                """# 💠 Check if any world boss battle reminders are due
+                await check_wb_battle_reminders(bot=self.bot)"""
 
                 # 🦭 Check if any pokemon reminder is due
                 await pokemon_reminder_checker(self.bot)
@@ -86,7 +86,7 @@ async def setup(bot: commands.Bot):
     print("  ─────────────────────────────────────────────")
     print("  ✅ 💠  flush_weekly_goal_cache")
     print("  ✅ 🍀  fl_cd_checker")
-    print("  ✅ 💠  wb_battle_reminder_checker")
+    #print("  ✅ 💠  wb_battle_reminder_checker")
     print("  ✅ 🦭  pokemon_reminder_checker")
     print("  ✅ ⏰  special_battle_timer_checker")
     print("  🧭 CentralLoop ticking every 60 seconds!")
