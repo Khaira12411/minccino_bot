@@ -1,5 +1,5 @@
-from datetime import datetime
 import re
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import discord
@@ -10,6 +10,7 @@ from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNEL
 from utils.database.weekly_goal_tracker_db_func import upsert_weekly_goal
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
+
 FISHING_COLOR = 0x87CEFA
 processed_caught_messages = set()
 
@@ -46,7 +47,12 @@ async def weekly_goal_checker(
             bot=bot,
         )
         return
-
+    # Early exit for those with probation role
+    probation_role = guild.get_role(STRAYMONS__ROLES.probation)
+    if probation_role and probation_role in member.roles:
+        #  Member is on probation, skip weekly goal checks
+        return
+    
     pokemon_caught = member_info.get("pokemon_caught", 0)
     fish_caught = member_info.get("fish_caught", 0)
     battles_won = member_info.get("battles_won", 0)
@@ -173,13 +179,17 @@ async def pokemon_caught_listener(
     bot: discord.Client, before_message: discord.Message, message: discord.Message
 ):
     from utils.cache.res_fossil_cache import res_fossils_alert_cache
-    from utils.cache.straymon_member_cache import fetch_straymon_member_cache, fetch_straymon_user_id_by_username
+    from utils.cache.straymon_member_cache import (
+        fetch_straymon_member_cache,
+        fetch_straymon_user_id_by_username,
+    )
     from utils.cache.weekly_goal_tracker_cache import (
         increment_fish_caught,
         mark_weekly_goal_dirty,
         set_pokemon_caught,
         weekly_goal_cache,
     )
+
     # Process message embeds
     if not message.embeds:
         return
@@ -216,7 +226,6 @@ async def pokemon_caught_listener(
                 bot=bot,
             )
             return
-
 
     member_id = member.id
     member_name = member.name
