@@ -1,15 +1,11 @@
 from group_func.toggle.timer.timer_db_func import fetch_all_timers
+from utils.cache.cache_list import timer_cache
 from utils.loggers.pretty_logs import pretty_log
+
 
 # 🟣────────────────────────────────────────────
 #       🐭 Timer Cache Loader 🐭
 # ─────────────────────────────────────────────
-
-timer_cache = (
-    {}
-)  # user_id -> {"pokemon_setting": str, "fish_setting": str, "battle_setting": str}
-
-
 async def load_timer_cache(bot):
     """
     Load all user timer settings into memory cache.
@@ -35,6 +31,7 @@ async def load_timer_cache(bot):
 
     return timer_cache
 
+
 def set_timer_cache(
     user_id: int,
     user_name: str,
@@ -56,6 +53,16 @@ def set_timer_cache(
         label="⌚ TIMER CACHE",
     )
 
+def fetch_id_by_user_name(user_name: str) -> int | None:
+    """
+    Fetch a user ID from the timer cache based on the user name.
+    Returns None if not found.
+    """
+    for user_id, settings in timer_cache.items():
+        if settings.get("user_name") == user_name:
+            return user_id
+    return None
+
 def update_pokemon_setting_in_cache(user_id: int, pokemon_setting: str):
     """
     Update only the pokemon_setting field in the timer cache for a specific user.
@@ -66,6 +73,19 @@ def update_pokemon_setting_in_cache(user_id: int, pokemon_setting: str):
             message=f"Updated pokemon_setting in timer cache for user {user_id} to {pokemon_setting}",
             label="⌚ TIMER CACHE",
         )
+
+
+def update_fish_setting_in_cache(user_id: int, fish_setting: str):
+    """
+    Update only the fish_setting field in the timer cache for a specific user.
+    """
+    if user_id in timer_cache:
+        timer_cache[user_id]["fish_setting"] = fish_setting
+        pretty_log(
+            message=f"Updated fish_setting in timer cache for user {user_id} to {fish_setting}",
+            label="⌚ TIMER CACHE",
+        )
+
 
 def update_battle_setting_in_cache(user_id: int, battle_setting: str):
     """

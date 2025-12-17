@@ -32,6 +32,7 @@ from utils.listener_func.faction_ball_listener import (
     extract_faction_ball_from_fa,
 )
 from utils.listener_func.feeling_lucky import feeling_lucky_cd
+from utils.listener_func.fish_timer import fish_timer_handler
 from utils.listener_func.halloween_contest_listener import (
     halloween_contest_embed_listener,
 )
@@ -123,25 +124,75 @@ class MessageCreateListener(commands.Cog):
                 1154753039685660793,
             ):
                 first_embed = message.embeds[0] if message.embeds else None
+                first_embed_author = (
+                    first_embed.author.name
+                    if first_embed and first_embed.author
+                    else ""
+                )
+                first_embed_description = (
+                    first_embed.description
+                    if first_embed and first_embed.description
+                    else ""
+                )
+                # 💜────────────────────────────────────────────
+                #           ⏲️ Pokemon Timer Processing Only
+                # 💜────────────────────────────────────────────
+                if message.embeds and message.embeds[0]:
+                    embed = message.embeds[0]
+                    embed_description = embed.description if embed else None
+                    if embed_description and "found a wild" in embed_description:
+                        await detect_pokemeow_reply(message)
 
-                # ⌚ detect PokéMeow replies
-                await detect_pokemeow_reply(message)
+                        # 🥎 Recommend ball
+                        await recommend_ball(message, self.bot)
+                        
+                # Faction Ball Alert
+                if first_embed:
+                    if (
+                        first_embed.description
+                        and "<:team_logo:" in first_embed.description
+                        and "found a wild" in first_embed.description
+                    ):
+                        await faction_ball_alert(before=message, after=message)
+                # 💜────────────────────────────────────────────
+                # ⚔️ Held Item Ping Processing Only
+                # 💜────────────────────────────────────────────
+                if (
+                    first_embed_description
+                    and "<:held_item:" in first_embed_description
+                ):
+                    await held_item_ping_handler(self.bot, message)
+                # 💜────────────────────────────────────────────
+                #           🎣 Fish Timer Processing Only
+                # 💜────────────────────────────────────────────
+                if message.embeds and message.embeds[0]:
+                    embed = message.embeds[0]
+                    embed_description = embed.description if embed else None
+                    if (
+                        embed_description
+                        and "cast a" in embed_description
+                        and "into the water" in embed_description
+                    ):
+                        await fish_timer_handler(message)
 
-                # ⌚ detect PokéMeow Battle replies
-                await detect_pokemeow_battle(bot=self.bot, message=message)
+                # 💜────────────────────────────────────────────
+                # ⚔️ Battle Timer Processing Only
+                # 💜────────────────────────────────────────────
+                if first_embed_author and "PokeMeow Battles" in first_embed_author:
+                    await detect_pokemeow_battle(bot=self.bot, message=message)
                 # Process battle won
                 if message.content and battle_won_trigger in message.content:
 
                     await battle_won_listener(bot=self.bot, message=message)
 
-                # 🐚 Held item ping
-                await held_item_ping_handler(self.bot, message)
-
-                # 🥎 Recommend ball
-                await recommend_ball(message, self.bot)
-
-                # 🧪 Debug: Relics processing
-                await handle_relics_message(bot=self.bot, message=message)
+                # 💜────────────────────────────────────────────
+                # ⚔️ Relics Processing Only
+                # 💜────────────────────────────────────────────
+                if (
+                    first_embed_author
+                    and "pokemeow research lab" in first_embed_author.lower()
+                ):
+                    await handle_relics_message(bot=self.bot, message=message)
 
                 # 🧪 Autoupdate catch boost via ;perks
                 if first_embed:
@@ -181,14 +232,7 @@ class MessageCreateListener(commands.Cog):
                             before=message,
                             message=message,
                         )
-                # Faction Ball Alert
-                if first_embed:
-                    if (
-                        first_embed.description
-                        and "<:team_logo:" in first_embed.description
-                        and "found a wild" in first_embed.description
-                    ):
-                        await faction_ball_alert(before=message, after=message)
+
                 # Faction Ball Listener from ;fa command
                 if first_embed:
                     if first_embed.author and any(
@@ -220,7 +264,7 @@ class MessageCreateListener(commands.Cog):
                             f"Matched World Boss Battle Reminder Registration | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await register_wb_battle_reminder(bot=self.bot, message=message)
-                        
+
                 # Special Battle NPC Listener (Disabled for now)
                 """if first_embed:
                     if (

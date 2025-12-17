@@ -5,15 +5,16 @@ from discord import app_commands
 from discord.ext import commands
 
 from utils.cache.ball_reco_cache import ball_reco_cache
+from utils.cache.cache_list import timer_cache
 from utils.cache.held_item_cache import held_item_cache
 from utils.cache.reminders_cache import user_reminders_cache
-from utils.cache.timers_cache import timer_cache
+from utils.cache.res_fossil_cache import res_fossils_alert_cache
 from utils.cache.user_captcha_alert_cache import user_captcha_alert_cache
 from utils.embeds.user_settings_embed import build_user_settings_embed
 from utils.essentials.loader.loader import *
 from utils.essentials.role_checks import *
 from utils.loggers.pretty_logs import pretty_log
-from utils.cache.res_fossil_cache import res_fossils_alert_cache
+
 
 # -------------------- Cache reload helpers --------------------
 async def reload_timer_cache(bot: commands.Bot):
@@ -45,10 +46,12 @@ async def reload_captcha_alert_cache(bot: commands.Bot):
 
     await load_user_captcha_alert_cache(bot=bot)
 
+
 async def reload_res_fossil_cache(bot: commands.Bot):
     from utils.cache.res_fossil_cache import load_res_fossils_alert_cache
 
     await load_res_fossils_alert_cache(bot=bot)
+
 
 # -------------------- Dropdown for settings --------------------
 class SettingsDropdown(discord.ui.Select):

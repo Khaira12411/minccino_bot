@@ -1,4 +1,5 @@
 class Emojis:
+    fish_spawn = "<:fish_spawn:1450992400167207015>"
     sgmax = "<:shinygmax:1416986057605517393>"
     gmax = "<:gmax:1440970765418631168>"
     duskball = "<:duskball:1440271335967162368>"

@@ -7,82 +7,94 @@ from discord.ext import commands
 
 from config.aesthetic import Emojis
 from config.current_setup import POKEMEOW_APPLICATION_ID
-from utils.cache.cache_list import timer_cache # 💜 import your cache
+from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
 
+FISH_TIMER = 25
+
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
-ready_tasks = {}
+fish_ready_tasks = {}
+
+
+def extract_fishing_trainer_name(description: str) -> str | None:
+    """
+    Extracts the trainer name (e.g. 'khy.09') from a PokéMeow fishing embed description.
+    Example: '<:irida:...> **khy.09** cast a ...'
+    """
+    match = re.search(r"\*\*(.+?)\*\* cast a", description)
+    if match:
+        return match.group(1).strip()
+    return None
 
 
 # 💜────────────────────────────────────────────
 #   Function: detect_pokemeow_reply
 #   Handles Pokemon timer notifications per user settings
 # 💜────────────────────────────────────────────
-async def detect_pokemeow_reply(message: discord.Message):
+async def fish_timer_handler(message: discord.Message):
     """
     Triggered on any message.
-    Handles Pokemon ready notifications depending on user's timer cache settings:
+    Handles Fish ready notifications depending on user's timer cache settings:
       - off → ignore
       - on → ping them in channel
       - on w/o pings → send message w/o mention
-      - react → ✅ react to PokeMeow's message
     """
     try:
         if message.author.id != POKEMEOW_APPLICATION_ID:
             return
 
-        match = re.search(r"\*\*(.+?)\*\* found a wild", message.content)
-        if not match:
-            return
-
-        username = match.group(1).strip()
+        embed = message.embeds[0]
+        embed_description = embed.description or ""
         guild = message.guild
 
-        # Match member case-insensitive
-        member = discord.utils.find(
-            lambda m: m.name.lower() == username.lower()
-            or m.display_name.lower() == username.lower(),
-            guild.members,
-        )
+        member = await get_pokemeow_reply_member(message)
         if not member:
-            return
+            # Fall back to username extraction if needed
+            user_name = extract_fishing_trainer_name(embed_description)
+            if not user_name:
+                return
+            from utils.cache.timers_cache import fetch_id_by_user_name
+
+            user_id = fetch_id_by_user_name(user_name)
+            if not user_id:
+                return
+            member = guild.get_member(user_id)
+            if not member:
+                return
 
         # -------------------------------
         # 💜 Check timer_cache settings
         # -------------------------------
+        from utils.cache.timers_cache import timer_cache
+
         user_settings = timer_cache.get(member.id)
         if not user_settings:
             return
 
-        setting = (user_settings.get("pokemon_setting") or "off").lower()
+        setting = (user_settings.get("fish_setting") or "off").lower()
         if setting == "off":
             return
 
         # Cancel previous ready task if any
-        if member.id in ready_tasks and not ready_tasks[member.id].done():
-            ready_tasks[member.id].cancel()
+        if member.id in fish_ready_tasks and not fish_ready_tasks[member.id].done():
+            fish_ready_tasks[member.id].cancel()
 
         # Schedule behavior depending on setting
         async def notify_ready():
             # 💜────────────────────────────────────────────
-            #   Pokemon Timer Notification Task
+            #   Fish Timer Notification Task
             # 💜────────────────────────────────────────────
             try:
-                await asyncio.sleep(11)
-                pretty_log(
-                    tag="info",
-                    message=f"Sending Pokemon timer ready notification to {member} (setting: {setting})",
-                )
+                await asyncio.sleep(FISH_TIMER)
+
                 if setting == "on":
                     await message.channel.send(
-                        f"{Emojis.brown_bear_two} {member.mention}, your </pokemon:1015311085441654824> command is ready! {Emojis.Minccino_Hug}"
-                    )
-                elif setting == "on w/o pings" or setting == "on_no_pings":
+                        f"{Emojis.fish_spawn} {member.mention}, your </fish spawn:1015311084812501026> command is ready! "
+                    )  # TODO update with skaia's emojis
+                elif setting == "on_no_pings":
                     await message.channel.send(
-                        f"{Emojis.brown_bear_two} **{member.display_name}**, your </pokemon:1015311085441654824> command is ready! {Emojis.Minccino_Hug}"
+                        f"{Emojis.fish_spawn} **{member.display_name}**, your </fish spawn:1015311084812501026> command is ready!"
                     )
-                elif setting == "react":
-                    await message.add_reaction(Emojis.brown_check)
 
             except asyncio.CancelledError:
                 # 💙 [CANCELLED] Scheduled ready notification cancelled
@@ -101,7 +113,7 @@ async def detect_pokemeow_reply(message: discord.Message):
                     ),
                 )
 
-        ready_tasks[member.id] = asyncio.create_task(notify_ready())
+        fish_ready_tasks[member.id] = asyncio.create_task(notify_ready())
 
     except Exception as e:
         pretty_log(

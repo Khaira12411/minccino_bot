@@ -46,7 +46,6 @@ async def set_timer(
                 bot=bot,
             )
 
-
     except Exception as e:
         pretty_log(
             tag="error",
@@ -81,6 +80,7 @@ async def update_pokemon_setting(bot, user_id: int, pokemon_setting: str):
 
             # Update cache
             from utils.cache.timers_cache import update_pokemon_setting_in_cache
+
             update_pokemon_setting_in_cache(user_id, pokemon_setting)
 
     except Exception as e:
@@ -91,6 +91,41 @@ async def update_pokemon_setting(bot, user_id: int, pokemon_setting: str):
             bot=bot,
         )
 
+
+async def update_fish_setting(bot, user_id: int, fish_setting: str):
+    """
+    Update only the fish_setting field for a user.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE timers
+                SET fish_setting = $2
+                WHERE user_id = $1
+                """,
+                user_id,
+                fish_setting,
+            )
+
+            pretty_log(
+                tag="db",
+                message=f"Updated fish_setting for user {user_id} to {fish_setting}",
+                label="STRAYMONS",
+                bot=bot,
+            )
+            # Update cache
+            from utils.cache.timers_cache import update_fish_setting_in_cache
+
+            update_fish_setting_in_cache(user_id, fish_setting)
+
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to update fish_setting for user {user_id}: {e}",
+            label="STRAYMONS",
+            bot=bot,
+        )
 
 
 async def update_battle_setting(bot, user_id: int, battle_setting: str):
@@ -117,8 +152,9 @@ async def update_battle_setting(bot, user_id: int, battle_setting: str):
             )
             # Update cache
             from utils.cache.timers_cache import update_battle_setting_in_cache
+
             update_battle_setting_in_cache(user_id, battle_setting)
-            
+
     except Exception as e:
         pretty_log(
             tag="error",
@@ -126,6 +162,8 @@ async def update_battle_setting(bot, user_id: int, battle_setting: str):
             label="STRAYMONS",
             bot=bot,
         )
+
+
 # --------------------
 #  Fetch all rows
 # --------------------

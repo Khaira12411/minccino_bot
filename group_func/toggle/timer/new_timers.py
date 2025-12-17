@@ -10,6 +10,7 @@ from group_func.toggle.timer.timer_db_func import (
     fetch_timer,
     set_timer,
     update_battle_setting,
+    update_fish_setting,
     update_pokemon_setting,
 )
 from utils.embeds.design_embed import design_embed
@@ -36,6 +37,7 @@ async def timer_settings_func(
         # 🐾 Grab the user info
         user = interaction.user
         user_id = user.id
+        user_name = user.name
         timer_setting = await fetch_timer(bot=bot, user_id=user_id)
         pretty_log(
             tag="info",
@@ -43,6 +45,19 @@ async def timer_settings_func(
             label="STRAYMONS",
             bot=bot,
         )
+        if not timer_setting:
+            # Upsert default timer settings
+            await set_timer(
+                bot=bot,
+                user_id=user_id,
+                user_name=user_name,
+                pokemon_setting="Off",
+                fish_setting="Off",
+                battle_setting="Off",
+            )
+            # Refetch
+            timer_setting = await fetch_timer(bot=bot, user_id=user_id)
+
         pokemon_settings = timer_setting.get("pokemon_setting", "Off")
         fish_settings = timer_setting.get("fish_setting", "Off")
         battle_settings = timer_setting.get("battle_setting", "Off")
@@ -58,6 +73,7 @@ async def timer_settings_func(
             bot=bot,
             user=user,
             pokemon_setting=pokemon_settings,
+            fish_setting=fish_settings,
             battle_setting=battle_settings,
         )
 
@@ -95,12 +111,14 @@ class TimerSettingsView(discord.ui.View):
         bot: commands.Bot,
         user: discord.Member,
         pokemon_setting,
+        fish_setting,
         battle_setting,
     ):
         super().__init__(timeout=180)  # 3 minutes timeout
         self.bot = bot
         self.user = user
         self.pokemon_setting = pokemon_setting
+        self.fish_setting = fish_setting
         self.battle_setting = battle_setting
         self.message = None  # set later
         self.update_buttons_styles()
@@ -186,6 +204,77 @@ class TimerSettingsView(discord.ui.View):
             )
             await interaction.followup.send(
                 "An error occurred while updating your Pokemon timer setting.",
+                ephemeral=True,
+            )
+
+    #  💫────────────────────────────────────
+    # [🎣 Button] Fish Timer (3 State Cycle)
+    #  💫────────────────────────────────────
+    @discord.ui.button(label="Fish: Off", style=ButtonStyle.secondary, emoji="🎣")
+    async def fish_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        if interaction.user.id != self.user.id:
+            await interaction.response.send_message(
+                "This is not your timer settings menu!", ephemeral=True
+            )
+            return
+        # Defer
+        await interaction.response.defer()
+        # Cycle thru off -> on - > on_no_pings -> off
+        try:
+            pretty_log(tag="info", message=f"Current fish setting: {self.fish_setting}")
+            current_state = (
+                str(self.fish_setting).lower() if self.fish_setting else "off"
+            )
+            pretty_log(tag="info", message=f"Current fish state: {current_state}")
+            # 3- State Cycle: off - > on -> on_no_pings -> off
+            if current_state == "off":
+                new_state = "on"
+            elif current_state == "on":
+                new_state = "on_no_pings"
+            elif current_state == "on_no_pings" or current_state == "on w/o pings":
+                new_state = "off"
+            else:
+                new_state = "off"
+
+            # 💾 Update the Fish timer setting in DB
+            await update_fish_setting(
+                bot=self.bot,
+                user_id=self.user.id,
+                fish_setting=new_state,
+            )
+            self.fish_setting = new_state
+
+            # Refresh buttons
+            self.update_buttons_styles()
+
+            # Display friendly text
+            display_text = {
+                "off": "Off",
+                "on": "On",
+                "on_no_pings": "On (No pings)",
+            }.get(new_state, "Off")
+
+            await interaction.edit_original_response(
+                content=f"Modify your Timer Settings:\n🎣 Fish Timer set to **{display_text}**",
+                view=self,
+            )
+            pretty_log(
+                tag="info",
+                message=f"User {self.user} set Fish timer to {new_state}",
+                label="STRAYMONS",
+                bot=self.bot,
+            )
+        except Exception as e:
+            pretty_log(
+                tag="error",
+                message=f"Error getting current fish timer state: {e}",
+                label="STRAYMONS",
+                bot=self.bot,
+            )
+            await interaction.followup.send(
+                "An error occurred while updating your Fish timer setting.",
                 ephemeral=True,
             )
 
@@ -288,6 +377,21 @@ class TimerSettingsView(discord.ui.View):
         else:
             self.pokemon_button.style = ButtonStyle.secondary
             self.pokemon_button.label = "Pokemon Timer: Off"
+
+        # Update Fish button style (3 States)
+        fish_state = str(self.fish_setting) if self.fish_setting else "off"
+        if fish_state == "off":
+            self.fish_button.style = ButtonStyle.secondary
+            self.fish_button.label = "Fish Timer: Off"
+        elif fish_state == "on":
+            self.fish_button.style = ButtonStyle.success
+            self.fish_button.label = "Fish Timer: On"
+        elif fish_state in ("on_no_pings", "on w/o pings"):
+            self.fish_button.style = ButtonStyle.blurple
+            self.fish_button.label = "Fish Timer: On (No pings)"
+        else:
+            self.fish_button.style = ButtonStyle.secondary
+            self.fish_button.label = "Fish Timer: Off"
 
         # Update Battle button style (3 States)
         battle_state = str(self.battle_setting) if self.battle_setting else "off"

@@ -25,8 +25,8 @@ HELD_ITEM_PATTERN = re.compile(
     r"\*\*(?P<pokemon>[A-Za-z_]+)\*\*"
 )
 # enable_debug(f"{__name__}.extract_water_state_from_author")
-#enable_debug(f"{__name__}.parse_pokemeow_spawn")
-#enable_debug(f"{__name__}.recommend_ball")
+# enable_debug(f"{__name__}.parse_pokemeow_spawn")
+# enable_debug(f"{__name__}.recommend_ball")
 FISHING_COLOR = 0x87CEFA  # sky blue
 HALLOWEEN_COLOR = 0xFFA500  # orange
 EVENT_EXCL_COLOR = 0xEA260B  # red
@@ -307,7 +307,7 @@ async def recommend_ball(message: discord.Message, bot):
         if not user_id:
             debug_log("No user_id extracted, exiting recommender")
             return None
-        
+
         user_settings = ball_reco_cache[user_id]
         user_name = user_settings.get("user_name")
         enabled_val = user_settings.get("enabled", False)
@@ -446,14 +446,14 @@ async def recommend_ball(message: discord.Message, bot):
         # {Emojis.held_item}
         if spawn_type == "held_item":
             if display_all and all_balls_str:
-                msg = f"{user_name} {Emojis.held_item} {Emojis_Balls.small_pokeball} {rarity_emoji} → {all_balls_str}"
+                msg = f"**{user_name}** {Emojis.held_item} {Emojis_Balls.small_pokeball} {rarity_emoji} → {all_balls_str}"
             else:
-                msg = f"{user_name} {Emojis.held_item} {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
+                msg = f"**{user_name}** {Emojis.held_item} {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
         else:
             if display_all and all_balls_str:
-                msg = f"{user_name} {Emojis_Balls.small_pokeball} {rarity_emoji} → {all_balls_str}"
+                msg = f"**{user_name}** {Emojis_Balls.small_pokeball} {rarity_emoji} → {all_balls_str}"
             else:
-                msg = f"{user_name} {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
+                msg = f"**{user_name}** {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
 
         await message.channel.send(msg)
 

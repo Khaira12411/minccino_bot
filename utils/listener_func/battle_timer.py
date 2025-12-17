@@ -7,7 +7,7 @@ from discord.ext import commands
 
 from config.aesthetic import Emojis
 from config.current_setup import MINCCINO_COLOR, POKEMEOW_APPLICATION_ID
-from utils.cache.timers_cache import timer_cache
+from utils.cache.cache_list import timer_cache
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
