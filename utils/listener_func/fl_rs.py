@@ -57,6 +57,18 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
 
     embed = message.embeds[0]
     embed_color = embed.color
+
+    # Extract Pokémon name
+    pokemon_name = None
+    if embed.description:
+        catch_match = re.search(r"You caught a.*?\*\*([^*]+)\*\*", embed.description)
+        if catch_match:
+            pokemon_name = catch_match.group(1).strip()
+            debug_log(f"Extracted Pokémon Name: {pokemon_name}")
+        else:
+            debug_log("No Pokémon name found in embed description.")
+            return
+        
     debug_log(f"Embed Color: {embed_color}")
     if (
         embed.color
@@ -78,17 +90,6 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
     if not member:
         debug_log("No member found from PokéMeow reply.")
         return
-
-    # Extract Pokémon name
-    pokemon_name = None
-    if embed.description:
-        catch_match = re.search(r"You caught a.*?\*\*([^*]+)\*\*", embed.description)
-        if catch_match:
-            pokemon_name = catch_match.group(1).strip()
-            debug_log(f"Extracted Pokémon Name: {pokemon_name}")
-        else:
-            debug_log("No Pokémon name found in embed description.")
-            return
 
     if embed.color.value == legendary_color:
         rarity = "legendary"
