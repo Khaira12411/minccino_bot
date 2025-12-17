@@ -150,6 +150,10 @@ async def register_wb_battle_reminder(
         return
 
     unix_seconds = extract_wb_unix_seconds(embed.description)
+    if not unix_seconds:
+        pretty_log("info", "No unix seconds found in the embed description.")
+        return
+    
     boss_name = extract_wb_boss_name(embed.description)
 
     now = int(time.time())

@@ -6,8 +6,10 @@ from discord.ext import commands
 from config.straymons_constants import STRAYMONS__EMOJIS, STRAYMONS__TEXT_CHANNELS
 from utils.embeds.design_embed import design_embed
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
+enable_debug(f"{__name__}.fl_rs_checker")
 rarity_meta = {
     "common": {"color": 810198, "emoji": STRAYMONS__EMOJIS.common},
     "uncommon": {"color": 1291495, "emoji": STRAYMONS__EMOJIS.uncommon},
@@ -55,22 +57,26 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
 
     embed = message.embeds[0]
     embed_color = embed.color
+    debug_log(f"Embed Color: {embed_color}")
     if (
         embed.color
         and embed.color.value not in RARE_COLORS
         and embed.color.value in NON_RARE_COLORS
     ):
+
         pretty_log(
             tag="info",
             message="Feeling Lucky spawn is not rare. Exiting FL RS Checker.",
             label="🍀 FL RS CHECKER",
             bot=bot,
         )
+        debug_log("Non-rare color detected, exiting FL RS Checker.")
         return
 
     rarity = "unknown"
     member = await get_pokemeow_reply_member(message=message)
     if not member:
+        debug_log("No member found from PokéMeow reply.")
         return
 
     # Extract Pokémon name
@@ -79,7 +85,9 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
         catch_match = re.search(r"You caught a.*?\*\*([^*]+)\*\*", embed.description)
         if catch_match:
             pokemon_name = catch_match.group(1).strip()
+            debug_log(f"Extracted Pokémon Name: {pokemon_name}")
         else:
+            debug_log("No Pokémon name found in embed description.")
             return
 
     if embed.color.value == legendary_color:
@@ -145,14 +153,13 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
     emoji = rarity_meta.get(rarity, rarity_meta["default"]).get("emoji", "❓")
     display_pokemon_name = f"{emoji} {pokemon_name.title()}"
 
-    desc = (
-        f"[Jump to Message]({message.jump_url})"
-        f"Member: {member.mention}\n"
-        f"Pokemon: {display_pokemon_name}\n"
-    )
+    desc = f"Member: {member.mention}\n" f"Pokemon: {display_pokemon_name}\n"
 
     log_embed = discord.Embed(
-        title="Feeling Lucky Rare Spawn", description=desc, color=embed_color
+        title="Feeling Lucky Rare Spawn",
+        url=message.jump_url,
+        description=desc,
+        color=embed_color,
     )
     log_embed = design_embed(
         user=member, embed=log_embed, thumbnail_url=image_url if image_url else None
