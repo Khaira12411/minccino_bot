@@ -48,6 +48,27 @@ def extract_rarity_from_footer(footer_text: str) -> str:
         return None
 
 
+def extract_member_username_from_embed(embed: discord.Embed) -> str | None:
+    """
+    Extracts the username from the embed author name, e.g. "Congratulations, frayl!" -> "frayl".
+    Returns None if not found.
+    """
+    if embed.author and embed.author.name:
+        # Try 'Congratulations, username!' first
+        match = re.search(r"Congratulations, ([^!]+)!", embed.author.name)
+        if match:
+            return match.group(1).strip()
+        # Fallback: 'Well done, username!'
+        match = re.search(r"Well done, ([^!]+)!", embed.author.name)
+        if match:
+            return match.group(1).strip()
+        # Fallback: 'Great work, username!'
+        match = re.search(r"Great work, ([^!]+)!", embed.author.name)
+        if match:
+            return match.group(1).strip()
+    return None
+
+
 # 🐾────────────────────────────────────────────
 #     ✨ Feeling Lucky Rare Pokémon Checker
 # 🐾────────────────────────────────────────────
@@ -68,7 +89,7 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
         else:
             debug_log("No Pokémon name found in embed description.")
             return
-        
+
     debug_log(f"Embed Color: {embed_color}")
     if (
         embed.color
@@ -89,7 +110,27 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
     member = await get_pokemeow_reply_member(message=message)
     if not member:
         debug_log("No member found from PokéMeow reply.")
-        return
+        # Fallback: Try to extract username from embed author
+        username = extract_member_username_from_embed(embed)
+        if not username:
+            debug_log(
+                "Failed to extract username from embed author. Exiting FL RS Checker."
+            )
+            return
+        
+        debug_log(f"Extracted username from embed: {username}")
+        from utils.cache.straymon_member_cache import fetch_straymon_user_id_by_username
+
+        user_id = fetch_straymon_user_id_by_username(username)
+        if not user_id:
+            debug_log("Failed to fetch user ID from username. Exiting FL RS Checker.")
+            return
+        debug_log(f"Fetched user ID from username: {user_id}")
+        member = message.guild.get_member(user_id)
+        if not member:
+            debug_log("Failed to fetch member from username. Exiting FL RS Checker.")
+            return
+        debug_log(f"Fetched member from username: {username}")
 
     if embed.color.value == legendary_color:
         rarity = "legendary"
