@@ -75,11 +75,11 @@ async def detect_pokemeow_reply(message: discord.Message):
                 )
                 if setting == "on":
                     await message.channel.send(
-                        f"{Emojis.brown_bear_two} {member.mention}, your </pokemon:1015311085441654824> command is ready! {Emojis.Minccino_Hug}"
+                        f"{Emojis.pokespawn} {member.mention}, your </pokemon:1015311085441654824> command is ready!"
                     )
                 elif setting == "on w/o pings" or setting == "on_no_pings":
                     await message.channel.send(
-                        f"{Emojis.brown_bear_two} **{member.display_name}**, your </pokemon:1015311085441654824> command is ready! {Emojis.Minccino_Hug}"
+                        f"{Emojis.pokespawn} **{member.name}**, your </pokemon:1015311085441654824> command is ready!"
                     )
                 elif setting == "react":
                     await message.add_reaction(Emojis.brown_check)

@@ -217,11 +217,11 @@ async def recommend_fishing_ball(message: discord.Message, bot):
 
         if display_all and all_balls_str:
             msg = (
-                f"**{user_settings['user_name']}** 🎣 {rarity_emoji} → {all_balls_str}"
+                f"{Emojis.fish_spawn} **{user_settings['user_name']}** {rarity_emoji} → {all_balls_str}"
             )
         else:
             ball_emoji = ball_emojis.get(ball, "")
-            msg = f"**{user_settings['user_name']}** 🎣 {rarity_emoji} → {ball_emoji} ({rate}%)"
+            msg = f"{Emojis.fish_spawn} **{user_settings['user_name']}** {rarity_emoji} → {ball_emoji} ({rate}%)"
 
         await message.channel.send(msg)
         debug_log(f"Sent recommendation: {msg}")

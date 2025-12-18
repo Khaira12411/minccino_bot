@@ -446,14 +446,14 @@ async def recommend_ball(message: discord.Message, bot):
         # {Emojis.held_item}
         if spawn_type == "held_item":
             if display_all and all_balls_str:
-                msg = f"**{user_name}** {Emojis.held_item} {Emojis_Balls.small_pokeball} {rarity_emoji} → {all_balls_str}"
+                msg = f"{Emojis.pokespawn} **{user_name}** {Emojis.held_item} {rarity_emoji} → {all_balls_str}"
             else:
-                msg = f"**{user_name}** {Emojis.held_item} {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
+                msg = f"{Emojis.pokespawn} **{user_name}** {Emojis.held_item} {rarity_emoji} → {ball_emoji} ({rate}%)"
         else:
             if display_all and all_balls_str:
-                msg = f"**{user_name}** {Emojis_Balls.small_pokeball} {rarity_emoji} → {all_balls_str}"
+                msg = f"{Emojis.pokespawn} **{user_name}** {rarity_emoji} → {all_balls_str}"
             else:
-                msg = f"**{user_name}** {Emojis_Balls.small_pokeball} {rarity_emoji} → {ball_emoji} ({rate}%)"
+                msg = f"{Emojis.pokespawn} **{user_name}** {rarity_emoji} → {ball_emoji} ({rate}%)"
 
         await message.channel.send(msg)
 

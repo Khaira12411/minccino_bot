@@ -93,7 +93,7 @@ async def fish_timer_handler(message: discord.Message):
                     )  # TODO update with skaia's emojis
                 elif setting == "on_no_pings":
                     await message.channel.send(
-                        f"{Emojis.fish_spawn} **{member.display_name}**, your </fish spawn:1015311084812501026> command is ready!"
+                        f"{Emojis.fish_spawn} **{member.name}**, your </fish spawn:1015311084812501026> command is ready!"
                     )
 
             except asyncio.CancelledError:
