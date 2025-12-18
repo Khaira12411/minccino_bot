@@ -90,7 +90,7 @@ async def fish_timer_handler(message: discord.Message):
                 if setting == "on":
                     await message.channel.send(
                         f"{Emojis.fish_spawn} {member.mention}, your </fish spawn:1015311084812501026> command is ready! "
-                    )  # TODO update with skaia's emojis
+                    )  
                 elif setting == "on_no_pings":
                     await message.channel.send(
                         f"{Emojis.fish_spawn} **{member.name}**, your </fish spawn:1015311084812501026> command is ready!"
