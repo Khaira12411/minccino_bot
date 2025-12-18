@@ -270,18 +270,20 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 elif enemy_id:
                     battle_embed.description = f";b npc {enemy_id}"
                 else:
-                    battle_embed.description = "Your battle command is ready!"
+                    battle_embed.description = (
+                        "Your </battle:1015311084422434819> command is ready!"
+                    )
 
                 if setting == "on":
                     debug_log("Sending notification (ping)")
                     await message.channel.send(
-                        content=f"{Emojis.battle_spawn} {challenger.mention}, your battle command is ready!",
+                        content=f"{Emojis.battle_spawn} {challenger.mention}, your </battle:1015311084422434819> command is ready!",
                         embed=battle_embed,
                     )
                 elif setting == "on w/o pings" or setting == "on_no_pings":
                     debug_log("Sending notification (no ping)")
                     await message.channel.send(
-                        content=f"{Emojis.battle_spawn} **{challenger.name}**, your battle command is ready!",
+                        content=f"{Emojis.battle_spawn} **{challenger.name}**, your </battle:1015311084422434819> command is ready!",
                         embed=battle_embed,
                     )
                 elif setting == "react":

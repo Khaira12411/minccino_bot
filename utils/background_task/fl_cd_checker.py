@@ -46,7 +46,7 @@ async def fl_cd_checker(bot: discord.Client):
                 if guild:
                     member = guild.get_member(user_id)
                 member_name = member.display_name if member else user_name
-                message_text = f"🍀 {member_name}, you can now use ;find again in <#{FEELING_LUCKY_CHANNEL_ID}>!"
+                message_text = f"{Emojis.lucky_cheese} **{member_name}**, you can now use ;find again in <#{FEELING_LUCKY_CHANNEL_ID}>!"
                 # Remove role
                 fl_cd_role = guild.get_role(STRAYMONS__ROLES.fl_cd)
                 if member and fl_cd_role in member.roles:

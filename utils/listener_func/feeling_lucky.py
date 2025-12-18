@@ -10,9 +10,11 @@ from config.aesthetic import Emojis
 from config.current_setup import MINCCINO_COLOR, POKEMEOW_APPLICATION_ID
 from config.straymons_constants import STRAYMONS__ROLES
 from utils.database.fl_cd_db_func import upsert_feeling_lucky_cd
+from utils.database.fl_reminders_db_func import *
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
-from utils.database.fl_reminders_db_func import *
+
+
 # 🍀────────────────────────────────────────────
 #   Function: feeling_lucky_cd
 #   Handles Pokémon find cooldowns per user
@@ -72,7 +74,7 @@ async def feeling_lucky_cd(bot: commands.Bot, message: discord.Message):
 
         cooldown_time = datetime.now() + timedelta(hours=6)
         desc = (
-            f"🍀 {member.mention}, you can use ;find here again "
+            f"{Emojis.lucky_cheese} {member.mention}, you can use ;find here again "
             f"<t:{int(cooldown_time.timestamp())}:R>.\n"
             "Type /cooldowns to check your cooldowns."
         )
