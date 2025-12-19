@@ -75,7 +75,9 @@ FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "
 BANNED_PERKS_PHRASES = {"PokeMeow Clans — Perks Info", "PokeMeow Clans — Rank Info"}
 secret_santa_phrases = [
     "You sent <:PokeCoin:666879070650236928>",
-    "to a random user!" "Your odds to receive items was boosted by" "You received",
+    "to a random user!",
+    "Your odds to receive items was boosted by",
+    "You received",
 ]
 
 
