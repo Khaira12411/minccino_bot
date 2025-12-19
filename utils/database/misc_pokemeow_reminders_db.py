@@ -20,7 +20,7 @@ async def upsert_secret_santa_reminder(
     bot, user_id: int, user_name: str, channel_id: int
 ):
     type = "secret_santa"
-    remind_on = int(time.time()) + 4 * 60 * 60  # 4 hours from now
+    remind_on = int(time()) + 4 * 60 * 60  # 4 hours from now
     try:
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
