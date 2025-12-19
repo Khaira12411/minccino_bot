@@ -7,6 +7,7 @@ from utils.database.misc_pokemeow_reminders_db import (
     fetch_secret_santa_reminder,
     update_secret_santa_reminder,
     upsert_secret_santa_reminder,
+    insert_secret_santa_reminder
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
@@ -85,7 +86,7 @@ async def secret_santa_timer_listener(bot: discord.Client, message: discord.Mess
             return
 
     # Upsert Secret Santa reminder for 4 hours later
-    await upsert_secret_santa_reminder(bot, user_id, user_name, channel_id)
+    await insert_secret_santa_reminder(bot, user_id, user_name, timestamp, channel_id)
     await message.add_reaction(
         Emojis.santa_mouse
     )  # React with Santa emoji to confirm participation

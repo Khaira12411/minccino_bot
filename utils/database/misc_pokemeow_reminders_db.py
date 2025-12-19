@@ -47,6 +47,34 @@ async def upsert_secret_santa_reminder(
         )
 
 
+async def insert_secret_santa_reminder(
+    bot, user_id: int, user_name: str, remind_on: int, channel_id: int
+):
+    type = "secret_santa"
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO misc_pokemeow_reminders (user_id, type, user_name, remind_on, channel_id)
+                VALUES ($1, $2, $3, $4, $5)
+                """,
+                user_id,
+                type,
+                user_name,
+                remind_on,
+                channel_id,
+            )
+            pretty_log(
+                "info",
+                f"Inserted secret santa reminder for {user_name}, reminds on {remind_on}, channel {channel_id}",
+            )
+    except Exception as e:
+        pretty_log(
+            "warn",
+            f"Failed to insert secret santa reminder for user {user_id}: {e}",
+        )
+
+
 async def update_secret_santa_reminder(
     bot, user_id: int, user_name: str, remind_on: int
 ):
