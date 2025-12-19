@@ -6,7 +6,7 @@ from utils.loggers.pretty_logs import pretty_log
 from utils.background_task.pokemon_reminders_checker import pokemon_reminder_checker
 from utils.background_task.fl_cd_checker import fl_cd_checker
 from utils.background_task.special_battle_timer_checker import special_battle_timer_checker
-from utils.background_task.wb_reminders_checker import check_wb_battle_reminders
+from utils.background_task.secret_santa_timer_checker import secret_santa_timer_checker
 # 🍰──────────────────────────────
 #   🎀 Cog: CentralLoop
 #   Handles background tasks every 60 seconds
@@ -50,14 +50,14 @@ class CentralLoop(commands.Cog):
                 # 🍀 Check if any Feeling Lucky cd is due
                 await fl_cd_checker(bot=self.bot)
 
-                """# 💠 Check if any world boss battle reminders are due
-                await check_wb_battle_reminders(bot=self.bot)"""
-
                 # 🦭 Check if any pokemon reminder is due
                 await pokemon_reminder_checker(self.bot)
 
-                # ⏰ Check if any special battle timers are due  (Disabled for now)
-                # await special_battle_timer_checker(bot=self.bot)
+                # ⏰ Check if any special battle timers are due
+                await special_battle_timer_checker(bot=self.bot)
+
+                # 🎅 Check if any Secret Santa reminders are due
+                await secret_santa_timer_checker(bot=self.bot)
 
             except Exception as e:
                 pretty_log(
@@ -86,8 +86,8 @@ async def setup(bot: commands.Bot):
     print("  ─────────────────────────────────────────────")
     print("  ✅ 💠  flush_weekly_goal_cache")
     print("  ✅ 🍀  fl_cd_checker")
-    #print("  ✅ 💠  wb_battle_reminder_checker")
     print("  ✅ 🦭  pokemon_reminder_checker")
     print("  ✅ ⏰  special_battle_timer_checker")
+    print("  ✅ 🎅  secret_santa_timer_checker")
     print("  🧭 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")

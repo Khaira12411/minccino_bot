@@ -1,4 +1,5 @@
 class Emojis:
+    santa_mouse = "<:santa_mouse:1451458853710331926>"
     lucky_cheese = "<:lucky_cheese:1451208482802892852>"
     battle_spawn = "<:battle_spawn:1451021066175516692>"
     pokespawn = "<:poke_spawn:1451021084676718673>"

@@ -22,7 +22,7 @@ async def special_battle_npc_listener(bot: discord.Client, message: discord.Mess
     user_name = str(member)
 
     channel_id = message.channel.id
-    npc_name = "irida"
+    npc_name = "xmas_blue"
 
     # Ends on timestamp = now + BATTLE_TIMER
     ends_on = int(time.time()) + BATTLE_TIMER

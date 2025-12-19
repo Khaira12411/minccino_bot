@@ -33,9 +33,9 @@ async def special_battle_timer_checker(bot: discord.Client):
     """Background task to check and notify about special battle timers."""
 
     # Check if spooky hour is active
-    spooky_hour = await fetch_spooky_hour(bot)
+    """spooky_hour = await fetch_spooky_hour(bot)
     if not spooky_hour:
-        return  # Spooky hour not active
+        return  # Spooky hour not active"""
 
     # Fetch due special battle timers
     due_timers = await fetch_due_special_battle_timers(bot)
@@ -49,11 +49,12 @@ async def special_battle_timer_checker(bot: discord.Client):
 
         # Notify the user in the specified channel
         channel = bot.get_channel(channel_id)
+        display_npc_name = npc_name.replace("_", " ").title()
         if channel:
             member = channel.guild.get_member(user_id)
             if member:
                 # Remove timer from database
-                content = f"{Emojis.brown_coffee} {member.mention}, you can now battle {npc_name.title()} again!"
+                content = f"{Emojis.battle_spawn} {member.mention}, you can now battle {display_npc_name} again!"
                 desc = f";b npc {npc_name}"
                 embed = discord.Embed(description=desc, color=0xC1B1A5)
                 try:

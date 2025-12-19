@@ -41,6 +41,7 @@ from utils.listener_func.perks_listener import auto_update_catchboost
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
+from utils.listener_func.secret_santa_listener import secret_santa_listener
 from utils.listener_func.special_battle_npc_listener import special_battle_npc_listener
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
@@ -72,6 +73,10 @@ captcha_description_trigger = (
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
 BANNED_PERKS_PHRASES = {"PokeMeow Clans — Perks Info", "PokeMeow Clans — Rank Info"}
+secret_santa_phrases = [
+    "You sent <:PokeCoin:666879070650236928>",
+    "to a random user!" "Your odds to receive items was boosted by" "You received",
+]
 
 
 class MessageCreateListener(commands.Cog):
@@ -145,7 +150,7 @@ class MessageCreateListener(commands.Cog):
 
                         # 🥎 Recommend ball
                         await recommend_ball(message, self.bot)
-                        
+
                 # Faction Ball Alert
                 if first_embed:
                     if (
@@ -266,17 +271,17 @@ class MessageCreateListener(commands.Cog):
                         await register_wb_battle_reminder(bot=self.bot, message=message)
 
                 # Special Battle NPC Listener (Disabled for now)
-                """if first_embed:
+                if first_embed:
                     if (
                         first_embed.description
-                        and "challenged <:irida:1428149067673767996> **Irida** to a battle!"
+                        and "challenged <:xmas_blue:1451059140955734110> **XMAS Blue** to a battle!"
                         in first_embed.description
                     ):
                         pretty_log(
                             "info",
-                            f"🔹 Matched Special Battle NPC Listener for Irida | message_id={message.id}",
+                            f"🔹 Matched Special Battle NPC Listener for XMAS BLUE | message_id={message.id}",
                         )
-                        await special_battle_npc_listener(bot=self.bot, message=message)"""
+                        await special_battle_npc_listener(bot=self.bot, message=message)
 
                 # 🛡️ Captcha Alert Listener
                 if first_embed:
@@ -345,6 +350,17 @@ class MessageCreateListener(commands.Cog):
                             await handle_cb_checklist_message(
                                 bot=self.bot, message=message
                             )
+                # Secret Santa Listener
+                if message.content:
+                    # Check if all ss phrases are in the message content
+                    if all(
+                        phrase in message.content for phrase in secret_santa_phrases
+                    ):
+                        pretty_log(
+                            "info",
+                            f"🎅 Matched Secret Santa Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
+                        await secret_santa_listener(bot=self.bot, message=message)
 
                 # 🎃 Halloween Contest Embed Listener
                 if first_embed:
@@ -360,6 +376,7 @@ class MessageCreateListener(commands.Cog):
                         await halloween_contest_embed_listener(
                             bot=self.bot, message=message
                         )
+
             # 🌊 Waterstate channel processing ---
             if message.channel.id == WATERSTATE_CHANNEL_ID:
                 await on_waterstate_message(message)
