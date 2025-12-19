@@ -47,6 +47,34 @@ async def upsert_secret_santa_reminder(
         )
 
 
+async def update_secret_santa_reminder(
+    bot, user_id: int, user_name: str, remind_on: int
+):
+    type = "secret_santa"
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE misc_pokemeow_reminders
+                SET user_name = $2, remind_on = $3
+                WHERE user_id = $1 AND type = $4
+                """,
+                user_id,
+                user_name,
+                remind_on,
+                type,
+            )
+            pretty_log(
+                "info",
+                f"Updated secret santa reminder for {user_name}, reminds on {remind_on}",
+            )
+    except Exception as e:
+        pretty_log(
+            "warn",
+            f"Failed to update secret santa reminder for user {user_id}: {e}",
+        )
+
+
 # 🐱 Remove secret santa reminder
 async def remove_secret_santa_reminder(bot, user_id: int):
     type = "secret_santa"
@@ -66,6 +94,30 @@ async def remove_secret_santa_reminder(bot, user_id: int):
             "warn",
             f"Failed to remove secret santa reminder for user {user_id}: {e}",
         )
+
+
+async def fetch_secret_santa_reminder(bot, user_id: int):
+    """
+    Fetch a user's secret santa reminder by user_id.
+    Returns the record as a dictionary, or None if not found.
+    """
+    type = "secret_santa"
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM misc_pokemeow_reminders WHERE user_id = $1 AND type = $2",
+                user_id,
+                type,
+            )
+            if row:
+                return dict(row)
+            return None
+    except Exception as e:
+        pretty_log(
+            "warn",
+            f"Failed to fetch secret santa reminder for user {user_id}: {e}",
+        )
+        return None
 
 
 # 🐱 Fetch all due secret santa reminders

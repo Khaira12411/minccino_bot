@@ -41,7 +41,10 @@ from utils.listener_func.perks_listener import auto_update_catchboost
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
-from utils.listener_func.secret_santa_listener import secret_santa_listener
+from utils.listener_func.secret_santa_listener import (
+    secret_santa_listener,
+    secret_santa_timer_listener,
+)
 from utils.listener_func.special_battle_npc_listener import special_battle_npc_listener
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
@@ -363,7 +366,14 @@ class MessageCreateListener(commands.Cog):
                             f"🎅 Matched Secret Santa Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await secret_santa_listener(bot=self.bot, message=message)
-
+                # Secret Santa Timer Listener
+                if message.content:
+                    if ":x: You may send out another gift on" in message.content:
+                        pretty_log(
+                            "info",
+                            f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
+                        await secret_santa_timer_listener(bot=self.bot, message=message)
                 # 🎃 Halloween Contest Embed Listener
                 if first_embed:
                     embed_author = first_embed.author.name if first_embed.author else ""
