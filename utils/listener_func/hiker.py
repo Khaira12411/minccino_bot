@@ -7,11 +7,11 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
 thumbnail_url = "https://media.discordapp.net/attachments/1298966164072038450/1451980492730798090/image.png?ex=694825b5&is=6946d435&hm=1ec4545ed79d1abd5d7639b67c987975465b2bb86934fd42647632fb02795898&=&format=webp&quality=lossless&width=480&height=480"
 DAMAGE_MAP = {
-    "weak": {"pokemon": "Lvl 30 Tyrogue", "move": "High-Jump-Kick"},
-    "decent": {"pokemon": "Lvl 49 Klinklang", "move": "Low-Kick"},
-    "good": {"pokemon": "Lvl 45 Darmanitan", "move": "Fire-Punch"},
-    "a lot": {"pokemon": "Lvl 80 Machoke", "move": "Karate-Chop"},
-    "insane": {"pokemon": "Lvl 65 Machamp", "move": "Rock-Slide"},
+    "weak": {"pokemon_title": "Lvl 30 Tyrogue", "move": "High-Jump-Kick", "pokemon": "tyrogue"},
+    "decent": {"pokemon_title": "Lvl 49 Klinklang", "move": "Low-Kick", "pokemon": "klinklang"},
+    "good": {"pokemon_title": "Lvl 45 Darmanitan", "move": "Fire-Punch", "pokemon": "darmanitan"},
+    "a lot": {"pokemon_title": "Lvl 80 Machoke", "move": "Karate-Chop", "pokemon": "machoke"},
+    "insane": {"pokemon_title": "Lvl 65 Machamp", "move": "Rock-Slide", "pokemon": "machamp"},
 }
 
 
@@ -43,13 +43,14 @@ async def hiker_snow_damage_listener(message: discord.Message):
     damage_info = DAMAGE_MAP.get(damage_lvl.lower())
     if not damage_info:
         return
+    pokemon_title = damage_info["pokemon_title"]
     pokemon = damage_info["pokemon"]
     move = damage_info["move"]
     display_move = move.replace("-", " ").title()
 
     embed = discord.Embed(
         title=f"{display_damage_lvl} Snow Move Suggestion",
-        description=(f"{pokemon.title()} with {display_move}"),
+        description=(f"{pokemon_title.title()} with {display_move}"),
         color=MINCCINO_COLOR,
     )
     embed.add_field(
@@ -59,7 +60,7 @@ async def hiker_snow_damage_listener(message: discord.Message):
     )
     embed.add_field(
         name="Step 2",
-        value=f";hiker clear {move}",
+        value=f";hiker clear {move.lower()}",
         inline=False,
     )
     embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
