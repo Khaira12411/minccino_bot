@@ -28,7 +28,7 @@ def extract_snow_damage(text):
 
 async def hiker_snow_damage_listener(message: discord.Message):
 
-    member = get_pokemeow_reply_member(message)
+    member = await get_pokemeow_reply_member(message)
     if not member:
         return
 
