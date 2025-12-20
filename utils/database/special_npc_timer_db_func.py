@@ -32,6 +32,29 @@ async def upsert_special_battle_timer(
         )
 
 
+async def fetch_ends_on_for_user_npc(bot, user_id: int, npc_name: str) -> int | None:
+    """
+    Fetches the ends_on timestamp for a specific user and NPC.
+    Returns the ends_on timestamp as an int if found, otherwise None.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT ends_on FROM special_battle_timers WHERE user_id = $1 AND npc_name = $2",
+                user_id,
+                npc_name,
+            )
+            if row:
+                return row["ends_on"]
+            return None
+    except Exception as e:
+        pretty_log(
+            "warn",
+            f"Failed to fetch ends_on for user {user_id}, npc {npc_name}: {e}",
+        )
+        return None
+
+
 # Get a special battle timer for a user and npc
 async def get_special_battle_timer(bot, user_id: int, npc_name: str):
     try:

@@ -45,7 +45,10 @@ from utils.listener_func.secret_santa_listener import (
     secret_santa_listener,
     secret_santa_timer_listener,
 )
-from utils.listener_func.special_battle_npc_listener import special_battle_npc_listener
+from utils.listener_func.special_battle_npc_listener import (
+    special_battle_npc_listener,
+    special_battle_npc_timer_listener,
+)
 from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
@@ -133,6 +136,7 @@ class MessageCreateListener(commands.Cog):
                 STRAYMONS_GUILD_ID,
                 1154753039685660793,
             ):
+                content = message.content
                 first_embed = message.embeds[0] if message.embeds else None
                 first_embed_author = (
                     first_embed.author.name
@@ -287,7 +291,18 @@ class MessageCreateListener(commands.Cog):
                             f"🔹 Matched Special Battle NPC Listener for XMAS BLUE | message_id={message.id}",
                         )
                         await special_battle_npc_listener(bot=self.bot, message=message)
-
+                if (
+                    content
+                    and ":x: You cannot fight XMAS Blue yet! He will be available for you to re-battle"
+                    in content
+                ):
+                    pretty_log(
+                        "info",
+                        f"🔹 Matched Special Battle NPC Timer Listener for XMAS BLUE | message_id={message.id}",
+                    )
+                    await special_battle_npc_timer_listener(
+                        bot=self.bot, message=message
+                    )
                 # 🛡️ Captcha Alert Listener
                 if first_embed:
                     title = first_embed.title.lower() if first_embed.title else ""
@@ -374,6 +389,7 @@ class MessageCreateListener(commands.Cog):
                             f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await secret_santa_timer_listener(bot=self.bot, message=message)
+
                 # 🎃 Halloween Contest Embed Listener
                 if first_embed:
                     embed_author = first_embed.author.name if first_embed.author else ""
