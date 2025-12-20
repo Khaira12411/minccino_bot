@@ -37,6 +37,7 @@ from utils.listener_func.halloween_contest_listener import (
     halloween_contest_embed_listener,
 )
 from utils.listener_func.held_item_ping import held_item_ping_handler
+from utils.listener_func.hiker import hiker_snow_damage_listener
 from utils.listener_func.perks_listener import auto_update_catchboost
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.listener_func.relics_listener import handle_relics_message
@@ -85,6 +86,9 @@ secret_santa_phrases = [
     "Your odds to receive items was boosted by",
     "You received",
 ]
+triggers = {
+    "hiker": "I could use some help clearing the snow, I left my Sirfetchd in my PC!"
+}
 
 
 class MessageCreateListener(commands.Cog):
@@ -370,6 +374,9 @@ class MessageCreateListener(commands.Cog):
                             await handle_cb_checklist_message(
                                 bot=self.bot, message=message
                             )
+                # 💜────────────────────────────────────────────
+                #          ⛄️ Seasonal Listeners
+                # 💜────────────────────────────────────────────
                 # Secret Santa Listener
                 if message.content:
                     # Check if all ss phrases are in the message content
@@ -389,6 +396,16 @@ class MessageCreateListener(commands.Cog):
                             f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await secret_santa_timer_listener(bot=self.bot, message=message)
+                # ❄️ Hiker Snow Damage Listener
+                if (
+                    first_embed_description
+                    and triggers["hiker"] in first_embed_description
+                ):
+                    pretty_log(
+                        "info",
+                        f"❄️ Matched Hiker Snow Damage Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                    )
+                    await hiker_snow_damage_listener(message=message)
 
                 # 🎃 Halloween Contest Embed Listener
                 if first_embed:
