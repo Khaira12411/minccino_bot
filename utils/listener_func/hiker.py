@@ -4,20 +4,43 @@ import discord
 
 from config.current_setup import MINCCINO_COLOR
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
+
+enable_debug(f"{__name__}.hiker_snow_damage_listener")
 thumbnail_url = "https://media.discordapp.net/attachments/1298966164072038450/1451980492730798090/image.png?ex=694825b5&is=6946d435&hm=1ec4545ed79d1abd5d7639b67c987975465b2bb86934fd42647632fb02795898&=&format=webp&quality=lossless&width=480&height=480"
 DAMAGE_MAP = {
-    "weak": {"pokemon_title": "Lvl 30 Tyrogue", "move": "High-Jump-Kick", "pokemon": "tyrogue"},
-    "decent": {"pokemon_title": "Lvl 49 Klinklang", "move": "Mirror-Shot", "pokemon": "klinklang"},
-    "good": {"pokemon_title": "Lvl 45 Darmanitan", "move": "Fire-Punch", "pokemon": "darmanitan"},
-    "a lot": {"pokemon_title": "Lvl 80 Machoke", "move": "Karate-Chop", "pokemon": "machoke"},
-    "insane": {"pokemon_title": "Lvl 65 Machamp", "move": "Rock-Slide", "pokemon": "machamp"},
+    "weak": {
+        "pokemon_title": "Lvl 30 Tyrogue",
+        "move": "High-Jump-Kick",
+        "pokemon": "tyrogue",
+    },
+    "decent": {
+        "pokemon_title": "Lvl 49 Klinklang",
+        "move": "Mirror-Shot",
+        "pokemon": "klinklang",
+    },
+    "good": {
+        "pokemon_title": "Lvl 45 Darmanitan",
+        "move": "Fire-Punch",
+        "pokemon": "darmanitan",
+    },
+    "a lot": {
+        "pokemon_title": "Lvl 80 Machoke",
+        "move": "Karate-Chop",
+        "pokemon": "machoke",
+    },
+    "insane": {
+        "pokemon_title": "Lvl 65 Machamp",
+        "move": "Rock-Slide",
+        "pokemon": "machamp",
+    },
 }
 
 
 def extract_snow_damage(text):
     match = re.search(
-        r"<:snow:787559641663537153>[ \t]*(Weak|decent|insane|good|strong|A lot)(?!\S)",
+        r"<:snow:787559641663537153>[ \t]*(Weak|Decent|Insane|Good|Strong|A lot)(?!\S)",
         text,
         re.IGNORECASE,
     )
@@ -28,25 +51,39 @@ def extract_snow_damage(text):
 
 async def hiker_snow_damage_listener(message: discord.Message):
 
+    debug_log("Entered hiker_snow_damage_listener")
     member = await get_pokemeow_reply_member(message)
+    debug_log(f"member: {member}")
     if not member:
+        debug_log("No PokéMeow reply member found.")
         return
 
     embed = message.embeds[0] if message.embeds else None
+    debug_log(f"embed: {embed}")
     if not embed:
+        debug_log("No embed found in message.")
         return
     description = embed.description if embed.description else ""
+    debug_log(f"description: {description}")
     damage_lvl = extract_snow_damage(description)
+    debug_log(f"damage_lvl: {damage_lvl}")
     if not damage_lvl:
+        debug_log("No damage level found in description.")
         return
     display_damage_lvl = damage_lvl.title()
     damage_info = DAMAGE_MAP.get(damage_lvl.lower())
+    debug_log(f"damage_info: {damage_info}")
     if not damage_info:
+        debug_log("No damage info found for level.")
         return
     pokemon_title = damage_info["pokemon_title"]
     pokemon = damage_info["pokemon"]
     move = damage_info["move"]
     display_move = move.replace("-", " ").title()
+
+    debug_log(
+        f"pokemon_title: {pokemon_title}, pokemon: {pokemon}, move: {move}, display_move: {display_move}"
+    )
 
     embed = discord.Embed(
         title=f"{display_damage_lvl} Snow Move Suggestion",
@@ -72,6 +109,9 @@ async def hiker_snow_damage_listener(message: discord.Message):
         ),
     )
     embed.set_thumbnail(url=thumbnail_url)
+    debug_log(
+        f"Sending embed to channel {message.channel} for member {member.display_name}"
+    )
     await message.channel.send(embed=embed)
     pretty_log(
         f"Hiker Snow Damage Listener triggered for {member.display_name} - {display_damage_lvl}"
