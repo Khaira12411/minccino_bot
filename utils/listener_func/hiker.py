@@ -39,8 +39,9 @@ DAMAGE_MAP = {
 
 
 def extract_snow_damage(text):
+    # Match bold (**), italics (*), or plain, with optional punctuation
     match = re.search(
-        r"<:snow:787559641663537153>[ \t]*(Weak|Decent|Insane|Good|Strong|A lot)(?!\S)",
+        r"<:snow:787559641663537153>[ \t]*(?:\*\*|\*)?(Weak|Decent|Insane|Good|Strong|A lot)(?:!|\.)?(?:\*\*|\*)?",
         text,
         re.IGNORECASE,
     )
@@ -87,7 +88,10 @@ async def hiker_snow_damage_listener(message: discord.Message):
 
     embed = discord.Embed(
         title=f"{display_damage_lvl} Snow Move Suggestion",
-        description=(f"{pokemon_title.title()} with {display_move}"),
+        description=(
+            f"{pokemon_title.title()} with {display_move}\n"
+            f"**Note:** These are only suggestions, if the move doesn't work try leveling up the Pokemon, or rerolling its Atk IVs"
+        ),
         color=MINCCINO_COLOR,
     )
     embed.add_field(
