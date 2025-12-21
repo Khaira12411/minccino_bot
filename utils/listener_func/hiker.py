@@ -8,7 +8,7 @@ from utils.loggers.pretty_logs import pretty_log
 thumbnail_url = "https://media.discordapp.net/attachments/1298966164072038450/1451980492730798090/image.png?ex=694825b5&is=6946d435&hm=1ec4545ed79d1abd5d7639b67c987975465b2bb86934fd42647632fb02795898&=&format=webp&quality=lossless&width=480&height=480"
 DAMAGE_MAP = {
     "weak": {"pokemon_title": "Lvl 30 Tyrogue", "move": "High-Jump-Kick", "pokemon": "tyrogue"},
-    "decent": {"pokemon_title": "Lvl 49 Klinklang", "move": "Low-Kick", "pokemon": "klinklang"},
+    "decent": {"pokemon_title": "Lvl 49 Klinklang", "move": "Mirror-Shot", "pokemon": "klinklang"},
     "good": {"pokemon_title": "Lvl 45 Darmanitan", "move": "Fire-Punch", "pokemon": "darmanitan"},
     "a lot": {"pokemon_title": "Lvl 80 Machoke", "move": "Karate-Chop", "pokemon": "machoke"},
     "insane": {"pokemon_title": "Lvl 65 Machamp", "move": "Rock-Slide", "pokemon": "machamp"},
