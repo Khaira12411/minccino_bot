@@ -89,7 +89,7 @@ async def hiker_snow_damage_listener(message: discord.Message):
     embed = discord.Embed(
         title=f"{display_damage_lvl} Snow Move Suggestion",
         description=(
-            f"{pokemon_title.title()} with {display_move}\n"
+            f"{pokemon_title.title()} with {display_move}\n\n"
             f"**Note:** These are only suggestions, if the move doesn't work try leveling up the Pokemon, or rerolling its Atk IVs"
         ),
         color=MINCCINO_COLOR,
