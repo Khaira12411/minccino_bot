@@ -31,9 +31,9 @@ DAMAGE_MAP = {
         "pokemon": "machoke",
     },
     "insane": {
-        "pokemon_title": "Lvl 65 Machamp",
+        "pokemon_title": "Lvl 65 Gigalith",
         "move": "Rock-Slide",
-        "pokemon": "machamp",
+        "pokemon": "gigalith",
     },
 }
 
