@@ -70,12 +70,14 @@ async def special_battle_timer_checker(bot: discord.Client):
                         f"Failed to notify {member.name} for npc {npc_name}: {e}",
                     )
             else:
+                await remove_special_battle_timer(bot, user_id, npc_name)
                 pretty_log(
                     "warn",
-                    f"Member {member.name} not found in guild {channel.guild.id} for notifying about special battle timer for npc {npc_name}",
+                    f"Member not found in guild {channel.guild.id} for notifying about special battle timer for npc {npc_name}",
                 )
 
         else:
+            await remove_special_battle_timer(bot, user_id, npc_name)
             pretty_log(
                 "warn",
                 f"Channel {channel_id} not found for notifying {member.name} about special battle timer for npc {npc_name}",
