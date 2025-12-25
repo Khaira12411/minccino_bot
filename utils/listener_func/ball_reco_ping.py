@@ -96,11 +96,13 @@ def parse_pokemeow_spawn(message: discord.Message):
         # -------------------- CHECKING WATER STATE --------------------
         water_state = None
         if embed.color and embed.color.value == FISHING_COLOR:
+            pretty_log("debug", "Embed color indicates fishing spawn, checking water state")
             if "cast a " in description_text.lower():
                 author_text = embed.author.name if embed.author else ""
                 debug_log(f"Author text for cast detection: '{author_text}'")
 
                 current_state = extract_water_state_from_author(author_text)
+                pretty_log("debug", f"Extracted water state from author: {current_state}")
                 debug_log(f"Detected cast: {current_state}")
 
                 if current_state:

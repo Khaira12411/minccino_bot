@@ -3,6 +3,7 @@
 # ─────────────────────────────────────────────
 
 import discord
+
 from config.current_setup import WATERSTATE_CHANNEL_ID
 from utils.loggers.pretty_logs import pretty_log
 
@@ -15,9 +16,8 @@ def update_water_state(new_state: str):
     Update the cached water state manually.
     """
     lower_state = new_state.lower()
-    if "golden" in lower_state:
-        new_state = "special"
-    elif "calm" in lower_state:
+
+    if "calm" in lower_state:
         new_state = "calm"
     elif "strong" in lower_state:
         new_state = "strong"
@@ -25,7 +25,9 @@ def update_water_state(new_state: str):
         new_state = "moderate"
     elif "intense" in lower_state:
         new_state = "intense"
-        
+    elif "golden" in lower_state:
+        new_state = "special"
+
     old_state = waterstate_cache.get("value", "strong")
     waterstate_cache["value"] = new_state
     pretty_log(
