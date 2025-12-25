@@ -14,8 +14,18 @@ def update_water_state(new_state: str):
     """
     Update the cached water state manually.
     """
-    if "Golden" in new_state:
+    lower_state = new_state.lower()
+    if "golden" in lower_state:
         new_state = "special"
+    elif "calm" in lower_state:
+        new_state = "calm"
+    elif "strong" in lower_state:
+        new_state = "strong"
+    elif "moderate" in lower_state:
+        new_state = "moderate"
+    elif "intense" in lower_state:
+        new_state = "intense"
+        
     old_state = waterstate_cache.get("value", "strong")
     waterstate_cache["value"] = new_state
     pretty_log(
