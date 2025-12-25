@@ -20,7 +20,18 @@ async def on_waterstate_message(message: discord.Message) -> str:
 
     embed = message.embeds[0]
     if embed.title and "water state" in embed.title.lower():
-        new_state = embed.description or "strong"
+        embed_description = embed.description or ""
+        new_state = None
+        if "calm" in embed_description.lower():
+            new_state = "calm"
+        elif "moderate" in embed_description.lower():
+            new_state = "moderate"
+        elif "intense" in embed_description.lower():
+            new_state = "intense"
+        elif "strong" in embed_description.lower():
+            new_state = "strong"
+        elif "golden" in embed_description.lower():
+            new_state = "special"
         return update_water_state(new_state)
 
     return get_water_state()
