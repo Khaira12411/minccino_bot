@@ -55,6 +55,7 @@ FISH_RARITY = {
         "shellos": {"dex": 422},
         "panpour": {"dex": 515},
         "tympole": {"dex": 535},
+        "clobbopus": {"dex": 852},
     },
     "rare": {
         "poliwrath": {"dex": 62},
