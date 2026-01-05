@@ -16,8 +16,11 @@ from utils.database.wb_fight_db import (
     upsert_wb_battle_reminder,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-
+enable_debug(f"{__name__}.register_wb_battle_reminder")
+enable_debug(f"{__name__}.world_boss_waiter")
+enable_debug(f"{__name__}.start_world_boss_task")
 wb_task = None
 
 
@@ -61,20 +64,37 @@ async def world_boss_waiter(
     user: discord.User,
     wb_name: str,
 ):
+    debug_log(f"world_boss_waiter: Started for user {user.name} and boss {wb_name}")
     now = int(time.time())
     seconds_until_fight = unix_seconds - now
-    if seconds_until_fight > 0:
+    if seconds_until_fight <= 0:
+        debug_log(
+            f"world_boss_waiter: seconds_until_fight <= 0 (unix_seconds={unix_seconds}, now={now}). No wait or notification needed."
+        )
+        return
+    try:
         await asyncio.sleep(seconds_until_fight)
-        content = (
-            f"{user.mention}, You can now join the World Boss Battle for **{wb_name}**!"
+    except Exception as e:
+        debug_log(
+            f"world_boss_waiter: Failed during asyncio.sleep for user {user.name}: {e}"
         )
-        embed = discord.Embed(
-            description=";wb f",
-            color=MINCCINO_COLOR,
-        )
+        return
+    content = (
+        f"{user.mention}, You can now join the World Boss Battle for **{wb_name}**!"
+    )
+    embed = discord.Embed(
+        description=";wb f",
+        color=MINCCINO_COLOR,
+    )
+    try:
         await channel.send(content=content, embed=embed)
-        """# Remove the reminder after sending notification
-        await remove_wb_reminder(bot, user.id)"""
+        debug_log(
+            f"world_boss_waiter: Notification sent to {user.name} in channel {channel.id} for boss {wb_name}"
+        )
+    except Exception as e:
+        debug_log(
+            f"world_boss_waiter: Failed to send notification to {user.name} in channel {channel.id}: {e}"
+        )
 
 
 async def start_world_boss_task(
@@ -88,19 +108,36 @@ async def start_world_boss_task(
     global wb_task
     # If a task is running and not done, don't start another
     if wb_task and not wb_task.done():
+        debug_log(
+            "start_world_boss_task: Task already scheduled and not done. Skipping new task."
+        )
         pretty_log("info", "World boss reminder task already scheduled.")
         return
-    await message.add_reaction(Emojis.calendar)
-    wb_task = asyncio.create_task(
-        world_boss_waiter(
-            bot=bot,
-            unix_seconds=unix_seconds,
-            channel=channel,
-            user=user,
-            wb_name=wb_name,
+    try:
+        await message.add_reaction(Emojis.calendar)
+    except Exception as e:
+        debug_log(
+            f"start_world_boss_task: Failed to add reaction to message for user {user.name}: {e}"
         )
-    )
-    pretty_log("info", "World boss reminder task started.")
+    try:
+        global wb_task
+        wb_task = asyncio.create_task(
+            world_boss_waiter(
+                bot=bot,
+                unix_seconds=unix_seconds,
+                channel=channel,
+                user=user,
+                wb_name=wb_name,
+            )
+        )
+        pretty_log("info", "World boss reminder task started.")
+        debug_log(
+            f"start_world_boss_task: Task started for user {user.name} and boss {wb_name}"
+        )
+    except Exception as e:
+        debug_log(
+            f"start_world_boss_task: Failed to create world boss waiter task for user {user.name}: {e}"
+        )
 
 
 async def register_wb_battle_reminder(
@@ -114,12 +151,24 @@ async def register_wb_battle_reminder(
     """
 
     embed = message.embeds[0] if message.embeds else None
-    if not embed or not embed.description:
+    if not embed:
+        debug_log(
+            "register_wb_battle_reminder: No embed found in the message. Cannot register world boss reminder."
+        )
+        pretty_log("info", "No embed found in the message.")
+        return
+    if not embed.description:
+        debug_log(
+            "register_wb_battle_reminder: Embed found but no description present. Cannot extract boss info."
+        )
         pretty_log("info", "No embed description found in the message.")
         return
 
     member = await get_pokemeow_reply_member(message)
     if not member:
+        debug_log(
+            "register_wb_battle_reminder: No replied member found for the message. Cannot determine user to notify."
+        )
         pretty_log("info", "No replied member found for the message.")
         return
 
@@ -127,7 +176,19 @@ async def register_wb_battle_reminder(
     from utils.cache.wb_battle_alert_cache import wb_battle_alert_cache
 
     alert_settings = wb_battle_alert_cache.get(member.id)
-    if not alert_settings or alert_settings.get("notify") == "off":
+    if not alert_settings:
+        debug_log(
+            f"register_wb_battle_reminder: Member {member.name} has no alert settings in cache. Skipping notification."
+        )
+        pretty_log(
+            "info",
+            f"Member {member.name} has no notify settings or it's turned off.",
+        )
+        return
+    if alert_settings.get("notify") == "off":
+        debug_log(
+            f"register_wb_battle_reminder: Member {member.name} has notify setting OFF. Skipping notification."
+        )
         pretty_log(
             "info",
             f"Member {member.name} has no notify settings or it's turned off.",
@@ -135,6 +196,9 @@ async def register_wb_battle_reminder(
         return
     channel_id = await get_registered_personal_channel(bot, member.id)
     if not channel_id:
+        debug_log(
+            f"register_wb_battle_reminder: Member {member.name} has no registered personal channel. Falling back to default channel {STRAYMONS__TEXT_CHANNELS.kanto_park}."
+        )
         # Fall back to one of the play channels
         channel_id = STRAYMONS__TEXT_CHANNELS.kanto_park
         pretty_log(
@@ -143,6 +207,9 @@ async def register_wb_battle_reminder(
         )
     notify_channel = bot.get_channel(channel_id)
     if not notify_channel:
+        debug_log(
+            f"register_wb_battle_reminder: Notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
+        )
         pretty_log(
             "info",
             f"Notify channel ID {channel_id} not found for member {member.name}.",
@@ -151,15 +218,34 @@ async def register_wb_battle_reminder(
 
     unix_seconds = extract_wb_unix_seconds(embed.description)
     if not unix_seconds:
+        debug_log(
+            f"register_wb_battle_reminder: No unix seconds found in embed description: {embed.description}"
+        )
         pretty_log("info", "No unix seconds found in the embed description.")
         return
-    
+
     boss_name = extract_wb_boss_name(embed.description)
+    if not boss_name:
+        debug_log(
+            f"register_wb_battle_reminder: No boss name could be extracted from embed description: {embed.description}"
+        )
+        pretty_log("info", "No boss name found in the embed description.")
+        return
 
     now = int(time.time())
     seconds_until_fight = unix_seconds - now
 
-    if unix_seconds and boss_name and seconds_until_fight > 0:
+    if seconds_until_fight <= 0:
+        debug_log(
+            f"register_wb_battle_reminder: World boss fight for {boss_name} is already available or in the past (unix_seconds={unix_seconds}, now={now}). No reminder scheduled."
+        )
+        pretty_log(
+            "info",
+            "World boss fight is already available or in the past. No reminder scheduled.",
+        )
+        return
+
+    try:
         await start_world_boss_task(
             bot=bot,
             unix_seconds=unix_seconds,
@@ -168,3 +254,11 @@ async def register_wb_battle_reminder(
             wb_name=boss_name,
             message=message,
         )
+        debug_log(
+            f"World boss reminder registered for user {member.name} in channel {notify_channel.id} for boss {boss_name} at unix {unix_seconds}"
+        )
+    except Exception as e:
+        debug_log(
+            f"register_wb_battle_reminder: Failed to start world boss task or add reaction for user {member.name}: {e}"
+        )
+        pretty_log("error", f"Failed to start world boss task or add reaction: {e}")
