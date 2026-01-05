@@ -7,7 +7,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.hiker_snow_damage_listener")
+#enable_debug(f"{__name__}.hiker_snow_damage_listener")
 thumbnail_url = "https://media.discordapp.net/attachments/1298966164072038450/1451980492730798090/image.png?ex=694825b5&is=6946d435&hm=1ec4545ed79d1abd5d7639b67c987975465b2bb86934fd42647632fb02795898&=&format=webp&quality=lossless&width=480&height=480"
 DAMAGE_MAP = {
     "weak": {

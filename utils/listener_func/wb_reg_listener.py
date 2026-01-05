@@ -18,6 +18,7 @@ from utils.database.wb_fight_db import (
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
+
 enable_debug(f"{__name__}.register_wb_battle_reminder")
 enable_debug(f"{__name__}.world_boss_waiter")
 enable_debug(f"{__name__}.start_world_boss_task")
@@ -120,7 +121,6 @@ async def start_world_boss_task(
             f"start_world_boss_task: Failed to add reaction to message for user {user.name}: {e}"
         )
     try:
-        global wb_task
         wb_task = asyncio.create_task(
             world_boss_waiter(
                 bot=bot,

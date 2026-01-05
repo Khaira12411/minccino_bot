@@ -367,10 +367,10 @@ class MessageCreateListener(commands.Cog):
                     if first_embed.footer and first_embed.footer.text:
                         footer_text = first_embed.footer.text.lower()
                         if cb_checklist_trigger.lower() in footer_text:
-                            pretty_log(
+                            """pretty_log(
                                 "embed",
                                 f"Matched CatchBot checklist trigger in embed footer: {footer_text}",
-                            )
+                            )"""
                             await handle_cb_checklist_message(
                                 bot=self.bot, message=message
                             )
