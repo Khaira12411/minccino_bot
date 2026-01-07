@@ -22,7 +22,8 @@ from utils.loggers.pretty_logs import pretty_log
 enable_debug(f"{__name__}.register_wb_battle_reminder")
 enable_debug(f"{__name__}.world_boss_waiter")
 enable_debug(f"{__name__}.start_world_boss_task")
-wb_task = None
+# Structure: {boss_name: {"time": unix_seconds, "users": set(user_ids), "task": asyncio.Task, "channels": {user_id: channel}}}
+wb_tasks = {}
 
 
 def extract_wb_unix_seconds(description: str) -> int | None:
@@ -58,14 +59,8 @@ def extract_wb_boss_name(description: str) -> str | None:
     return None
 
 
-async def world_boss_waiter(
-    bot: discord.Client,
-    unix_seconds,
-    channel: discord.TextChannel,
-    user: discord.User,
-    wb_name: str,
-):
-    debug_log(f"world_boss_waiter: Started for user {user.name} and boss {wb_name}")
+async def world_boss_waiter(bot, unix_seconds, wb_name):
+    debug_log(f"world_boss_waiter: Started for boss {wb_name}")
     now = int(time.time())
     seconds_until_fight = unix_seconds - now
     if seconds_until_fight <= 0:
@@ -77,25 +72,39 @@ async def world_boss_waiter(
         await asyncio.sleep(seconds_until_fight)
     except Exception as e:
         debug_log(
-            f"world_boss_waiter: Failed during asyncio.sleep for user {user.name}: {e}"
+            f"world_boss_waiter: Failed during asyncio.sleep for boss {wb_name}: {e}"
         )
         return
-    content = (
-        f"{user.mention}, You can now join the World Boss Battle for **{wb_name}**!"
-    )
-    embed = discord.Embed(
-        description=";wb f",
-        color=MINCCINO_COLOR,
-    )
-    try:
-        await channel.send(content=content, embed=embed)
+    # Notify all users registered for this boss
+    task_info = wb_tasks.get(wb_name)
+    if not task_info:
         debug_log(
-            f"world_boss_waiter: Notification sent to {user.name} in channel {channel.id} for boss {wb_name}"
+            f"world_boss_waiter: No task info found for boss {wb_name} at notification time."
         )
-    except Exception as e:
-        debug_log(
-            f"world_boss_waiter: Failed to send notification to {user.name} in channel {channel.id}: {e}"
+        return
+    for user_id in list(task_info["users"]):
+        channel = task_info["channels"].get(user_id)
+        user = bot.get_user(user_id)
+        if not channel or not user:
+            debug_log(
+                f"world_boss_waiter: Channel or user not found for user_id {user_id} and boss {wb_name}"
+            )
+            continue
+        content = (
+            f"{user.mention}, You can now join the World Boss Battle for **{wb_name}**!"
         )
+        embed = discord.Embed(description=";wb f", color=MINCCINO_COLOR)
+        try:
+            await channel.send(content=content, embed=embed)
+            debug_log(
+                f"world_boss_waiter: Notification sent to {user.name} in channel {channel.id} for boss {wb_name}"
+            )
+        except Exception as e:
+            debug_log(
+                f"world_boss_waiter: Failed to send notification to {user_id} in channel {getattr(channel, 'id', None)}: {e}"
+            )
+    # Clean up after notification
+    wb_tasks.pop(wb_name, None)
 
 
 async def start_world_boss_task(
@@ -106,14 +115,40 @@ async def start_world_boss_task(
     wb_name: str,
     message: discord.Message,
 ):
-    global wb_task
-    # If a task is running and not done, don't start another
-    if wb_task and not wb_task.done():
+    # Add user to the boss task, or create a new one if not present
+    user_id = user.id
+    if wb_name in wb_tasks:
+        task_info = wb_tasks[wb_name]
+        # If user_id is already registered for this boss, do nothing
+        if user_id in task_info["users"]:
+            debug_log(
+                f"start_world_boss_task: User ID {user_id} already registered for boss {wb_name}, skipping."
+            )
+            pretty_log(
+                "info",
+                f"User ID {user_id} already registered for world boss reminder for {wb_name}.",
+            )
+            return
+        # If the time is different, update if later, else ignore
+        if unix_seconds > task_info["time"]:
+            task_info["time"] = unix_seconds
+        task_info["users"].add(user_id)
+        task_info["channels"][user_id] = channel
         debug_log(
-            "start_world_boss_task: Task already scheduled and not done. Skipping new task."
+            f"start_world_boss_task: Added user ID {user_id} to existing boss task for {wb_name}"
         )
-        pretty_log("info", "World boss reminder task already scheduled.")
+        pretty_log(
+            "info",
+            f"Added user ID {user_id} to existing world boss reminder for {wb_name}.",
+        )
+        try:
+            await message.add_reaction(Emojis.calendar)
+        except Exception as e:
+            debug_log(
+                f"start_world_boss_task: Failed to add reaction to message for user ID {user_id}: {e}"
+            )
         return
+    # Otherwise, create a new task for this boss
     try:
         await message.add_reaction(Emojis.calendar)
     except Exception as e:
@@ -121,22 +156,19 @@ async def start_world_boss_task(
             f"start_world_boss_task: Failed to add reaction to message for user {user.name}: {e}"
         )
     try:
-        wb_task = asyncio.create_task(
-            world_boss_waiter(
-                bot=bot,
-                unix_seconds=unix_seconds,
-                channel=channel,
-                user=user,
-                wb_name=wb_name,
-            )
-        )
-        pretty_log("info", "World boss reminder task started.")
+        wb_tasks[wb_name] = {
+            "time": unix_seconds,
+            "users": set([user_id]),
+            "channels": {user_id: channel},
+            "task": asyncio.create_task(world_boss_waiter(bot, unix_seconds, wb_name)),
+        }
+        pretty_log("info", f"World boss reminder task started for {wb_name}.")
         debug_log(
-            f"start_world_boss_task: Task started for user {user.name} and boss {wb_name}"
+            f"start_world_boss_task: Task started for boss {wb_name} with user {user.name}"
         )
     except Exception as e:
         debug_log(
-            f"start_world_boss_task: Failed to create world boss waiter task for user {user.name}: {e}"
+            f"start_world_boss_task: Failed to create world boss waiter task for boss {wb_name} and user {user.name}: {e}"
         )
 
 
