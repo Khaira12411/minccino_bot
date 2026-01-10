@@ -28,17 +28,21 @@ async def captcha_alert_handler(bot: commands.Bot, message: discord.Message):
         if message.author.id != POKEMEOW_APPLICATION_ID:
             return
 
-        # 🚫 Skip if it's not a captcha (content, embed title, or embed description)
+        # 🚫 Skip if it's not a captcha (content, embed title, embed description, or image url is None)
         if message.embeds:
             embed = message.embeds[0]
+            image_url = getattr(embed.image, "url", None) if embed.image else None
             if not (
-                (embed.title and "captcha" in embed.title.lower())
-                or (embed.description and "captcha" in embed.description.lower())
+                (
+                    (embed.title and "captcha" in embed.title.lower())
+                    or (embed.description and "captcha" in embed.description.lower())
+                )
+                and image_url is not None
             ):
                 return
 
         guild = message.guild
-        #
+
         member = await get_pokemeow_reply_member(message=message)
         if not member:
             return
