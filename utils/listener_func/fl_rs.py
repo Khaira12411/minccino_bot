@@ -117,7 +117,7 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
                 "Failed to extract username from embed author. Exiting FL RS Checker."
             )
             return
-        
+
         debug_log(f"Extracted username from embed: {username}")
         from utils.cache.straymon_member_cache import fetch_straymon_user_id_by_username
 
@@ -153,8 +153,9 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
         # Extract rarity from footer for event exclusive
         if embed.footer and embed.footer.text:
             rarity = extract_rarity_from_footer(embed.footer.text)
-            if rarity.lower() == "super rare":
-                rarity = "superrare"
+            if rarity.lower() != "shiny" and rarity.lower() != "legendary":
+                return
+            
             pretty_log(
                 tag="info",
                 message=f"Feeling Lucky spawn is event exclusive with rarity: {rarity}.",
