@@ -269,6 +269,11 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 # Regular NPC
                 elif enemy_id:
                     battle_embed.description = f";b npc {enemy_id}"
+
+                # If id is 15 or more than 15 digits, it's likely a user ID
+                elif enemy_id and (len(enemy_id) >= 15 or int(enemy_id) == 15):
+                    battle_embed.description = f";b user {enemy_id}"
+
                 else:
                     battle_embed.description = (
                         "Your </battle:1015311084422434819> command is ready!"
