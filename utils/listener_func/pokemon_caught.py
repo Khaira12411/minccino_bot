@@ -7,6 +7,11 @@ import discord
 from config.aesthetic import *
 from config.current_setup import STRAYMONS_GUILD_ID
 from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
+from utils.cache.cache_list import probation_members_cache
+from utils.database.probation_members_db import (
+    update_probation_member_status,
+    upsert_probation_member,
+)
 from utils.database.weekly_goal_tracker_db_func import upsert_weekly_goal
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
@@ -47,12 +52,7 @@ async def weekly_goal_checker(
             bot=bot,
         )
         return
-    # Early exit for those with probation role
-    probation_role = guild.get_role(STRAYMONS__ROLES.probation)
-    if probation_role and probation_role in member.roles:
-        #  Member is on probation, skip weekly goal checks
-        return
-    
+
     pokemon_caught = member_info.get("pokemon_caught", 0)
     fish_caught = member_info.get("fish_caught", 0)
     battles_won = member_info.get("battles_won", 0)
@@ -63,6 +63,34 @@ async def weekly_goal_checker(
     weekly_guardian_mark = member_info.get("weekly_guardian_mark", False)
 
     goal_tracker_channel = guild.get_channel(STRAYMONS__TEXT_CHANNELS.goal_tracker)
+
+    # Early exit for those with probation role
+    probation_role = guild.get_role(STRAYMONS__ROLES.probation)
+    if probation_role and probation_role in member.roles:
+        # Check their status
+        probation_data = probation_members_cache.get(member.id)
+        if not probation_data:
+            # Upsert in DB and cache
+            await upsert_probation_member(
+                bot,
+                member.id,
+                member.name,
+            )
+            probation_data = probation_members_cache.get(member.id)
+
+        status = probation_data.get("status", "")
+        status = status.lower()
+        if status == "pending":
+            if total_caught >= 300:
+                # Update status to Passed
+                await update_probation_member_status(bot, member.id, "Passed")
+                pretty_log(
+                    "info",
+                    f"Probation status updated to 'Passed' for {member.name} ({member.id}) after catching {total_caught} Pokémon.",
+                    label="💠 Weekly Goal Tracker",
+                )
+        else:
+            return  # Silently exit if not Pending
 
     # Check for Weekly Angler role
     if fish_caught >= 500 and not weekly_angler_mark:

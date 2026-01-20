@@ -171,17 +171,17 @@ async def fetch_message_from_link_func(
                 # Title
                 if emb.get("title"):
                     parts.append(f"📌 Title:")
-                    parts.append(f"   🔹 {emb['title']}")
+                    parts.append(f"{emb['title']}")
 
                 # URL
                 if emb.get("url"):
                     parts.append(f"🔗 URL:")
-                    parts.append(f"   🔹 {emb['url']}")
+                    parts.append(f"{emb['url']}")
 
                 # Author
                 if emb.get("author") and emb["author"].get("name"):
                     parts.append("👤 Author:")
-                    parts.append(f"   🔹 {emb['author']['name']}")
+                    parts.append(f"{emb['author']['name']}")
 
                     # ✅ Add author URL if present
                     if emb["author"].get("url"):
@@ -194,7 +194,7 @@ async def fetch_message_from_link_func(
                 if emb.get("description"):
                     parts.append("📝 Description:")
                     for line in emb["description"].splitlines():
-                        parts.append(f"   🔹 {line}")
+                        parts.append(f"{line}")
 
                 # Fields
                 if emb.get("fields"):
@@ -206,21 +206,21 @@ async def fetch_message_from_link_func(
                         inline_note = "inline" if inline else "block"
                         parts.append(f"  • {name} [{inline_note}]:")
                         for line in val.splitlines():
-                            parts.append(f"     🔹 {line}")
+                            parts.append(f"  {line}")
 
                 # Footer
                 if emb.get("footer") and emb["footer"].get("text"):
                     parts.append("🦶 Footer:")
                     for line in emb["footer"]["text"].splitlines():
-                        parts.append(f"   🔹 {line}")
+                        parts.append(f"{line}")
 
                 # Images / Thumbnails
                 if emb.get("image") and emb["image"].get("url"):
                     parts.append("🖼 Image:")
-                    parts.append(f"   🔹 {emb['image']['url']}")
+                    parts.append(f"{emb['image']['url']}")
                 if emb.get("thumbnail") and emb["thumbnail"].get("url"):
                     parts.append("🖼 Thumbnail:")
-                    parts.append(f"   🔹 {emb['thumbnail']['url']}")
+                    parts.append(f"{emb['thumbnail']['url']}")
 
                 parts.append("")  # space after each embed
 

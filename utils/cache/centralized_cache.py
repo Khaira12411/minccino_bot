@@ -7,7 +7,7 @@ from utils.cache.boosted_channels_cache import (
     boosted_channels_cache,
     load_boosted_channels_cache,
 )
-from utils.cache.cache_list import timer_cache
+from utils.cache.cache_list import probation_members_cache, timer_cache
 from utils.cache.daily_fa_ball_cache import (
     daily_faction_ball_cache,
     load_daily_faction_ball_cache,
@@ -26,6 +26,7 @@ from utils.cache.halloween_contest_cache import (
     load_halloween_contest_alert_cache,
 )
 from utils.cache.held_item_cache import held_item_cache, load_held_item_cache
+from utils.cache.probation_members_cache import load_probation_members_cache
 from utils.cache.reminders_cache import *
 from utils.cache.res_fossil_cache import (
     load_res_fossils_alert_cache,
@@ -111,6 +112,9 @@ async def load_all_caches(bot):
         # 🎯 Faction Ball Alert
         await load_faction_ball_alert_cache(bot)
 
+        # 🕒 Probation Members Cache
+        await load_probation_members_cache(bot)
+
         # 🎃 Halloween Contest Alert Cache
         # await load_halloween_contest_alert_cache(bot)
 
@@ -134,6 +138,7 @@ async def load_all_caches(bot):
                 f"Faction Ball Alerts: {len(faction_ball_alert_cache)},"
                 f"World Boss Battle Alerts: {len(wb_battle_alert_cache)},"
                 f"Res Fossils Alerts: {len(res_fossils_alert_cache)})"
+                f"Probation Members: {len(probation_members_cache)},"
                 # f"Halloween Contest Alerts: {len(halloween_contests_alert_cache)},"
                 # f"Halloween Con Fourth Place Score: {halloween_con_top_cache.get('fourth_place', {}).get('score', 0)}"
             ),
