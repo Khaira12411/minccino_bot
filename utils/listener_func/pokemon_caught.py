@@ -89,8 +89,7 @@ async def weekly_goal_checker(
                     f"Probation status updated to 'Passed' for {member.name} ({member.id}) after catching {total_caught} Pokémon.",
                     label="💠 Weekly Goal Tracker",
                 )
-        else:
-            return  # Silently exit if not Pending
+        return # Exit early if on probation
 
     # Check for Weekly Angler role
     if fish_caught >= 500 and not weekly_angler_mark:
