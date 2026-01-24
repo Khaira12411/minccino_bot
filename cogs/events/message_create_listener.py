@@ -263,9 +263,13 @@ class MessageCreateListener(commands.Cog):
                 # Daily Faction Ball Listener
                 if first_embed:
                     if (
-                        first_embed.description
-                        and "daily streak" in first_embed.description.lower()
+                        first_embed.title
+                        and "daily streak" in first_embed.title.lower()
                     ):
+                        pretty_log(
+                            "info",
+                            f"Matched Daily Faction Ball Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
                         await extract_faction_ball_from_daily(
                             bot=self.bot, message=message
                         )
