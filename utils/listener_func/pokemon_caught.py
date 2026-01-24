@@ -78,11 +78,17 @@ async def weekly_goal_checker(
             )
             probation_data = probation_members_cache.get(member.id)
 
-        status = probation_data.get("status", "")
-        if status == "Passed" or status == "passed":
+        status = str(probation_data.get("status", "")).strip().lower()
+        pretty_log(
+            "info",
+            f"Probation status for {member.name} ({member.id}): '{status}'",
+            label="💠 WEEKLY GOAL",
+            bot=bot,
+        )
+        if status == "passed":
             return  # They have passed probation
 
-        elif status == "Pending" or status == "pending":
+        elif status == "pending":
             if total_caught >= 300:
                 # Update status to Passed
                 await update_probation_member_status(bot, member.id, "Passed")
