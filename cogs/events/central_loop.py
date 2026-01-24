@@ -54,10 +54,10 @@ class CentralLoop(commands.Cog):
                 await pokemon_reminder_checker(self.bot)
 
                 # ⏰ Check if any special battle timers are due
-                await special_battle_timer_checker(bot=self.bot)
+                #await special_battle_timer_checker(bot=self.bot)
 
                 # 🎅 Check if any Secret Santa reminders are due
-                await secret_santa_timer_checker(bot=self.bot)
+                #await secret_santa_timer_checker(bot=self.bot)
 
             except Exception as e:
                 pretty_log(
@@ -87,7 +87,7 @@ async def setup(bot: commands.Bot):
     print("  ✅ 💠  flush_weekly_goal_cache")
     print("  ✅ 🍀  fl_cd_checker")
     print("  ✅ 🦭  pokemon_reminder_checker")
-    print("  ✅ ⏰  special_battle_timer_checker")
-    print("  ✅ 🎅  secret_santa_timer_checker")
+    #print("  ✅ ⏰  special_battle_timer_checker")
+    #print("  ✅ 🎅  secret_santa_timer_checker")
     print("  🧭 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")

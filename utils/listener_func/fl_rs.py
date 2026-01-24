@@ -9,7 +9,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.fl_rs_checker")
+#enable_debug(f"{__name__}.fl_rs_checker")
 rarity_meta = {
     "common": {"color": 810198, "emoji": STRAYMONS__EMOJIS.common},
     "uncommon": {"color": 1291495, "emoji": STRAYMONS__EMOJIS.uncommon},
@@ -97,12 +97,6 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
         and embed.color.value in NON_RARE_COLORS
     ):
 
-        pretty_log(
-            tag="info",
-            message="Feeling Lucky spawn is not rare. Exiting FL RS Checker.",
-            label="🍀 FL RS CHECKER",
-            bot=bot,
-        )
         debug_log("Non-rare color detected, exiting FL RS Checker.")
         return
 
@@ -155,7 +149,7 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
             rarity = extract_rarity_from_footer(embed.footer.text)
             if rarity.lower() != "shiny" and rarity.lower() != "legendary":
                 return
-            
+
             pretty_log(
                 tag="info",
                 message=f"Feeling Lucky spawn is event exclusive with rarity: {rarity}.",

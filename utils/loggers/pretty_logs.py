@@ -30,6 +30,7 @@ TAGS = {
     "captcha": "📢 CAPTCHA",
     "background_task": "🫒  BACKGROUND TASK",
     "debug": "🔧 DEBUG",
+    "cache": "🍞 CACHE",
 }
 
 # -------------------- 🎨 ANSI Colors --------------------

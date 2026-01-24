@@ -14,17 +14,18 @@ async def load_probation_members_cache(bot: discord.Client):
     """
     global probation_members_cache
     members = await fetch_all_probation_members(bot)
-    probation_members = {
-        member["user_id"]: {
+    probation_members_cache.clear()
+    for member in members:
+        probation_members_cache[member["user_id"]] = {
             "user_name": member["user_name"],
             "status": member["status"],
         }
-        for member in members
-    }
     pretty_log(
         "cache",
-        f"Loaded {len(probation_members)} probation members into cache",
+        f"Loaded {len(probation_members_cache)} probation members into cache",
     )
+    return probation_members_cache
+
 
 def upsert_probation_member_in_cache(
     user_id: int,
@@ -42,6 +43,7 @@ def upsert_probation_member_in_cache(
         "cache",
         f"Upserted probation member {user_name} ({user_id}) with status '{status}' in cache",
     )
+
 
 def update_probation_member_status_in_cache(
     user_id: int,
