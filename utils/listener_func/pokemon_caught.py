@@ -9,6 +9,7 @@ from config.current_setup import STRAYMONS_GUILD_ID
 from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
 from utils.cache.cache_list import probation_members_cache
 from utils.database.probation_members_db import (
+    get_probation_member_status,
     update_probation_member_status,
     upsert_probation_member,
 )
@@ -70,21 +71,18 @@ async def weekly_goal_checker(
         # Check their status
         probation_data = probation_members_cache.get(member.id)
         if not probation_data:
-            # Upsert in DB and cache
-            await upsert_probation_member(
-                bot,
-                member.id,
-                member.name,
-            )
-            probation_data = probation_members_cache.get(member.id)
+            # Not in cache, fetch from DB
+            status = await get_probation_member_status(bot, member.id)
+            if status is None:
+                # Upsert in DB and cache
+                await upsert_probation_member(
+                    bot,
+                    member.id,
+                    member.name,
+                )
+                probation_data = probation_members_cache.get(member.id)
 
         status = str(probation_data.get("status", "")).strip().lower()
-        pretty_log(
-            "info",
-            f"Probation status for {member.name} ({member.id}): '{status}'",
-            label="💠 WEEKLY GOAL",
-            bot=bot,
-        )
         if status == "passed":
             return  # They have passed probation
 
