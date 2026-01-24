@@ -1,13 +1,17 @@
 import re
+
 import discord
+
 from config.faction_data import FACTION_LOGO_EMOJIS, get_faction_by_emoji
-from utils.loggers.pretty_logs import pretty_log
 from utils.cache.daily_fa_ball_cache import daily_faction_ball_cache
-from utils.cache.straymon_member_cache import straymon_member_cache
 from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache
-from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.cache.straymon_member_cache import straymon_member_cache
 from utils.database.daily_fa_ball import update_faction_ball
+from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.loggers.pretty_logs import pretty_log
+
 STRAYMONS_GUILD_ID = 1047856017121214555
+
 
 async def update_faction(bot: discord.Client, user_id: int, faction: str | None):
     """
@@ -41,17 +45,26 @@ async def extract_faction_ball_from_daily(bot, message: discord.Message):
 
     # Regex to match: <:team_logo:ID> **|** Your Faction's daily ball-type is <:ball_emoji:ID> BallName
     match = re.search(
-        r"(<:team_logo:\d+>) \*\*\|\*\* Your Faction's daily ball-type is (<:[^:]+:\d+>) (\w+ball)",
+        r"(<:team_logo:\d+>) \*\*\|\*\* Your Faction's daily ball-type is (<:[^:]+:\d+>) ([A-Za-z]+)",
         embed.description,
     )
     if not match:
+        pretty_log(
+            "info",
+            "Could not find faction ball info in daily message.",
+            bot=bot,
+        )
         return
 
     faction_team_emoji = match.group(1)
     daily_ball_emoji = match.group(2)
     daily_ball = match.group(3)
     daily_ball = daily_ball.lower()
-
+    pretty_log(
+        "info",
+        f"Extracted faction ball from daily message in {message.channel.name}: Faction Emoji: {faction_team_emoji}, Ball: {daily_ball}",
+        bot=bot,
+    )
     faction = get_faction_by_emoji(faction_team_emoji)
     if not faction:
         pretty_log(
@@ -65,24 +78,23 @@ async def extract_faction_ball_from_daily(bot, message: discord.Message):
     if not member:
         return
 
+    # Check if there is already a ball for that faction
+    latest_ball = daily_faction_ball_cache.get(faction)
+
+    if latest_ball != daily_ball:
+        # Update db and cache
+        await update_faction_ball(bot, faction, daily_ball)
+
     # Check if user has faction or not
     user_id = member.id
     cached_member = straymon_member_cache.get(user_id)
     if not cached_member:
-        return # Not straymon member
+        return  # Not straymon member
     user_faction = cached_member.get("faction")
     if not user_faction:
         # Update user faction
         await update_faction(bot, user_id, faction)
         straymon_member_cache[user_id]["faction"] = faction
-
-    # Check if there is already a ball for that faction
-    latest_ball = daily_faction_ball_cache.get(faction)
-    if latest_ball == daily_ball:
-        return  # No change
-    
-    # Update db and cache
-    await update_faction_ball(bot, faction, daily_ball)
 
 
 # 🍥──────────────────────────────────────────────
@@ -113,7 +125,7 @@ async def extract_faction_ball_from_fa(bot, message: discord.Message):
     user_id = member.id
     cached_member = straymon_member_cache.get(user_id)
     if not cached_member:
-        return # Not straymon member
+        return  # Not straymon member
     user_faction = cached_member.get("faction")
     if not user_faction:
         # Update user faction
