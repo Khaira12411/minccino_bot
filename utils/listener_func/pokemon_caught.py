@@ -79,8 +79,10 @@ async def weekly_goal_checker(
             probation_data = probation_members_cache.get(member.id)
 
         status = probation_data.get("status", "")
-        status = status.lower()
-        if status == "pending":
+        if status == "Passed" or status == "passed":
+            return  # They have passed probation
+
+        elif status == "Pending" or status == "pending":
             if total_caught >= 300:
                 # Update status to Passed
                 await update_probation_member_status(bot, member.id, "Passed")
@@ -89,7 +91,7 @@ async def weekly_goal_checker(
                     f"Probation status updated to 'Passed' for {member.name} ({member.id}) after catching {total_caught} Pokémon.",
                     label="💠 Weekly Goal Tracker",
                 )
-        return # Exit early if on probation
+        return  # Exit early if on probation
 
     # Check for Weekly Angler role
     if fish_caught >= 500 and not weekly_angler_mark:

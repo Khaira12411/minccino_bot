@@ -42,7 +42,7 @@ def upsert_probation_member_in_cache(
         "cache",
         f"Upserted probation member {user_name} ({user_id}) with status '{status}' in cache",
     )
-    
+
 def update_probation_member_status_in_cache(
     user_id: int,
     status: str,
