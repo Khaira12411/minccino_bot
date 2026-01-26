@@ -94,7 +94,7 @@ async def detect_pokemeow_reply(message: discord.Message):
                 # 💜 [MISSED] Timer ran correctly but message failed
                 # Trackable: include member ID and username
                 pretty_log(
-                    tag="error",
+                    tag="info",
                     message=(
                         f"Missed Pokemon timer notification for {member} "
                         f"(ID: {member.id}). Timer ran correctly but message failed: {e}"

@@ -324,10 +324,7 @@ class MessageCreateListener(commands.Cog):
                         and "captcha forgiveness centre" not in title
                         and "captcha forgiveness centre" not in description
                     ):
-                        pretty_log(
-                            tag="info",
-                            message=f"🔐 Entered Captcha Alert Listener | message_id={message.id}",
-                        )
+
                         await captcha_alert_handler(bot=self.bot, message=message)
 
                 # 🟣 Catchbot processing
