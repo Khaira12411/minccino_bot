@@ -45,8 +45,8 @@ async def extract_faction_ball_from_daily(bot, message: discord.Message):
 
     embed_description = embed.description or ""
     debug_log(f"Embed description: {embed_description}")
-    if not embed_description or "daily streak" not in embed_description:
-        debug_log("Embed description missing or does not contain 'daily streak'.")
+    if not embed_description:
+        debug_log("No description found in embed.")
         return
 
     # Regex to match: <:team_logo:ID> **|** Your Faction's daily ball-type is <:ball_emoji:ID> BallName

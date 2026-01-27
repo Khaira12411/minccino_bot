@@ -6,10 +6,11 @@ from discord.ext import commands
 from config.straymons_constants import STRAYMONS__EMOJIS, STRAYMONS__TEXT_CHANNELS
 from utils.embeds.design_embed import design_embed
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.essentials.webhook import send_webhook
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-#enable_debug(f"{__name__}.fl_rs_checker")
+# enable_debug(f"{__name__}.fl_rs_checker")
 rarity_meta = {
     "common": {"color": 810198, "emoji": STRAYMONS__EMOJIS.common},
     "uncommon": {"color": 1291495, "emoji": STRAYMONS__EMOJIS.uncommon},
@@ -190,7 +191,11 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
     emoji = rarity_meta.get(rarity, rarity_meta["default"]).get("emoji", "❓")
     display_pokemon_name = f"{emoji} {pokemon_name.title()}"
 
-    desc = f"Member: {member.mention}\n" f"Pokemon: {display_pokemon_name}\n"
+    desc = (
+        f"Member: {member.mention}\n"
+        f"Pokemon: {display_pokemon_name}\n\n"
+        f"Don't forget to forward the rare spawn in <#1167381632429342794>!"
+    )
 
     log_embed = discord.Embed(
         title="Feeling Lucky Rare Spawn",
@@ -205,7 +210,7 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
 
     report_channel = message.guild.get_channel(STRAYMONS__TEXT_CHANNELS.reports)
     if report_channel:
-        await report_channel.send(embed=log_embed)
+        await send_webhook(bot, report_channel, embed=log_embed)
 
     pretty_log(
         tag="info",

@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import discord
 
 from config.aesthetic import *
-from config.current_setup import STRAYMONS_GUILD_ID
+from config.current_setup import MINCCINO_COLOR, STRAYMONS_GUILD_ID
 from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
 from utils.cache.cache_list import probation_members_cache
 from utils.database.probation_members_db import (
@@ -15,6 +15,7 @@ from utils.database.probation_members_db import (
 )
 from utils.database.weekly_goal_tracker_db_func import upsert_weekly_goal
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.essentials.webhook import send_webhook
 from utils.loggers.pretty_logs import pretty_log
 
 FISHING_COLOR = 0x87CEFA
@@ -95,6 +96,21 @@ async def weekly_goal_checker(
                     f"Probation status updated to 'Passed' for {member.name} ({member.id}) after catching {total_caught} Pokémon.",
                     label="💠 Weekly Goal Tracker",
                 )
+                embed = discord.Embed(
+                    title="Probation Member Status Set to Passed",
+                    description=(
+                        f"**Member:** {member.mention}\n"
+                        f"**Reason:** Caught {total_caught} Pokémon during probation period."
+                    ),
+                    color=discord.Color.green(),
+                    timestamp=datetime.now(),
+                )
+                embed.set_footer(text=f"User ID: {member.id}", icon_url=guild.icon.url)
+                embed.set_author(
+                    name=member.display_name, icon_url=member.display_avatar.url
+                )
+                await send_webhook(bot, channel, embed=embed)
+
         return  # Exit early if on probation
 
     # Check for Weekly Angler role
@@ -126,8 +142,12 @@ async def weekly_goal_checker(
                 f"Congratulations {member.display_name}! You've reached the weekly requirement goal of catching 175 Pokémon! 🎉\nDouble-check your stats by running `;clan stats w` and finding your name."
             )
             if goal_tracker_channel:
-                await goal_tracker_channel.send(
-                    f"{Emojis.gray_star} {member.display_name} has reached the Weekly requirement catch goal of 175!"
+
+                content = f"{Emojis.gray_star} {member.display_name} has reached the Weekly requirement catch goal of 175!"
+                await send_webhook(
+                    bot,
+                    goal_tracker_channel,
+                    content=content,
                 )
             pretty_log(
                 "info",
@@ -157,9 +177,14 @@ async def weekly_goal_checker(
                 bot=bot,
             )
             if goal_tracker_channel:
-                await goal_tracker_channel.send(
-                    f"{Emojis.medal} {member.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon! {Emojis.celebrate}"
+
+                content = f"{Emojis.medal} {member.display_name} has reached the Weekly Grinder goal of catching 2000 Pokémon! {Emojis.celebrate}"
+                await send_webhook(
+                    bot,
+                    goal_tracker_channel,
+                    content=content,
                 )
+                
             pretty_log(
                 "info",
                 f"{member.name} ({member.id}) has reached the Weekly Grinder goal | Pokémon Caught: {pokemon_caught}, Total Caught: {total_caught}",

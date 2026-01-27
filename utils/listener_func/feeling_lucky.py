@@ -13,7 +13,7 @@ from utils.database.fl_cd_db_func import upsert_feeling_lucky_cd
 from utils.database.fl_reminders_db_func import *
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
-
+from utils.essentials.webhook import send_webhook
 
 # 🍀────────────────────────────────────────────
 #   Function: feeling_lucky_cd
@@ -79,7 +79,8 @@ async def feeling_lucky_cd(bot: commands.Bot, message: discord.Message):
             "Type /cooldowns to check your cooldowns."
         )
         embed = discord.Embed(description=desc, color=MINCCINO_COLOR)
-        await message.channel.send(embed=embed)
+        await send_webhook(bot, message.channel, embed=embed)
+        
 
         pretty_log(
             "info",

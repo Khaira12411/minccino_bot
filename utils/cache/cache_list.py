@@ -18,3 +18,14 @@ probation_members_cache: dict[int, dict[str, str]] = {}
 #         "user_name": str,
 #         "status": str,
 #     }
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+#       🌸 Webhook URL Cache 🌸
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+webhook_url_cache: dict[int, dict] = {}
+# Structure:
+# {
+#   channel_id: {
+#       "channel_name": str,
+#       "url": str,
+#   },
+#   ...
