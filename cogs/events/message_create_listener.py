@@ -26,6 +26,10 @@ from utils.listener_func.boosted_channel_listener import (
 )
 from utils.listener_func.captcha_alert_listener import captcha_alert_handler
 from utils.listener_func.catchbot_listener import *
+from utils.listener_func.egg_listener import (
+    egg_hatched_listener,
+    egg_ready_to_hatch_listener,
+)
 from utils.listener_func.faction_ball_alert import faction_ball_alert
 from utils.listener_func.faction_ball_listener import (
     extract_faction_ball_from_daily,
@@ -150,6 +154,11 @@ class MessageCreateListener(commands.Cog):
                 first_embed_description = (
                     first_embed.description
                     if first_embed and first_embed.description
+                    else ""
+                )
+                first_embed_footer = (
+                    first_embed.footer.text
+                    if first_embed and first_embed.footer
                     else ""
                 )
                 # 💜────────────────────────────────────────────
@@ -286,6 +295,30 @@ class MessageCreateListener(commands.Cog):
                             f"Matched World Boss Battle Reminder Registration | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await register_wb_battle_reminder(bot=self.bot, message=message)
+                # 💜────────────────────────────────────────────
+                # Egg Hatching Listeners
+                # 💜────────────────────────────────────────────
+                if message.content and message.author.id == POKEMEOW_APPLICATION_ID:
+                    if (
+                        "your egg is ready to hatch! `/egg hatch` to hatch it."
+                        in message.content
+                    ):
+                        pretty_log(
+                            "info",
+                            f"🔹 Matched Egg Ready to Hatch Listener | message_id={message.id}",
+                        )
+                        await egg_ready_to_hatch_listener(bot=self.bot, message=message)
+                # Egg Hatched Listener
+                if first_embed:
+                    if (
+                        first_embed_footer
+                        and "PokeMeow | Egg Hatched" in first_embed_footer
+                    ):
+                        pretty_log(
+                            "info",
+                            f"🔹 Matched Egg Hatched Listener | message_id={message.id}",
+                        )
+                        await egg_hatched_listener(bot=self.bot, message=message)
 
                 # Special Battle NPC Listener (Disabled for now)
                 if first_embed:

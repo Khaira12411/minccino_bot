@@ -1,4 +1,6 @@
 class Emojis:
+    egg = "<:egg:1466357402520518688>"
+    egg_shake = "<a:egg_shake:1466356979042746432>"
     santa_mouse = "<:santa_mouse:1451458853710331926>"
     lucky_cheese = "<:lucky_cheese:1451208482802892852>"
     battle_spawn = "<:battle_spawn:1451021066175516692>"
@@ -75,6 +77,7 @@ class Emojis_Rarity:
     shiny = "<:shiny:1412000714804170803>"
     golden = "<:golden:1412000647666073670>"
 
+
 class Emojis_Balls:
     small_pokeball = "<:small_pokeball:1412231157063483422>"
     beastball = "<:beastball:1412000353645236245>"
@@ -96,6 +99,7 @@ class Emojis_Factions:
     skull = "<:skull:1427123189410042027>"
     yell = "<:yell:1427123204664590366>"
 
+
 class MINC_Thumbnails:
     goal = "https://media.discordapp.net/attachments/1394913073520967680/1425339641846042624/image.png?ex=68e73a7c&is=68e5e8fc&hm=497750b9566e5bb377654f90a8b23d1963c186127f2af7e3e78c3b6c6c4ad347&=&format=webp&quality=lossless&width=640&height=640"
     captcha_alert = "https://media.discordapp.net/attachments/1394913073520967680/1422761285422157905/image.png?ex=68ddd934&is=68dc87b4&hm=3eda2aa450903858d789b543495a6054c1b44a2e3ec731d3c4f0c13ece9ce473&=&format=webp&quality=lossless&width=576&height=576"
@@ -110,9 +114,11 @@ class MINC_Thumbnails:
     bell = "https://media.discordapp.net/attachments/1394913073520967680/1413355689757118605/bell.png?ex=68bba18f&is=68ba500f&hm=fa8f943e71f74bba34121517ffc3bd2c748b6054c1e03c555557181900d5ea6f&=&format=webp&quality=lossless&width=560&height=842"
     reminders = "https://media.discordapp.net/attachments/1394913073520967680/1415099761253421076/image.png?ex=68c1f9da&is=68c0a85a&hm=d3f2bb2a1961e23b6f949ce0b562c41029ac5045f05f40d3946fa25fc08bed70&=&format=webp&quality=lossless&width=576&height=576"
 
+
 class MINC_DIVIDER:
     brown_stars = "https://media.discordapp.net/attachments/1393740397905313912/1412595875360014376/image.png?ex=68b8dded&is=68b78c6d&hm=1562907ed9097b683e921ce2f8790e23ea6d8c7dacc51a2587cff87882b9f4ff&=&format=webp&quality=lossless&width=1215&height=54"
     tulips = "https://media.discordapp.net/attachments/1393740397905313912/1412599439968964689/image.png?ex=68b8e13f&is=68b78fbf&hm=d6750e5a1ddc1a3c7a208efc86938938185e0f979b23c8ed53f3c2d4e358689f&=&format=webp&quality=lossless&width=1646&height=191"
+
 
 class Image_Link:
     new_week = "https://media.discordapp.net/attachments/1358029599463968798/1396344374920613919/Welcome_to_Straymons_2.png?ex=68e5e509&is=68e49389&hm=f277d9deeadc4b8fff890fce51f6ae0b91de611d46cdec04d9608f02f3dd0979&=&format=webp&quality=lossless&width=915&height=307"
