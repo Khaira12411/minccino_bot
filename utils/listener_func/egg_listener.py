@@ -17,7 +17,7 @@ OWNER_IDS = [KHY_USER_ID, HANA_USER_ID]
 def extract_user_id(message: str) -> int | None:
     match = re.search(r"<@(\d+)>", message)
     if match:
-        return match.group(1)
+        return match.group(1).strip()
     return None
 
 

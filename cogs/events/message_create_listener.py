@@ -312,7 +312,7 @@ class MessageCreateListener(commands.Cog):
                 if first_embed:
                     if (
                         first_embed_footer
-                        and "PokeMeow | Egg Hatched" in first_embed.footer.text
+                        and "PokeMeow | Egg Hatch" in first_embed.footer.text
                     ):
                         pretty_log(
                             "info",
