@@ -1,6 +1,6 @@
 class Emojis:
-    egg = "<:egggg:1466357402520518688>"
-    egg_shake = "<a:egg_shake:1466356979042746432>"
+    egg = "<:egg:1466648759835562105>"
+    egg_shake = "<a:egg_sway:1466648747441131722>"
     santa_mouse = "<:santa_mouse:1451458853710331926>"
     lucky_cheese = "<:lucky_cheese:1451208482802892852>"
     battle_spawn = "<:battle_spawn:1451021066175516692>"

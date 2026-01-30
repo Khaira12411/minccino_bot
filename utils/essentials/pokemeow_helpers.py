@@ -73,11 +73,11 @@ def get_message_interaction_member(message: discord.Message) -> discord.Member |
     Returns the member who triggered the interaction that created this message, if available.
     Returns None if not an interaction-created message or not a guild interaction.
     """
-    interaction = getattr(message, "interaction", None)
-    if interaction:
+    interaction_metadata = getattr(message, "interaction_metadata", None)
+    if interaction_metadata:
         # Try to get the member (guild) or user (DM)
-        member = getattr(interaction, "user", None) or getattr(
-            interaction, "member", None
+        member = getattr(interaction_metadata, "user", None) or getattr(
+            interaction_metadata, "member", None
         )
         if isinstance(member, discord.Member):
             return member
