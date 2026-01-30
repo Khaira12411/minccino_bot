@@ -30,8 +30,13 @@ async def egg_ready_to_hatch_listener(bot: discord.Client, message: discord.Mess
     if not user_id:
         debug_log("No user ID found in the message.")
         return
-    if user_id not in OWNER_IDS:
-        debug_log(f"User ID {user_id} not in OWNER_IDS.")
+    try:
+        user_id_int = int(user_id)
+    except Exception:
+        debug_log(f"User ID {user_id} could not be converted to int.")
+        return
+    if user_id_int not in OWNER_IDS:
+        debug_log(f"User ID {user_id_int} not in OWNER_IDS.")
         return
 
     user = bot.get_user(user_id)
@@ -60,8 +65,13 @@ async def egg_hatched_listener(bot: discord.Client, message: discord.Message):
         debug_log("No member found from the Pokemeow reply.")
         return
     member_id = member.id
-    if member_id not in OWNER_IDS:
-        debug_log(f"Member ID {member_id} not in OWNER_IDS.")
+    try:
+        member_id_int = int(member_id)
+    except Exception:
+        debug_log(f"Member ID {member_id} could not be converted to int.")
+        return
+    if member_id_int not in OWNER_IDS:
+        debug_log(f"Member ID {member_id_int} not in OWNER_IDS.")
         return
     # Delay 1 second
     await asyncio.sleep(1)
