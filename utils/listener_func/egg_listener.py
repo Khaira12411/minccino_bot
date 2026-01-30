@@ -42,13 +42,13 @@ async def egg_ready_to_hatch_listener(bot: discord.Client, message: discord.Mess
         debug_log(f"User ID {user_id_int} not in OWNER_IDS.")
         return
 
-    user = message.guild.get_member(user_id)
+    user = message.guild.get_member(user_id_int)
     debug_log(f"Fetched user: {user}")
     if not user:
         debug_log(f"User with ID {user_id} not found.")
         return
 
-    content = f"{Emojis.egg_shake}, **{user.name}**  Use </egg hatch:1015311084594405485> to hatch your egg! "
+    content = f"{Emojis.egg_shake} **{user.name}**,  Use </egg hatch:1015311084594405485> to hatch your egg! "
     await message.channel.send(content)
 
     pretty_log(
@@ -72,7 +72,7 @@ async def egg_hatched_listener(bot: discord.Client, message: discord.Message):
         if not member:
             debug_log("No member found from the interaction.")
             return
-        
+
     member_id = member.id
     try:
         member_id_int = int(member_id)
@@ -84,7 +84,7 @@ async def egg_hatched_listener(bot: discord.Client, message: discord.Message):
         return
     # Delay 1 second
     await asyncio.sleep(1)
-    content = f"{Emojis.egg}, **{member.name}**  Use </egg hold:1015311084594405485> to hold another egg!"
+    content = f"{Emojis.egg} **{member.name}**,  Use </egg hold:1015311084594405485> to hold another egg!"
     await message.channel.send(content)
     pretty_log(
         "info",

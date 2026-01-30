@@ -74,11 +74,22 @@ def get_message_interaction_member(message: discord.Message) -> discord.Member |
     Returns None if not an interaction-created message or not a guild interaction.
     """
     interaction_metadata = getattr(message, "interaction_metadata", None)
-    if interaction_metadata:
-        # Try to get the member (guild) or user (DM)
-        member = getattr(interaction_metadata, "user", None) or getattr(
-            interaction_metadata, "member", None
-        )
-        if isinstance(member, discord.Member):
-            return member
+    if not interaction_metadata:
+        return None
+
+    # Try member first
+    member = getattr(interaction_metadata, "member", None)
+    if isinstance(member, discord.Member):
+        return member
+
+    # Try user (may be discord.User, not Member)
+    user = getattr(interaction_metadata, "user", None)
+    if isinstance(user, discord.Member):
+        return user
+    elif isinstance(user, discord.User) and message.guild:
+        # Try to fetch member from guild
+        fetched_member = message.guild.get_member(user.id)
+        if fetched_member:
+            return fetched_member
+
     return None
