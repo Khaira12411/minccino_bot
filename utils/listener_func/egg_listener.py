@@ -5,7 +5,10 @@ import discord
 
 from config.aesthetic import Emojis
 from config.current_setup import HANA_USER_ID, KHY_USER_ID
-from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.essentials.pokemeow_helpers import (
+    get_message_interaction_member,
+    get_pokemeow_reply_member,
+)
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
@@ -39,7 +42,7 @@ async def egg_ready_to_hatch_listener(bot: discord.Client, message: discord.Mess
         debug_log(f"User ID {user_id_int} not in OWNER_IDS.")
         return
 
-    user = bot.get_user(user_id)
+    user = message.guild.get_member(user_id)
     debug_log(f"Fetched user: {user}")
     if not user:
         debug_log(f"User with ID {user_id} not found.")
@@ -63,7 +66,13 @@ async def egg_hatched_listener(bot: discord.Client, message: discord.Message):
     debug_log(f"Fetched member: {member}")
     if not member:
         debug_log("No member found from the Pokemeow reply.")
-        return
+        # Use interaction member as fallback
+        member = get_message_interaction_member(message)
+        debug_log(f"Fetched interaction member: {member}")
+        if not member:
+            debug_log("No member found from the interaction.")
+            return
+        
     member_id = member.id
     try:
         member_id_int = int(member_id)
