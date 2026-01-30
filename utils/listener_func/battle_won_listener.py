@@ -1,9 +1,13 @@
 import re
+
 import discord
 
+from config.aesthetic import Emojis
+from config.straymons_constants import STRAYMONS__ROLES
 from utils.database.weekly_goal_tracker_db_func import upsert_weekly_goal
 from utils.loggers.pretty_logs import pretty_log
-from config.straymons_constants import STRAYMONS__ROLES
+
+OWNER_USERNAME = ["khy.09", "hana_banana._"]
 
 
 async def battle_won_listener(bot: discord.Client, message: discord.Message):
@@ -11,9 +15,9 @@ async def battle_won_listener(bot: discord.Client, message: discord.Message):
     from utils.cache.weekly_goal_tracker_cache import (
         fetch_weekly_goal_cache_by_name,
         increment_battles_won,
-        weekly_goal_cache,
         mark_weekly_goal_dirty,
         update_weekly_guardian_mark,
+        weekly_goal_cache,
     )
 
     # Extract username from battle won message
@@ -25,6 +29,11 @@ async def battle_won_listener(bot: discord.Client, message: discord.Message):
         return
 
     user_name = username_match.group(1)
+    if user_name in OWNER_USERNAME:
+        pokemon_message = f"{Emojis.pokespawn} **{user_name}**, your </pokemon:1015311085441654824> command is ready!"
+        fish_message = f"{Emojis.fish_spawn} **{user_name}**, your </fish spawn:1015311084812501026> command is ready!"
+        await message.channel.send(pokemon_message)
+        await message.channel.send(fish_message)
 
     # Check cache first
     weekly_goal_info = fetch_weekly_goal_cache_by_name(user_name)
