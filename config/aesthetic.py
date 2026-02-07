@@ -101,6 +101,7 @@ class Emojis_Factions:
 
 
 class MINC_Thumbnails:
+    cross = "https://media.discordapp.net/attachments/1394913073520967680/1469640654211780750/image.png?ex=69886504&is=69871384&hm=c5fddb50957b892c9fba88af09651be5b51069e78646a4c0cb787eae1a4a7bc0&=&format=webp&quality=lossless&width=480&height=480"
     goal = "https://media.discordapp.net/attachments/1394913073520967680/1425339641846042624/image.png?ex=68e73a7c&is=68e5e8fc&hm=497750b9566e5bb377654f90a8b23d1963c186127f2af7e3e78c3b6c6c4ad347&=&format=webp&quality=lossless&width=640&height=640"
     captcha_alert = "https://media.discordapp.net/attachments/1394913073520967680/1422761285422157905/image.png?ex=68ddd934&is=68dc87b4&hm=3eda2aa450903858d789b543495a6054c1b44a2e3ec731d3c4f0c13ece9ce473&=&format=webp&quality=lossless&width=576&height=576"
     fl = "https://media.discordapp.net/attachments/1394913073520967680/1420580195659939840/image.png?ex=68d5e9e7&is=68d49867&hm=af6fb5c2d86a87813dba5f96f3488f321c0c13a4677bfb02c46ea1ecac0fb6f6&=&format=webp&quality=lossless&width=576&height=576"

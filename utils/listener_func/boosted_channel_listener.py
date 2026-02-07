@@ -1,17 +1,72 @@
 import re
-import discord
 
-from config.current_setup import POKEMEOW_APPLICATION_ID
+import discord
+from discord.ext import commands
+
+from config.aesthetic import MINC_Thumbnails
+from config.current_setup import POKEMEOW_APPLICATION_ID, STRAYMONS__GUILD_ID
+from config.straymons_constants import STRAYMONS__CATEGORIES, STRAYMONS__TEXT_CHANNELS
 from utils.database.boosted_channels_db_func import (
     delete_boosted_channel,
     insert_boosted_channel,
 )
-from utils.loggers.pretty_logs import pretty_log
-from utils.loggers.debug_log import debug_log
-from discord.ext import commands
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.essentials.webhook import send_webhook
+from utils.loggers.debug_log import debug_log
+from utils.loggers.pretty_logs import pretty_log
 
 BOOST_FOOTER_PATTERN = re.compile(r"\(\+(\d+)% ;channel boost\)")
+
+
+async def check_if_important_channel(bot, channel: discord.TextChannel):
+    """Checks if the unboosted channel is one of the important channels we track."""
+    channel_id = channel.id
+    guild = channel.guild
+    if guild.id != STRAYMONS__GUILD_ID:
+        return
+
+    lucky_channel = guild.get_channel(STRAYMONS__TEXT_CHANNELS.feeling_lucky)
+    if not lucky_channel:
+        pretty_log(
+            "info",
+            f"Feeling Lucky channel not found in guild {guild.name} ({guild.id}).",
+            bot=bot,
+        )
+        return
+    if (
+        channel_id == lucky_channel.id
+        or channel.category_id == STRAYMONS__CATEGORIES.OPEN_SANCTUARY_
+    ):
+        embed = discord.Embed(
+            title=f"{channel.name} Unboosted",
+            description=(f"**Channel:** {channel.mention}"),
+            color=discord.Color.red(),
+        )
+        embed.set_footer(
+            text=f"Channel ID: {channel_id}",
+            icon_url=guild.icon.url if guild.icon else None,
+        )
+        embed.set_thumbnail(url=MINC_Thumbnails.cross)
+        report_channel = guild.get_channel(STRAYMONS__TEXT_CHANNELS.reports)
+        if not report_channel:
+            pretty_log(
+                "info",
+                f"Report channel not found in guild {guild.name} ({guild.id}).",
+                bot=bot,
+            )
+            return
+
+        try:
+            await send_webhook(bot, report_channel, embed=embed)
+        except Exception as e:
+            pretty_log(
+                "error",
+                f"Failed to send unboosted channel embed: {e}",
+                bot=bot,
+            )
+        pretty_log(
+            "info", f"Important channel unboosted: {channel.name} ({channel_id}), "
+        )
 
 
 # ─────────────────────────────────────────────
@@ -140,6 +195,7 @@ async def remove_boosted_channel_listener(bot: commands.Bot, message: discord.Me
             f"(Message ID {getattr(message, 'id', 'unknown')}): {e}",
         )
 
+
 # ─────────────────────────────────────────────
 # 💠 Handle Boosted Channel on Edit
 # ─────────────────────────────────────────────
@@ -215,6 +271,7 @@ async def handle_boosted_channel_on_edit(bot: commands.Bot, message: discord.Mes
             boosted_channels_cache.pop(channel_id, None)
             try:
                 await delete_boosted_channel(bot, channel_id)
+                await check_if_important_channel(bot, message.channel)
             except Exception as e:
                 pretty_log(
                     "error",

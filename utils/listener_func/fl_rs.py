@@ -190,10 +190,15 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
 
     emoji = rarity_meta.get(rarity, rarity_meta["default"]).get("emoji", "❓")
     display_pokemon_name = f"{emoji} {pokemon_name.title()}"
-
+    reward_map = {
+        "legendary": f"{STRAYMONS__EMOJIS.pokecoin} 50k",
+        "shiny": f"{STRAYMONS__EMOJIS.pokecoin} 250k",
+    }
+    reward = reward_map.get(rarity, "Unknown")
     desc = (
-        f"Member: {member.mention}\n"
-        f"Pokemon: {display_pokemon_name}\n\n"
+        f"**Member:** {member.mention}\n"
+        f"**Pokemon:** {display_pokemon_name}\n"
+        f"**Reward:** {reward}\n\n"
         f"Don't forget to forward the rare spawn in <#1167381632429342794>!"
     )
 
