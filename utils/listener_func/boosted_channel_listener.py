@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from config.aesthetic import MINC_Thumbnails
-from config.current_setup import POKEMEOW_APPLICATION_ID, STRAYMONS__GUILD_ID
+from config.current_setup import POKEMEOW_APPLICATION_ID, STRAYMONS_GUILD_ID
 from config.straymons_constants import STRAYMONS__CATEGORIES, STRAYMONS__TEXT_CHANNELS
 from utils.database.boosted_channels_db_func import (
     delete_boosted_channel,
@@ -22,7 +22,7 @@ async def check_if_important_channel(bot, channel: discord.TextChannel):
     """Checks if the unboosted channel is one of the important channels we track."""
     channel_id = channel.id
     guild = channel.guild
-    if guild.id != STRAYMONS__GUILD_ID:
+    if guild.id != STRAYMONS_GUILD_ID:
         return
 
     lucky_channel = guild.get_channel(STRAYMONS__TEXT_CHANNELS.feeling_lucky)
