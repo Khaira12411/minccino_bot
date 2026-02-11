@@ -109,7 +109,8 @@ async def weekly_goal_checker(
                 embed.set_author(
                     name=member.display_name, icon_url=member.display_avatar.url
                 )
-                await send_webhook(bot, channel, embed=embed)
+                report_channel = guild.get_channel(STRAYMONS__TEXT_CHANNELS.reports)
+                await send_webhook(bot, report_channel, embed=embed)
 
         return  # Exit early if on probation
 
@@ -184,7 +185,7 @@ async def weekly_goal_checker(
                     goal_tracker_channel,
                     content=content,
                 )
-                
+
             pretty_log(
                 "info",
                 f"{member.name} ({member.id}) has reached the Weekly Grinder goal | Pokémon Caught: {pokemon_caught}, Total Caught: {total_caught}",
