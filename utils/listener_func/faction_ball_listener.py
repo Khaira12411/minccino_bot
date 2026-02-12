@@ -109,15 +109,20 @@ async def extract_faction_ball_from_daily(bot, message: discord.Message):
     if not cached_member:
         debug_log("User is not a straymon member.")
         return  # Not straymon member
-    user_faction = cached_member.get("faction")
-    debug_log(f"User's current faction: {user_faction}")
-    if not user_faction:
+    existing_user_faction = cached_member.get("faction")
+    debug_log(f"User's current faction: {existing_user_faction}")
+    if not existing_user_faction or existing_user_faction != faction:
         debug_log(f"Updating user {user_id} faction to {faction}")
         # Update user faction
         await update_faction(bot, user_id, faction)
         straymon_member_cache[user_id]["faction"] = faction
+        pretty_log(
+            "success",
+            f"Updated faction for user {user_id} to '{faction}' based on daily message.",
+            bot=bot,
+        )
     else:
-        debug_log(f"User {user_id} already has faction: {user_faction}")
+        debug_log(f"User {user_id} already has faction: {existing_user_faction}")
 
 
 # 🍥──────────────────────────────────────────────
@@ -150,10 +155,15 @@ async def extract_faction_ball_from_fa(bot, message: discord.Message):
     if not cached_member:
         return  # Not straymon member
     user_faction = cached_member.get("faction")
-    if not user_faction:
+    if not user_faction or user_faction != faction:
         # Update user faction
         await update_faction(bot, user_id, faction)
         straymon_member_cache[user_id]["faction"] = faction
+        pretty_log(
+            "success",
+            f"Updated faction for user {user_id} from {user_faction} to '{faction}' based on faction command.",
+            bot=bot,
+        )
 
     # Check if there is already a ball for that faction
     daily_ball_faction = daily_faction_ball_cache.get(faction)
