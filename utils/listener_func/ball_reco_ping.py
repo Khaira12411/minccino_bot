@@ -324,7 +324,7 @@ async def recommend_ball(message: discord.Message, bot):
 
         # --- Masterball bypass ---
         embed = message.embeds[0]
-        if embed.color and embed.color.value == 15345163:
+        """if embed.color and embed.color.value == 15345163:
 
             rarity = spawn_info.get("rarity")  # can be None
 
@@ -345,7 +345,7 @@ async def recommend_ball(message: discord.Message, bot):
                 "spawn_type": "special_masterball",
                 "ball": ball,
                 "rate": rate,
-            }
+            }"""
 
         spawn_type = spawn_info.get("type")
         rarity = spawn_info.get("rarity")  # can be None
