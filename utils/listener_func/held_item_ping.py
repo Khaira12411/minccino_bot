@@ -7,9 +7,6 @@ from group_func.toggle.held_item.held_item_ping_helpers import held_item_message
 from utils.loggers.pretty_logs import pretty_log
 
 
-
-
-
 async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
     """
     Scan message embeds for Pokemon spawns.
@@ -77,7 +74,7 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
             r"(?P<teamlogo><:team_logo:\d+>)?\s*"  # optional team logo emoji
             r"(?P<held><:held_item:\d+>)?\s*"  # optional held item emoji
             r"(?:<:[^:]+:\d+>\s*)+"  # Pokemon emoji (+ optional dexCaught)
-            r"\*\*(?P<pokemon>[A-Za-z_]+)\*\*"  # pokemon name
+            r"\*\*(?P<pokemon>[A-Za-z_-]+)\*\*"  # pokemon name (allow hyphens)
         )
         matches = re.finditer(pattern, desc)
 
