@@ -58,6 +58,7 @@ from utils.listener_func.waterstate_listener import on_waterstate_message
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
+from utils.listener_func.clan_members_listener import clan_members_command_listener
 
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
@@ -91,7 +92,8 @@ secret_santa_phrases = [
     "You received",
 ]
 triggers = {
-    "hiker": "I could use some help clearing the snow, I left my Sirfetchd in my PC!"
+    "hiker": "I could use some help clearing the snow, I left my Sirfetchd in my PC!",
+    "clan_member": "Clan Member Information - Straymons",
 }
 
 
@@ -408,6 +410,22 @@ class MessageCreateListener(commands.Cog):
                             await handle_cb_checklist_message(
                                 bot=self.bot, message=message
                             )
+                # 💜────────────────────────────────────────────
+                #          👥 Clan Members Command Listener
+                # 💜────────────────────────────────────────────
+                if first_embed:
+                    if (
+                        first_embed_description
+                        and triggers["clan_member"] in first_embed_description
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Clan Member Information embed, processing clan members command...",
+                        )
+                        await clan_members_command_listener(
+                            self.bot,
+                            message,
+                        )
                 # 💜────────────────────────────────────────────
                 #          ⛄️ Seasonal Listeners
                 # 💜────────────────────────────────────────────

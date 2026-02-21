@@ -3,7 +3,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import discord
-
+from config.current_setup import STRAYMONS_GUILD_ID, REQUIRED_PROBATION_CATCHES
 from config.aesthetic import *
 from config.current_setup import MINCCINO_COLOR, STRAYMONS_GUILD_ID
 from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
@@ -88,7 +88,7 @@ async def weekly_goal_checker(
             return  # They have passed probation
 
         elif status == "pending":
-            if total_caught >= 300:
+            if total_caught >= REQUIRED_PROBATION_CATCHES:
                 # Update status to Passed
                 await update_probation_member_status(bot, member.id, "Passed")
                 pretty_log(

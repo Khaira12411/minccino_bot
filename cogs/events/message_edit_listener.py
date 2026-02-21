@@ -18,6 +18,7 @@ from config.current_setup import (
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.listener_func.battle_won_listener import battle_won_listener
 from utils.listener_func.boosted_channel_listener import handle_boosted_channel_on_edit
+from utils.listener_func.clan_members_listener import clan_members_command_listener
 from utils.listener_func.explore_caught_listener import explore_caught_listener
 from utils.listener_func.faction_ball_alert import faction_ball_alert
 from utils.listener_func.fish_reco_ping import recommend_fishing_ball
@@ -35,6 +36,11 @@ FISHING_COLOR = 0x87CEFA
 
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 explore_trigger = ":stopwatch: Your explore session has ended!"
+
+triggers = {
+    "hiker": "I could use some help clearing the snow, I left my Sirfetchd in my PC!",
+    "clan_member": "Clan Member Information - Straymons",
+}
 
 
 class MessageEditListener(commands.Cog):
@@ -85,6 +91,23 @@ class MessageEditListener(commands.Cog):
             ):
                 embed = after.embeds[0] if after.embeds else None
                 embed_description = embed.description if embed else ""
+
+                first_embed = after.embeds[0] if after.embeds else None
+                first_embed_author = (
+                    first_embed.author.name
+                    if first_embed and first_embed.author
+                    else ""
+                )
+                first_embed_description = (
+                    first_embed.description
+                    if first_embed and first_embed.description
+                    else ""
+                )
+                first_embed_footer = (
+                    first_embed.footer.text
+                    if first_embed and first_embed.footer
+                    else ""
+                )
 
                 # 🔹 Fishing reco ball
                 if embed_description and "fished a wild" in embed_description:
@@ -167,6 +190,22 @@ class MessageEditListener(commands.Cog):
                     await halloween_contest_score_listener(
                         bot=self.bot, before_message=before, message=after
                     )"""
+                # 💜────────────────────────────────────────────
+                #          👥 Clan Members Command Listener
+                # 💜────────────────────────────────────────────
+                if first_embed:
+                    if (
+                        first_embed_description
+                        and triggers["clan_member"] in first_embed_description
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Clan Member Information embed, processing clan members command...",
+                        )
+                        await clan_members_command_listener(
+                            self.bot,
+                            after,
+                        )
         except Exception as e:
             pretty_log(
                 tag="critical",
