@@ -18,8 +18,8 @@ from utils.essentials.loader.pretty_defer import *
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.timer_settings_func")
-enable_debug(f"{__name__}.TimerSettingsView")
+"""enable_debug(f"{__name__}.timer_settings_func")
+enable_debug(f"{__name__}.TimerSettingsView")"""
 
 
 # 💗────────────────────────────────────────────

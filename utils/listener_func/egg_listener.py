@@ -12,8 +12,8 @@ from utils.essentials.pokemeow_helpers import (
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.egg_ready_to_hatch_listener")
-enable_debug(f"{__name__}.egg_hatched_listener")
+"""enable_debug(f"{__name__}.egg_ready_to_hatch_listener")
+enable_debug(f"{__name__}.egg_hatched_listener")"""
 OWNER_IDS = [KHY_USER_ID, HANA_USER_ID]
 
 
