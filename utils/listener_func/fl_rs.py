@@ -9,7 +9,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.essentials.webhook import send_webhook
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-
+processing_fl_rs_msg_id = set()
 # enable_debug(f"{__name__}.fl_rs_checker")
 rarity_meta = {
     "common": {"color": 810198, "emoji": STRAYMONS__EMOJIS.common},
@@ -185,6 +185,10 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
                         label="🍀 FL RS CHECKER",
                         bot=bot,
                     )
+    if message.id in processing_fl_rs_msg_id:
+        debug_log("Message ID already being processed. Exiting FL RS Checker.")
+        return
+    processing_fl_rs_msg_id.add(message.id)
 
     image_url = embed.image.url if embed.image else None
 
@@ -223,3 +227,4 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
         label="🍀 FL RS CHECKER",
         bot=bot,
     )
+    processing_fl_rs_msg_id.discard(message.id)
