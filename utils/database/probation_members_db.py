@@ -113,7 +113,10 @@ async def update_probation_member_status(
         f"Updated status to '{new_status}' for probation member with user_id {user_id}",
     )
     # Update in cache as well
-    from utils.cache.probation_members_cache import update_probation_member_status_in_cache
+    from utils.cache.probation_members_cache import (
+        update_probation_member_status_in_cache,
+    )
+
     update_probation_member_status_in_cache(
         user_id,
         new_status,

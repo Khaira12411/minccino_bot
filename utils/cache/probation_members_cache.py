@@ -12,9 +12,9 @@ async def load_probation_members_cache(bot: discord.Client):
     """
     Loads all probation members from the database into the in-memory cache.
     """
-    global probation_members_cache
-    members = await fetch_all_probation_members(bot)
     probation_members_cache.clear()
+    members = await fetch_all_probation_members(bot)
+
     for member in members:
         probation_members_cache[member["user_id"]] = {
             "user_name": member["user_name"],

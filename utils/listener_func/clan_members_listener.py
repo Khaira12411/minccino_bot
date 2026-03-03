@@ -14,9 +14,10 @@ from utils.database.probation_members_db import (
     update_probation_member_status,
     upsert_probation_member,
 )
+from utils.cache.cache_list import probation_members_cache
 from utils.essentials.webhook import send_webhook
 
-# enable_debug(f"{__name__}.fl_rs_checker")
+#enable_debug(f"{__name__}.clan_members_command_listener")
 
 
 def extract_page_numbers(text):
@@ -99,7 +100,7 @@ async def clan_members_command_listener(
 
     # Process each user line and contribution line together
     for user_line, contrib_line in zip(user_lines, contribution_line):
-        debug_log(f"Processing user_line: {user_line}, contrib_line: {contrib_line}")
+        #debug_log(f"Processing user_line: {user_line}, contrib_line: {contrib_line}")
         user_name = user_line.split(" ", 1)[-1].replace("**", "").strip()
         member, user_id = get_member_from_line(straymon_guild, user_line)
 
@@ -112,6 +113,32 @@ async def clan_members_command_listener(
         if probation_role not in member.roles:
             debug_log(f"Member {member} does not have probation role, skipping.")
             continue
+        # Check their current probation status
+        status = probation_members_cache.get(user_id, {}).get("status")
+        if not status:
+            debug_log(
+                f"Probation status for {member.name} ({user_id}) not found in cache. Fetching from DB.",
+
+            )
+            status = await get_probation_member_status(bot, user_id)
+            if status is None:
+                # Upsert in DB and cache
+                await upsert_probation_member(bot, user_id, member.name, "Pending")
+                status = "Pending"
+                debug_log(
+                    f"Upserted {member.name} ({user_id}) as 'Pending' in DB and cache.",
+                )
+        else:
+            debug_log(
+                f"Found probation status for {member.name} ({user_id}) in cache: {status}",
+            )
+
+        if status.lower().strip() == "passed":
+            debug_log(
+                f"{member.name} ({user_id}) has already passed probation, skipping.",
+            )
+            return  # They have passed probation, no need to check contributions
+
         # Extract contribution number from contrib_line
         contrib_match = re.search(r"> ?\*?\*?([\d,]+)", contrib_line)
         catches = (

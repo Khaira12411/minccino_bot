@@ -69,10 +69,10 @@ async def weekly_goal_checker(
     # Early exit for those with probation role
     probation_role = guild.get_role(STRAYMONS__ROLES.probation)
     if probation_role and probation_role in member.roles:
+        pretty_log("info", f"{probation_members_cache}")
         # Check their status
         probation_data = probation_members_cache.get(member.id)
         if not probation_data:
-            # Not in cache, fetch from DB
             status = await get_probation_member_status(bot, member.id)
             if status is None:
                 # Upsert in DB and cache
@@ -88,6 +88,12 @@ async def weekly_goal_checker(
             return  # They have passed probation
 
         elif status == "pending":
+            pretty_log(
+                "info",
+                f"{member.name} ({member.id}) is currently on probation. Checking if they have caught {REQUIRED_PROBATION_CATCHES} Pokémon to pass probation.",
+                label="💠 PROBATION DEBUG",
+                bot=bot,
+            )
             if total_caught >= REQUIRED_PROBATION_CATCHES:
                 # Update status to Passed
                 await update_probation_member_status(bot, member.id, "Passed")
@@ -110,6 +116,12 @@ async def weekly_goal_checker(
                     name=member.display_name, icon_url=member.display_avatar.url
                 )
                 report_channel = guild.get_channel(STRAYMONS__TEXT_CHANNELS.reports)
+                pretty_log(
+                    "info",
+                    f"{member.name} ({member.id}) has passed probation by catching {total_caught} Pokémon. Sending report.",
+                    label="💠 PROBATION DEBUG",
+                    bot=bot,
+                )
                 await send_webhook(bot, report_channel, embed=embed)
 
         return  # Exit early if on probation
