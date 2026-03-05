@@ -26,6 +26,7 @@ from utils.listener_func.boosted_channel_listener import (
 )
 from utils.listener_func.captcha_alert_listener import captcha_alert_handler
 from utils.listener_func.catchbot_listener import *
+from utils.listener_func.clan_members_listener import clan_members_command_listener
 from utils.listener_func.egg_listener import (
     egg_hatched_listener,
     egg_ready_to_hatch_listener,
@@ -55,10 +56,12 @@ from utils.listener_func.special_battle_npc_listener import (
     special_battle_npc_timer_listener,
 )
 from utils.listener_func.waterstate_listener import on_waterstate_message
-from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
+from utils.listener_func.wb_reg_listener import (
+    handle_wb_register_command,
+    register_wb_battle_reminder,
+)
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
-from utils.listener_func.clan_members_listener import clan_members_command_listener
 
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
@@ -297,6 +300,19 @@ class MessageCreateListener(commands.Cog):
                             f"Matched World Boss Battle Reminder Registration | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await register_wb_battle_reminder(bot=self.bot, message=message)
+                if first_embed:
+                    if (
+                        first_embed_description
+                        and "<:checkedbox:752302633141665812> Successfully registered your"
+                        in first_embed_description
+                        and "**A World Boss has spawned! Register now!**"
+                        in first_embed_description
+                    ):
+                        pretty_log(
+                            "info",
+                            f"Matched World Boss Battle Reminder Registration Confirmation | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
+                        await handle_wb_register_command(bot=self.bot, message=message)
                 # 💜────────────────────────────────────────────
                 # Egg Hatching Listeners
                 # 💜────────────────────────────────────────────

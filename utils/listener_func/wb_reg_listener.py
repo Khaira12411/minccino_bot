@@ -171,7 +171,7 @@ async def start_world_boss_task(
             f"start_world_boss_task: Failed to create world boss waiter task for boss {wb_name} and user {user.name}: {e}"
         )
 
-
+#  WB COMMAND EMBED
 async def register_wb_battle_reminder(
     bot: discord.Client,
     message: discord.Message,
@@ -264,12 +264,46 @@ async def register_wb_battle_reminder(
         pretty_log("info", "No boss name found in the embed description.")
         return
 
+
+
+    try:
+        await centralize_wb_register_handler(
+            bot=bot,
+            unix_seconds=unix_seconds,
+            boss_name=boss_name,
+            user=member,
+            channel=notify_channel,
+            message=message,
+        )
+        debug_log(
+            f"World boss reminder registered for member {member.name} in channel {notify_channel.name} for boss {boss_name} at unix {unix_seconds}"
+        )
+    except Exception as e:
+        debug_log(
+            f"register_wb_battle_reminder: Failed to register world boss reminder for member {member.name}: {e}"
+        )
+        pretty_log("error", f"Failed to register world boss reminder: {e}")
+
+
+async def centralize_wb_register_handler(
+    bot: discord.Client,
+    unix_seconds: int,
+    boss_name: str,
+    user: discord.User,
+    channel: discord.TextChannel,
+    message: discord.Message,
+):
+
+    """
+    Centralized handler for registering world boss battle reminders.
+    This function can be called from different command handlers or listeners to ensure consistent behavior.
+    """
     now = int(time.time())
     seconds_until_fight = unix_seconds - now
 
     if seconds_until_fight <= 0:
         debug_log(
-            f"register_wb_battle_reminder: World boss fight for {boss_name} is already available or in the past (unix_seconds={unix_seconds}, now={now}). No reminder scheduled."
+            f"centralize_wb_register_handler: World boss fight for {boss_name} is already available or in the past (unix_seconds={unix_seconds}, now={now}). No reminder scheduled."
         )
         pretty_log(
             "info",
@@ -281,16 +315,145 @@ async def register_wb_battle_reminder(
         await start_world_boss_task(
             bot=bot,
             unix_seconds=unix_seconds,
-            channel=notify_channel,
-            user=member,
+            channel=channel,
+            user=user,
             wb_name=boss_name,
             message=message,
         )
         debug_log(
-            f"World boss reminder registered for user {member.name} in channel {notify_channel.id} for boss {boss_name} at unix {unix_seconds}"
+            f"centralize_wb_register_handler: World boss reminder registered for user {user.name} in channel {channel.id} for boss {boss_name} at unix {unix_seconds}"
         )
     except Exception as e:
         debug_log(
-            f"register_wb_battle_reminder: Failed to start world boss task or add reaction for user {member.name}: {e}"
+            f"centralize_wb_register_handler: Failed to start world boss task or add reaction for user {user.name}: {e}"
         )
         pretty_log("error", f"Failed to start world boss task or add reaction: {e}")
+
+
+def extract_boss_and_timestamp(embed_description: str) -> tuple[str | None, int | None]:
+    """
+    Extracts the boss name and unix timestamp from a World Boss embed description.
+    Args:
+        embed_description (str): The embed description text.
+    Returns:
+        tuple[str | None, int | None]: (boss_name, unix_timestamp) or (None, None) if not found.
+    """
+    # Boss name: after 'World Boss challenge:' and before newline or emoji
+    boss_match = re.search(r"World Boss challenge:[^:]*:([^\\n]+)", embed_description)
+    boss_name = boss_match.group(1).strip() if boss_match else None
+
+    # Timestamp: look for <t:digits(:R)?> in description
+    timestamp_match = re.search(r"<t:(\\d+)(?::[A-Za-z])?>", embed_description)
+    unix_timestamp = int(timestamp_match.group(1)) if timestamp_match else None
+
+    return boss_name, unix_timestamp
+
+
+# WB REGISTER COMMAND EMBED
+async def handle_wb_register_command(
+    bot: discord.Client,
+    message: discord.Message,
+):
+    """
+    Handle the ;wb register command which allows users to register for world boss battle reminders.
+    The command should be used in reply to the world boss announcement embed.
+    """
+
+    embed = message.embeds[0] if message.embeds else None
+    if not embed:
+        debug_log(
+            "register_wb_battle_reminder: No embed found in the message. Cannot register world boss reminder."
+        )
+        pretty_log("info", "No embed found in the message.")
+        return
+    if not embed.description:
+        debug_log(
+            "register_wb_battle_reminder: Embed found but no description present. Cannot extract boss info."
+        )
+        pretty_log("info", "No embed description found in the message.")
+        return
+    embed_description = embed.description
+    member = await get_pokemeow_reply_member(message)
+    if not member:
+        debug_log(
+            "register_wb_battle_reminder: No replied member found for the message. Cannot determine user to notify."
+        )
+        pretty_log("info", "No replied member found for the message.")
+        return
+
+    # Check if member has their notify settings on
+    from utils.cache.wb_battle_alert_cache import wb_battle_alert_cache
+
+    alert_settings = wb_battle_alert_cache.get(member.id)
+    if not alert_settings:
+        debug_log(
+            f"register_wb_battle_reminder: Member {member.name} has no alert settings in cache. Skipping notification."
+        )
+        pretty_log(
+            "info",
+            f"Member {member.name} has no notify settings or it's turned off.",
+        )
+        return
+    if alert_settings.get("notify") == "off":
+        debug_log(
+            f"register_wb_battle_reminder: Member {member.name} has notify setting OFF. Skipping notification."
+        )
+        pretty_log(
+            "info",
+            f"Member {member.name} has no notify settings or it's turned off.",
+        )
+        return
+    channel_id = await get_registered_personal_channel(bot, member.id)
+    if not channel_id:
+        debug_log(
+            f"register_wb_battle_reminder: Member {member.name} has no registered personal channel. Falling back to default channel {STRAYMONS__TEXT_CHANNELS.kanto_park}."
+        )
+        # Fall back to one of the play channels
+        channel_id = STRAYMONS__TEXT_CHANNELS.kanto_park
+        pretty_log(
+            "info",
+            f"Member {member.name} has no registered personal channel. Using fallback channel {channel_id}.",
+        )
+    notify_channel = bot.get_channel(channel_id)
+    if not notify_channel:
+        debug_log(
+            f"register_wb_battle_reminder: Notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
+        )
+        pretty_log(
+            "info",
+            f"Notify channel ID {channel_id} not found for member {member.name}.",
+        )
+        return
+
+    boss_name, unix_seconds = extract_boss_and_timestamp(embed_description)
+    if not boss_name and not unix_seconds:
+        debug_log(
+            f"Failed to extract both boss name and unix seconds from embed description. Description: {embed_description}"
+        )
+        pretty_log(
+            "info",
+            "Failed to extract both boss name and unix seconds from embed description. Cannot register reminder.",
+        )
+        return
+
+    try:
+        await centralize_wb_register_handler(
+            bot=bot,
+            unix_seconds=unix_seconds,
+            boss_name=boss_name,
+            user=member,
+            channel=notify_channel,
+            message=message,
+        )
+        debug_log(
+            f"World boss reminder registered for member {member.name} in channel {notify_channel.name} for boss {boss_name} at unix {unix_seconds}"
+        )
+        pretty_log(
+            "info",
+            f"World boss reminder registered for {member.name} for boss {boss_name} at {unix_seconds}.",
+        )
+    except Exception as e:
+        debug_log(
+            f"handle_wb_register_command: Failed to register world boss reminder for member {member.name}: {e}"
+        )
+        pretty_log("error", f"Failed to register world boss reminder: {e}")
