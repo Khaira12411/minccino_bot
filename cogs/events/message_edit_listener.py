@@ -29,9 +29,10 @@ from utils.listener_func.halloween_contest_listener import (
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.pokemon_caught import pokemon_caught_listener
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
+from utils.listener_func.wb_reg_listener import handle_wb_register_command
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
-from utils.listener_func.wb_reg_listener import handle_wb_register_command
+
 FISHING_COLOR = 0x87CEFA
 
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
@@ -214,14 +215,17 @@ class MessageEditListener(commands.Cog):
                         first_embed_description
                         and "<:checkedbox:752302633141665812> Successfully registered your"
                         in first_embed_description
+                        and first_embed.title
                         and "**A World Boss has spawned! Register now!**"
-                        in first_embed_description
+                        in first_embed.title
                     ):
                         pretty_log(
                             "info",
                             f"Matched World Boss Battle Reminder Registration Confirmation | Message ID: {after.id} | Channel: {after.channel.name}",
                         )
-                        await handle_wb_register_command(bot=self.bot, before_message=before, message=after)
+                        await handle_wb_register_command(
+                            bot=self.bot, before_message=before, message=after
+                        )
         except Exception as e:
             pretty_log(
                 tag="critical",

@@ -92,10 +92,10 @@ async def detect_pokemeow_reply(message: discord.Message):
                     f"notify_ready: woke up, preparing to notify (setting: {setting})",
                     highlight=True,
                 )
-                pretty_log(
+                """pretty_log(
                     tag="info",
                     message=f"Sending Pokemon timer ready notification to {member} (setting: {setting})",
-                )
+                )"""
                 if setting == "on":
                     debug_log(f"Notifying with mention for {member}")
                     await message.channel.send(

@@ -38,12 +38,12 @@ class CentralLoop(commands.Cog):
         )
         while not self.bot.is_closed():
             try:
-                pretty_log(
+                """pretty_log(
                     "",
                     "🔂 Running background checks...",
                     label="🧭 CENTRAL LOOP",
                     bot=self.bot,
-                )
+                )"""
                 # 💠 Flush any dirty weekly goal stats to DB
                 await flush_weekly_goal_cache(self.bot)
 
