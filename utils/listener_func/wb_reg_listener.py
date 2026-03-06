@@ -18,7 +18,7 @@ from utils.database.wb_fight_db import (
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-
+enable_debug(f"{__name__}.handle_wb_register_command")
 """enable_debug(f"{__name__}.register_wb_battle_reminder")
 enable_debug(f"{__name__}.world_boss_waiter")
 enable_debug(f"{__name__}.start_world_boss_task")"""
@@ -185,13 +185,13 @@ async def register_wb_battle_reminder(
     embed = message.embeds[0] if message.embeds else None
     if not embed:
         debug_log(
-            "register_wb_battle_reminder: No embed found in the message. Cannot register world boss reminder."
+            "No embed found in the message. Cannot register world boss reminder."
         )
         pretty_log("info", "No embed found in the message.")
         return
     if not embed.description:
         debug_log(
-            "register_wb_battle_reminder: Embed found but no description present. Cannot extract boss info."
+            "Embed found but no description present. Cannot extract boss info."
         )
         pretty_log("info", "No embed description found in the message.")
         return
@@ -199,7 +199,7 @@ async def register_wb_battle_reminder(
     member = await get_pokemeow_reply_member(message)
     if not member:
         debug_log(
-            "register_wb_battle_reminder: No replied member found for the message. Cannot determine user to notify."
+            "No replied member found for the message. Cannot determine user to notify."
         )
         pretty_log("info", "No replied member found for the message.")
         return
@@ -210,7 +210,7 @@ async def register_wb_battle_reminder(
     alert_settings = wb_battle_alert_cache.get(member.id)
     if not alert_settings:
         debug_log(
-            f"register_wb_battle_reminder: Member {member.name} has no alert settings in cache. Skipping notification."
+            f"Member {member.name} has no alert settings in cache. Skipping notification."
         )
         pretty_log(
             "info",
@@ -219,7 +219,7 @@ async def register_wb_battle_reminder(
         return
     if alert_settings.get("notify") == "off":
         debug_log(
-            f"register_wb_battle_reminder: Member {member.name} has notify setting OFF. Skipping notification."
+            f"Member {member.name} has notify setting OFF. Skipping notification."
         )
         pretty_log(
             "info",
@@ -229,7 +229,7 @@ async def register_wb_battle_reminder(
     channel_id = await get_registered_personal_channel(bot, member.id)
     if not channel_id:
         debug_log(
-            f"register_wb_battle_reminder: Member {member.name} has no registered personal channel. Falling back to default channel {STRAYMONS__TEXT_CHANNELS.kanto_park}."
+            f"Member {member.name} has no registered personal channel. Falling back to default channel {STRAYMONS__TEXT_CHANNELS.kanto_park}."
         )
         # Fall back to one of the play channels
         channel_id = STRAYMONS__TEXT_CHANNELS.kanto_park
@@ -240,7 +240,7 @@ async def register_wb_battle_reminder(
     notify_channel = bot.get_channel(channel_id)
     if not notify_channel:
         debug_log(
-            f"register_wb_battle_reminder: Notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
+            f"Notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
         )
         pretty_log(
             "info",
@@ -251,7 +251,7 @@ async def register_wb_battle_reminder(
     unix_seconds = extract_wb_unix_seconds(embed.description)
     if not unix_seconds:
         debug_log(
-            f"register_wb_battle_reminder: No unix seconds found in embed description: {embed.description}"
+            f"No unix seconds found in embed description: {embed.description}"
         )
         pretty_log("info", "No unix seconds found in the embed description.")
         return
@@ -259,7 +259,7 @@ async def register_wb_battle_reminder(
     boss_name = extract_wb_boss_name(embed.description)
     if not boss_name:
         debug_log(
-            f"register_wb_battle_reminder: No boss name could be extracted from embed description: {embed.description}"
+            f"No boss name could be extracted from embed description: {embed.description}"
         )
         pretty_log("info", "No boss name found in the embed description.")
         return
@@ -280,7 +280,7 @@ async def register_wb_battle_reminder(
         )
     except Exception as e:
         debug_log(
-            f"register_wb_battle_reminder: Failed to register world boss reminder for member {member.name}: {e}"
+            f"Failed to register world boss reminder for member {member.name}: {e}"
         )
         pretty_log("error", f"Failed to register world boss reminder: {e}")
 
@@ -363,13 +363,13 @@ async def handle_wb_register_command(
     embed = message.embeds[0] if message.embeds else None
     if not embed:
         debug_log(
-            "register_wb_battle_reminder: No embed found in the message. Cannot register world boss reminder."
+            "No embed found in the message. Cannot register world boss reminder."
         )
         pretty_log("info", "No embed found in the message.")
         return
     if not embed.description:
         debug_log(
-            "register_wb_battle_reminder: Embed found but no description present. Cannot extract boss info."
+            "Embed found but no description present. Cannot extract boss info."
         )
         pretty_log("info", "No embed description found in the message.")
         return
@@ -377,7 +377,7 @@ async def handle_wb_register_command(
     member = await get_pokemeow_reply_member(before_message)
     if not member:
         debug_log(
-            "register_wb_battle_reminder: No replied member found for the message. Cannot determine user to notify."
+            "No replied member found for the message. Cannot determine user to notify."
         )
         pretty_log("info", "No replied member found for the message.")
         return
@@ -388,7 +388,7 @@ async def handle_wb_register_command(
     alert_settings = wb_battle_alert_cache.get(member.id)
     if not alert_settings:
         debug_log(
-            f"register_wb_battle_reminder: Member {member.name} has no alert settings in cache. Skipping notification."
+            f"Member {member.name} has no alert settings in cache. Skipping notification."
         )
         pretty_log(
             "info",
@@ -397,7 +397,7 @@ async def handle_wb_register_command(
         return
     if alert_settings.get("notify") == "off":
         debug_log(
-            f"register_wb_battle_reminder: Member {member.name} has notify setting OFF. Skipping notification."
+            f"Member {member.name} has notify setting OFF. Skipping notification."
         )
         pretty_log(
             "info",
@@ -407,7 +407,7 @@ async def handle_wb_register_command(
     channel_id = await get_registered_personal_channel(bot, member.id)
     if not channel_id:
         debug_log(
-            f"register_wb_battle_reminder: Member {member.name} has no registered personal channel. Falling back to default channel {STRAYMONS__TEXT_CHANNELS.kanto_park}."
+            f"Member {member.name} has no registered personal channel. Falling back to default channel {STRAYMONS__TEXT_CHANNELS.kanto_park}."
         )
         # Fall back to one of the play channels
         channel_id = STRAYMONS__TEXT_CHANNELS.kanto_park
@@ -418,7 +418,7 @@ async def handle_wb_register_command(
     notify_channel = bot.get_channel(channel_id)
     if not notify_channel:
         debug_log(
-            f"register_wb_battle_reminder: Notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
+            f"Notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
         )
         pretty_log(
             "info",
