@@ -323,6 +323,9 @@ async def centralize_wb_register_handler(
         pretty_log("error", f"Failed to start world boss task or add reaction: {e}")
 
 
+import re
+
+
 def extract_boss_and_timestamp(embed_description: str) -> tuple[str | None, int | None]:
     """
     Extracts the boss name and unix timestamp from a World Boss embed description.
@@ -331,12 +334,12 @@ def extract_boss_and_timestamp(embed_description: str) -> tuple[str | None, int 
     Returns:
         tuple[str | None, int | None]: (boss_name, unix_timestamp) or (None, None) if not found.
     """
-    # Boss name: after 'World Boss challenge:' and before newline or emoji
+    # Boss name: after 'World Boss challenge:' and before newline
     boss_match = re.search(r"World Boss challenge:[^:]*:([^\n]+)", embed_description)
     boss_name = boss_match.group(1).strip() if boss_match else None
 
-    # Timestamp: look for <t:digits(:R)?> in description
-    timestamp_match = re.search(r"<t:(\d+)(?::[A-Za-z])?>", embed_description)
+    # Timestamp: look for <t:digits(:letters)?>
+    timestamp_match = re.search(r"<t:(\d+)(?::[A-Za-z]+)?>", embed_description)
     unix_timestamp = int(timestamp_match.group(1)) if timestamp_match else None
 
     return boss_name, unix_timestamp
