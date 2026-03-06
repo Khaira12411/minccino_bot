@@ -335,7 +335,7 @@ def extract_boss_and_timestamp(embed_description: str) -> tuple[str | None, int 
         tuple[str | None, int | None]: (boss_name, unix_timestamp) or (None, None) if not found.
     """
     # Boss name: after 'World Boss challenge:' and before newline
-    boss_match = re.search(r"World Boss challenge:[^:]*:([^\n]+)", embed_description)
+    boss_match = re.search(r"World Boss challenge:\s*(?:<[^>]+>\s*)?([A-Za-z0-9\s\-]+)", embed_description)
     boss_name = boss_match.group(1).strip() if boss_match else None
 
     # Timestamp: look for <t:digits(:letters)?>
