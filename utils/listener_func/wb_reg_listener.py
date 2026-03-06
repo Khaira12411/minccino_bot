@@ -18,6 +18,7 @@ from utils.database.wb_fight_db import (
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
+
 enable_debug(f"{__name__}.handle_wb_register_command")
 """enable_debug(f"{__name__}.register_wb_battle_reminder")
 enable_debug(f"{__name__}.world_boss_waiter")
@@ -171,6 +172,7 @@ async def start_world_boss_task(
             f"start_world_boss_task: Failed to create world boss waiter task for boss {wb_name} and user {user.name}: {e}"
         )
 
+
 #  WB COMMAND EMBED
 async def register_wb_battle_reminder(
     bot: discord.Client,
@@ -184,15 +186,11 @@ async def register_wb_battle_reminder(
 
     embed = message.embeds[0] if message.embeds else None
     if not embed:
-        debug_log(
-            "No embed found in the message. Cannot register world boss reminder."
-        )
+        debug_log("No embed found in the message. Cannot register world boss reminder.")
         pretty_log("info", "No embed found in the message.")
         return
     if not embed.description:
-        debug_log(
-            "Embed found but no description present. Cannot extract boss info."
-        )
+        debug_log("Embed found but no description present. Cannot extract boss info.")
         pretty_log("info", "No embed description found in the message.")
         return
 
@@ -250,9 +248,7 @@ async def register_wb_battle_reminder(
 
     unix_seconds = extract_wb_unix_seconds(embed.description)
     if not unix_seconds:
-        debug_log(
-            f"No unix seconds found in embed description: {embed.description}"
-        )
+        debug_log(f"No unix seconds found in embed description: {embed.description}")
         pretty_log("info", "No unix seconds found in the embed description.")
         return
 
@@ -263,8 +259,6 @@ async def register_wb_battle_reminder(
         )
         pretty_log("info", "No boss name found in the embed description.")
         return
-
-
 
     try:
         await centralize_wb_register_handler(
@@ -293,7 +287,6 @@ async def centralize_wb_register_handler(
     channel: discord.TextChannel,
     message: discord.Message,
 ):
-
     """
     Centralized handler for registering world boss battle reminders.
     This function can be called from different command handlers or listeners to ensure consistent behavior.
@@ -339,11 +332,11 @@ def extract_boss_and_timestamp(embed_description: str) -> tuple[str | None, int 
         tuple[str | None, int | None]: (boss_name, unix_timestamp) or (None, None) if not found.
     """
     # Boss name: after 'World Boss challenge:' and before newline or emoji
-    boss_match = re.search(r"World Boss challenge:[^:]*:([^\\n]+)", embed_description)
+    boss_match = re.search(r"World Boss challenge:[^:]*:([^\n]+)", embed_description)
     boss_name = boss_match.group(1).strip() if boss_match else None
 
     # Timestamp: look for <t:digits(:R)?> in description
-    timestamp_match = re.search(r"<t:(\\d+)(?::[A-Za-z])?>", embed_description)
+    timestamp_match = re.search(r"<t:(\d+)(?::[A-Za-z])?>", embed_description)
     unix_timestamp = int(timestamp_match.group(1)) if timestamp_match else None
 
     return boss_name, unix_timestamp
@@ -362,15 +355,11 @@ async def handle_wb_register_command(
 
     embed = message.embeds[0] if message.embeds else None
     if not embed:
-        debug_log(
-            "No embed found in the message. Cannot register world boss reminder."
-        )
+        debug_log("No embed found in the message. Cannot register world boss reminder.")
         pretty_log("info", "No embed found in the message.")
         return
     if not embed.description:
-        debug_log(
-            "Embed found but no description present. Cannot extract boss info."
-        )
+        debug_log("Embed found but no description present. Cannot extract boss info.")
         pretty_log("info", "No embed description found in the message.")
         return
     embed_description = embed.description
