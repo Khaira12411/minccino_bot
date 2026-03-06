@@ -352,6 +352,7 @@ def extract_boss_and_timestamp(embed_description: str) -> tuple[str | None, int 
 # WB REGISTER COMMAND EMBED
 async def handle_wb_register_command(
     bot: discord.Client,
+    before_message: discord.Message,
     message: discord.Message,
 ):
     """
@@ -373,7 +374,7 @@ async def handle_wb_register_command(
         pretty_log("info", "No embed description found in the message.")
         return
     embed_description = embed.description
-    member = await get_pokemeow_reply_member(message)
+    member = await get_pokemeow_reply_member(before_message)
     if not member:
         debug_log(
             "register_wb_battle_reminder: No replied member found for the message. Cannot determine user to notify."
