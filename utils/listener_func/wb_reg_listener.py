@@ -38,6 +38,20 @@ def extract_wb_unix_seconds(description: str) -> int | None:
     return None
 
 
+def format_display_boss_name(boss_name: str) -> str:
+    """Formats the boss name for display by replacing certain keywords with emojis."""
+    if "Shiny Gigantamax" in boss_name:
+        boss_name = boss_name.replace("Shiny Gigantamax-", f"{Emojis.sgmax} ")
+    elif "Gigantamax" in boss_name:
+        boss_name = boss_name.replace("Gigantamax-", f"{Emojis.gmax} ")
+    elif "Shiny Eternamax" in boss_name:
+        boss_name = boss_name.replace("Shiny Eternamax-", f"{Emojis.sgmax} ")
+    elif "Eternamax" in boss_name:
+        boss_name = boss_name.replace("Eternamax-", f"{Emojis.gmax} ")
+
+        return boss_name.strip()
+
+
 def extract_wb_boss_name(description: str) -> str | None:
     """
     Extracts the boss name from the line:
@@ -47,17 +61,30 @@ def extract_wb_boss_name(description: str) -> str | None:
     if match:
 
         boss_name = match.group(1).strip()
-        if "Shiny Gigantamax" in boss_name:
-            boss_name = boss_name.replace("Shiny Gigantamax-", f"{Emojis.sgmax} ")
-        elif "Gigantamax" in boss_name:
-            boss_name = boss_name.replace("Gigantamax-", f"{Emojis.gmax} ")
-        elif "Shiny Eternamax" in boss_name:
-            boss_name = boss_name.replace("Shiny Eternamax-", f"{Emojis.sgmax} ")
-        elif "Eternamax" in boss_name:
-            boss_name = boss_name.replace("Eternamax-", f"{Emojis.gmax} ")
 
         return boss_name
     return None
+
+
+def extract_boss_and_timestamp(embed_description: str) -> tuple[str | None, int | None]:
+    """
+    Extracts the boss name and unix timestamp from a World Boss embed description.
+    Args:
+        embed_description (str): The embed description text.
+    Returns:
+        tuple[str | None, int | None]: (boss_name, unix_timestamp) or (None, None) if not found.
+    """
+    # Boss name: after 'World Boss challenge:' and before newline
+    boss_match = re.search(
+        r"World Boss challenge:\s*(?:<[^>]+>\s*)?([A-Za-z0-9\s\-]+)", embed_description
+    )
+    boss_name = boss_match.group(1).strip() if boss_match else None
+
+    # Timestamp: look for <t:digits(:letters)?>
+    timestamp_match = re.search(r"<t:(\d+)(?::[A-Za-z]+)?>", embed_description)
+    unix_timestamp = int(timestamp_match.group(1)) if timestamp_match else None
+
+    return boss_name, unix_timestamp
 
 
 async def world_boss_waiter(bot, unix_seconds, wb_name):
@@ -91,9 +118,9 @@ async def world_boss_waiter(bot, unix_seconds, wb_name):
                 f"world_boss_waiter: Channel or user not found for user_id {user_id} and boss {wb_name}"
             )
             continue
-        content = (
-            f"{user.mention}, You can now join the World Boss Battle for **{wb_name}**!"
-        )
+
+        display_wb_name = format_display_boss_name(wb_name)
+        content = f"{user.mention}, You can now join the World Boss Battle for **{display_wb_name}**!"
         embed = discord.Embed(description=";wb f", color=MINCCINO_COLOR)
         try:
             await channel.send(content=content, embed=embed)
@@ -321,28 +348,6 @@ async def centralize_wb_register_handler(
             f"centralize_wb_register_handler: Failed to start world boss task or add reaction for user {user.name}: {e}"
         )
         pretty_log("error", f"Failed to start world boss task or add reaction: {e}")
-
-
-import re
-
-
-def extract_boss_and_timestamp(embed_description: str) -> tuple[str | None, int | None]:
-    """
-    Extracts the boss name and unix timestamp from a World Boss embed description.
-    Args:
-        embed_description (str): The embed description text.
-    Returns:
-        tuple[str | None, int | None]: (boss_name, unix_timestamp) or (None, None) if not found.
-    """
-    # Boss name: after 'World Boss challenge:' and before newline
-    boss_match = re.search(r"World Boss challenge:\s*(?:<[^>]+>\s*)?([A-Za-z0-9\s\-]+)", embed_description)
-    boss_name = boss_match.group(1).strip() if boss_match else None
-
-    # Timestamp: look for <t:digits(:letters)?>
-    timestamp_match = re.search(r"<t:(\d+)(?::[A-Za-z]+)?>", embed_description)
-    unix_timestamp = int(timestamp_match.group(1)) if timestamp_match else None
-
-    return boss_name, unix_timestamp
 
 
 # WB REGISTER COMMAND EMBED
