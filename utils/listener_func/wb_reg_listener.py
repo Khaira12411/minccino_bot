@@ -49,7 +49,7 @@ def format_display_boss_name(boss_name: str) -> str:
     elif "Eternamax" in boss_name:
         boss_name = boss_name.replace("Eternamax-", f"{Emojis.gmax} ")
 
-        return boss_name.strip()
+    return boss_name.strip()
 
 
 def extract_wb_boss_name(description: str) -> str | None:
@@ -286,6 +286,7 @@ async def register_wb_battle_reminder(
         )
         pretty_log("info", "No boss name found in the embed description.")
         return
+
 
     try:
         await centralize_wb_register_handler(
