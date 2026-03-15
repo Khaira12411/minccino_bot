@@ -287,7 +287,7 @@ async def register_wb_battle_reminder(
         pretty_log("info", "No boss name found in the embed description.")
         return
 
-
+#
     try:
         await centralize_wb_register_handler(
             bot=bot,
