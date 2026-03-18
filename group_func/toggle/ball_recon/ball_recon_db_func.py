@@ -23,7 +23,7 @@ async def fetch_patreon_and_catch_rate_bonus(bot: discord.Client, user_id: int):
     try:
         async with bot.pg_pool.acquire() as conn:
             row = await conn.fetchrow(
-                f"SELECT is_patreon, catch_rate_bonus FROM {TABLE_NAME} WHERE user_id = $1",
+                f"SELECT is_patreon, catch_rate_bonus FROM straymons_members WHERE user_id = $1",
                 user_id,
             )
             if row:
