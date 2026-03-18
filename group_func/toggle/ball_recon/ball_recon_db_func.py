@@ -7,12 +7,37 @@ from typing import Optional
 from asyncpg import Connection
 
 from utils.loggers.pretty_logs import pretty_log
+import discord
 
 TABLE_NAME = "user_ball_recommendations"
 import json
 
 from utils.loggers.pretty_logs import pretty_log
 
+# Get is_patreon and catch_rate_bonus for a user id in straymons_members table
+async def fetch_patreon_and_catch_rate_bonus(bot: discord.Client, user_id: int):
+    """
+    Fetch is_patreon and catch_rate_bonus for a user id from user_ball_recommendations table.
+    Returns a dict with keys 'is_patreon' and 'catch_rate_bonus', or None if not found.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                f"SELECT is_patreon, catch_rate_bonus FROM {TABLE_NAME} WHERE user_id = $1",
+                user_id,
+            )
+            if row:
+                return {"is_patreon": row["is_patreon"], "catch_rate_bonus": row["catch_rate_bonus"]}
+            else:
+                return None
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to fetch Patreon and bonus for user {user_id}: {e}",
+            label="STRAYMONS",
+            bot=bot,
+        )
+        return None
 
 async def fetch_all_user_recs(bot) -> list[dict]:
     """

@@ -7,11 +7,13 @@ from discord.ext import commands
 
 from config.aesthetic import Emojis
 from group_func.toggle.ball_recon.ball_recon_db_func import (
+    fetch_patreon_and_catch_rate_bonus,
     fetch_user_rec,
     update_enabled,
     update_fishing,
     update_held_items,
     update_pokemon,
+    upsert_user_rec,
 )
 from utils.embeds.embed_settings_summary import build_summary_settings_embed
 from utils.essentials.loader.loader import pretty_defer
@@ -49,7 +51,6 @@ class RarityToggleButton(discord.ui.Button):
         if now - self.last_interaction < 1.0:
             return  # Silently ignore rapid clicks
         self.last_interaction = now
-
 
         if not self.enabled_state:
             await safe_respond(
@@ -300,6 +301,7 @@ class RaritySelectView(discord.ui.View):
             ephemeral=True,
             method="followup",
         )
+
     #
     async def save_selection(self, interaction: discord.Interaction):
         try:
@@ -332,7 +334,7 @@ class RaritySelectView(discord.ui.View):
 
             # Update rarities
             for r in self.rarities:
-                new_category_data[r] = (r in self.selection_changed)
+                new_category_data[r] = r in self.selection_changed
 
             # Preserve or update display_mode
             if "display_mode" not in new_category_data:
@@ -345,7 +347,7 @@ class RaritySelectView(discord.ui.View):
                 await self.update_db_func(
                     interaction.client,
                     self.user_id,
-                    new_category_data  # ✅ Pass complete object instead of just rarities
+                    new_category_data,  # ✅ Pass complete object instead of just rarities
                 )
 
             # Build changes dict for embed
@@ -394,6 +396,7 @@ class RaritySelectView(discord.ui.View):
 
             # Reload cache
             from utils.cache.ball_reco_cache import load_ball_reco_cache
+
             await load_ball_reco_cache(interaction.client)
 
         except Exception as e:
@@ -409,6 +412,7 @@ class RaritySelectView(discord.ui.View):
                 content="❌ Failed to save your settings. Please try again later.",
                 ephemeral=True,
             )
+
 
 # ─────────────────────────────
 # Dropdown to choose category
@@ -613,18 +617,34 @@ class RarityDropdownView(discord.ui.View):
 # Command
 # ─────────────────────────────
 
-
 async def toggle_ball_rec_func(bot: commands.Bot, interaction: discord.Interaction):
     try:
         row = await fetch_user_rec(bot=bot, user_id=interaction.user.id)
         if not row:
-            await safe_respond(
-                interaction,
-                content="Please set your catch rate first using the `;perks` command!",
-                ephemeral=True,
-                method="auto",
+
+            # Get patreon and bonus info for upsert if it exists
+            patreon_info = await fetch_patreon_and_catch_rate_bonus(
+                bot, interaction.user.id
             )
-            return
+            if patreon_info:
+                is_patreon = patreon_info.get("is_patreon", False)
+                catch_rate_bonus = patreon_info.get("catch_rate_bonus", 0)
+
+                await upsert_user_rec(
+                    bot=bot,
+                    user_id=interaction.user.id,
+                    user_name=interaction.user.name,
+                    is_patreon=is_patreon,
+                    catch_rate_bonus=catch_rate_bonus,
+                )
+            else:
+                await safe_respond(
+                    interaction,
+                    content="Please set your catch rate first using the `;perks` command!",
+                    ephemeral=True,
+                    method="auto",
+                )
+                return
 
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=True, thinking=False)
