@@ -160,6 +160,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
         )
         if not match:
             debug_log("Regex failed: no challenger/opponent match")
+            pretty_log("warning", "Could not parse battle challenge message for challenger/opponent names")
             return
 
         challenger_name = match.group(1).strip()
@@ -266,7 +267,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 elif 600 <= int(enemy_id) <= 743:
                     mc_npc_id = find_key_by_npc_id(int(enemy_id))
                     battle_embed.description = f";b npc {mc_npc_id}"
-                    
+
                 # If id is 15 or more than 15 digits, it's likely a user ID
                 elif enemy_id and (len(enemy_id) >= 15 or int(enemy_id) == 15):
                     battle_embed.description = f";b user {enemy_id}"
