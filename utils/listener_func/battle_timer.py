@@ -11,8 +11,9 @@ from utils.cache.cache_list import timer_cache
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-# enable_debug(f"{__name__}.detect_pokemeow_battle")
-# enable_debug(f"{__name__}.grab_enemy_id")
+enable_debug(f"{__name__}.detect_pokemeow_battle")
+enable_debug(f"{__name__}.grab_enemy_id")
+enable_debug(f"{__name__}.notify_battle_ready")
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 battle_ready_tasks = {}
 
@@ -136,14 +137,17 @@ def find_key_by_npc_id(npc_id: int):
 async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
     try:
         debug_log("Entered detect_pokemeow_battle()", disabled=True)
-
+        debug_log(f"Message author ID: {message.author.id}")
         # ✅ Only PokéMeow messages
         if message.author.id != POKEMEOW_APPLICATION_ID:
+            debug_log("Message is not from PokéMeow bot, exiting.")
             return
         if not message.embeds:
+            debug_log("Message has no embeds, exiting.")
             return
 
         embed = message.embeds[0]
+        debug_log(f"Embed author: {getattr(embed.author, 'name', None)}")
 
         # ✅ Step 1: detect "challenged ... to a battle!"
         if not (embed.author and "PokeMeow Battles" in embed.author.name):
@@ -160,17 +164,19 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
         )
         if not match:
             debug_log("Regex failed: no challenger/opponent match")
-            pretty_log("warning", "Could not parse battle challenge message for challenger/opponent names")
+            pretty_log(
+                "warning",
+                "Could not parse battle challenge message for challenger/opponent names",
+            )
             return
 
         challenger_name = match.group(1).strip()
         opponent_name = match.group(2).strip()
-        debug_log(
-            f"Challenger: {challenger_name}, Opponent: {opponent_name}", disabled=True
-        )
+        debug_log(f"Challenger: {challenger_name}, Opponent: {opponent_name}")
 
         # ✅ Match challenger in guild
         guild = message.guild
+        debug_log(f"Guild: {guild}, Members: {len(guild.members) if guild else 'N/A'}")
         challenger = discord.utils.find(
             lambda m: m.name.lower() == challenger_name.lower()
             or m.display_name.lower() == challenger_name.lower(),
@@ -185,10 +191,12 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
         user_settings = timer_cache.get(challenger.id)
         debug_log(f"User settings: {user_settings}")
         if not user_settings:
+            debug_log("No user settings found, exiting.")
             return
         setting = (user_settings.get("battle_setting") or "off").lower()
         debug_log(f"Battle setting: {setting}", disabled=True)
         if setting == "off":
+            debug_log("Battle setting is off, exiting.")
             return
 
         # ✅ Cancel existing task if user already has one
@@ -207,15 +215,21 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
             debug_log("Started grab_enemy_id() background task")
 
             def check(m: discord.Message):
+                debug_log(
+                    f"Checking message in grab_enemy_id: author={m.author.id}, embeds={bool(m.embeds)}"
+                )
                 if m.author.id != POKEMEOW_APPLICATION_ID:
                     return False
                 if not m.embeds:
                     return False
                 emb = m.embeds[0]
-                result = (
-                    emb.footer
-                    and "Enemy ID:" in (emb.footer.text or "")
-                    and opponent_name in (emb.description or "")
+                footer_text = emb.footer.text if emb.footer else ""
+                result = emb.footer and (
+                    (
+                        "Enemy ID:" in (emb.footer.text or "")
+                        and opponent_name in (emb.description or "")
+                    )
+                    or ("Round" in footer_text and "Moves taken" in footer_text)
                 )
                 debug_log(
                     f"Checking message for Enemy ID... "
@@ -226,8 +240,9 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 return result
 
             try:
+                debug_log("Waiting for follow-up message with Enemy ID...")
                 followup: discord.Message = await bot.wait_for(
-                    "message", timeout=10.0, check=check
+                    "message", timeout=10, check=check
                 )
                 debug_log("Follow-up embed received ✅")
 
@@ -244,10 +259,22 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                     )
                 else:
                     debug_log("Regex failed: Enemy ID not found in footer text ❌")
+                    if "Round" in footer_text and "Moves taken" in footer_text:
+                        debug_log("Detected battle frontier battle")
+
+                        enemy_id_holder["id"] = "bf"
+                    else:
+                        debug_log(
+                            "Follow-up embed does not appear to be a battle frontier battle"
+                        )
+                        return
 
             except asyncio.TimeoutError:
                 debug_log("Timeout: no follow-up embed with Enemy ID found ⏰")
+            except Exception as e:
+                debug_log(f"Exception in grab_enemy_id: {e}")
 
+        debug_log("Creating background task for grab_enemy_id")
         bot.loop.create_task(grab_enemy_id())
 
         # 💜 Step 4: schedule 60s notification immediately
@@ -256,27 +283,34 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 debug_log("Timer started (60s)")
                 await asyncio.sleep(60)
                 enemy_id = enemy_id_holder["id"]
-
                 debug_log(f"Timer finished. Enemy ID={enemy_id}")
-
                 battle_embed = discord.Embed(color=MINCCINO_COLOR)
+                if enemy_id == "bf":
+                    debug_log("Detected battle frontier enemy_id.")
+                    battle_embed.description = ";b npc bf"
+
                 # Battle Tower NPC
-                if enemy_id and int(enemy_id) in BATTLE_TOWER_NPC_IDS:
+                elif enemy_id and int(enemy_id) in BATTLE_TOWER_NPC_IDS:
+                    debug_log("Detected Battle Tower NPC.")
                     battle_embed.description = ";b npc bt"
                 # Mega Chamber NPC
-                elif 600 <= int(enemy_id) <= 743:
+                elif enemy_id and 600 <= int(enemy_id) <= 743:
                     mc_npc_id = find_key_by_npc_id(int(enemy_id))
+                    debug_log(f"Detected Mega Chamber NPC. mc_npc_id={mc_npc_id}")
                     battle_embed.description = f";b npc {mc_npc_id}"
 
                 # If id is 15 or more than 15 digits, it's likely a user ID
                 elif enemy_id and (len(enemy_id) >= 15 or int(enemy_id) == 15):
+                    debug_log("Detected user ID for battle.")
                     battle_embed.description = f";b user {enemy_id}"
 
                 # Regular NPC
                 elif enemy_id:
+                    debug_log("Detected regular NPC.")
                     battle_embed.description = f";b npc {enemy_id}"
 
                 else:
+                    debug_log("No enemy_id found, using default notification.")
                     battle_embed.description = (
                         "Your </battle:1015311084422434819> command is ready!"
                     )
@@ -302,8 +336,10 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
             except Exception as e:
                 debug_log(f"Timer task error: {e}")
 
+        debug_log("Creating background task for notify_battle_ready")
         battle_ready_tasks[challenger.id] = bot.loop.create_task(notify_battle_ready())
         debug_log("Scheduled notify_battle_ready() task", highlight=True)
 
     except Exception as e:
+        debug_log(f"Exception in detect_pokemeow_battle: {e}")
         pretty_log("critical", f"Unhandled exception in detect_pokemeow_battle: {e}")
