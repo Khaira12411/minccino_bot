@@ -293,12 +293,12 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 debug_log("Timeout: no follow-up embed with Enemy ID found ⏰")
             except Exception as e:
                 debug_log(f"Exception in grab_enemy_id: {e}")
-        if "Battle Pyramid" in (embed.footer.text if embed.footer else ""):
+        if not "Battle Pyramid" in (embed.footer.text if embed.footer else ""):
             debug_log("Exiting early: Battle Pyramid detected in initial message.")
-            return
-        
+            bot.loop.create_task(grab_enemy_id())
+
         debug_log("Creating background task for grab_enemy_id")
-        bot.loop.create_task(grab_enemy_id())
+
 
         # 💜 Step 4: schedule 60s notification immediately
         async def notify_battle_ready():
