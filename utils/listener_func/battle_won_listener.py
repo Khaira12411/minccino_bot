@@ -27,9 +27,9 @@ async def battle_won_listener(bot: discord.Client, message: discord.Message):
     )
     if not username_match:
         return
-
+    embed_footer = message.embeds[0].footer.text if message.embeds and message.embeds[0].footer else ""
     user_name = username_match.group(1)
-    if user_name in OWNER_USERNAME:
+    if user_name in OWNER_USERNAME and "Round" not in embed_footer:
         pokemon_message = f"{Emojis.pokespawn} **{user_name}**, your </pokemon:1015311085441654824> command is ready!"
         fish_message = f"{Emojis.fish_spawn} **{user_name}**, your </fish spawn:1015311084812501026> command is ready!"
         await message.channel.send(pokemon_message)
