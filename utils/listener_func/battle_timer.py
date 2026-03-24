@@ -237,7 +237,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                             "Enemy ID:" in (emb.footer.text or "")
                             and opponent_name in (emb.description or "")
                         )
-                        or ("Round" in footer_text and "Moves taken" in footer_text)
+                        or ("Battle Pike Round" in footer_text and "Moves taken" in footer_text)
                     )
                     and not "Battle Pyramid" in emb.footer.text
                 )
@@ -276,7 +276,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                     )
                 else:
                     debug_log("Regex failed: Enemy ID not found in footer text ❌")
-                    if "Round" in footer_text and "Moves taken" in footer_text:
+                    if "Battle Pike Round" in footer_text and "Moves taken" in footer_text:
                         debug_log("Detected battle frontier battle")
                         enemy_id_holder["id"] = "bf"
                     else:
