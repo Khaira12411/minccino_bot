@@ -176,7 +176,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
 
         embed_footer = embed.footer.text if embed.footer else ""
         if "Battle Pyramid Round" in embed_footer:
-            return # Exit early for Battle Pyramid
+            return  # Exit early for Battle Pyramid
 
         # ✅ Match challenger in guild
         guild = message.guild
@@ -228,13 +228,23 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                     return False
                 emb = m.embeds[0]
                 footer_text = emb.footer.text if emb.footer else ""
-                result = emb.footer and (
-                    (
-                        "Enemy ID:" in (emb.footer.text or "")
-                        and opponent_name in (emb.description or "")
+                # If Battle Pyramid is in the footer, exit early by returning False (will be handled after followup)
+                if "Battle Pyramid" in footer_text:
+                    debug_log(
+                        "Battle Pyramid detected in follow-up, will exit after followup."
                     )
-                    or ("Round" in footer_text and "Moves taken" in footer_text)
-                ) and not "Battle Pyramid" in emb.footer.text
+                    return True  # Accept this message so we can handle it after await
+                result = (
+                    emb.footer
+                    and (
+                        (
+                            "Enemy ID:" in (emb.footer.text or "")
+                            and opponent_name in (emb.description or "")
+                        )
+                        or ("Round" in footer_text and "Moves taken" in footer_text)
+                    )
+                    and not "Battle Pyramid" in emb.footer.text
+                )
                 debug_log(
                     f"Checking message for Enemy ID... "
                     f"footer={emb.footer.text if emb.footer else None}, "
@@ -254,6 +264,13 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 footer_text = emb.footer.text if emb.footer else ""
                 debug_log(f"Follow-up footer text: {footer_text}")
 
+                # Exit early if Battle Pyramid is detected in the follow-up message
+                if "Battle Pyramid" in footer_text:
+                    debug_log(
+                        "Exiting early: Battle Pyramid detected in follow-up message."
+                    )
+                    return
+
                 enemy_match = re.search(r"Enemy ID:\s*(\d+)", footer_text)
                 if enemy_match:
                     enemy_id_holder["id"] = enemy_match.group(1)
@@ -265,7 +282,6 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                     debug_log("Regex failed: Enemy ID not found in footer text ❌")
                     if "Round" in footer_text and "Moves taken" in footer_text:
                         debug_log("Detected battle frontier battle")
-
                         enemy_id_holder["id"] = "bf"
                     else:
                         debug_log(
