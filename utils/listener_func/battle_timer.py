@@ -174,6 +174,10 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
         opponent_name = match.group(2).strip()
         debug_log(f"Challenger: {challenger_name}, Opponent: {opponent_name}")
 
+        embed_footer = embed.footer.text if embed.footer else ""
+        if "Battle Pyramid Round" in embed_footer:
+            return # Exit early for Battle Pyramid
+
         # ✅ Match challenger in guild
         guild = message.guild
         debug_log(f"Guild: {guild}, Members: {len(guild.members) if guild else 'N/A'}")
@@ -230,7 +234,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                         and opponent_name in (emb.description or "")
                     )
                     or ("Round" in footer_text and "Moves taken" in footer_text)
-                )
+                ) and not "Battle Pyramid" in emb.footer.text
                 debug_log(
                     f"Checking message for Enemy ID... "
                     f"footer={emb.footer.text if emb.footer else None}, "
