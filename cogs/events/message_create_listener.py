@@ -63,6 +63,7 @@ from utils.listener_func.wb_reg_listener import (
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
 from utils.listener_func.berry_listener import berry_listener
+from utils.listener_func.berry_water_listener import handle_berry_water_message, handle_growth_mulch_message
 
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
@@ -448,6 +449,28 @@ class MessageCreateListener(commands.Cog):
                             before_message=message,
                             message=message,
                         )
+
+                # 💜────────────────────────────────────────────
+                #          🧑‍🌾 Berry Water Listener
+                # 💜────────────────────────────────────────────
+                if message.content:
+                    if "Watered Slot" in message.content and "Next stage" in message.content:
+                        pretty_log(
+                            "info",
+                            "Detected Berry Water message, processing berry water reminders...",
+                        )
+                        await handle_berry_water_message(bot=self.bot, message=message)
+                # 💜────────────────────────────────────────────
+                #          🧑‍🌾 Growth Mulch Listener
+                # 💜────────────────────────────────────────────
+                if message.content:
+                    if "Applied **Growth Mulch** to Slot" in message.content:
+                        pretty_log(
+                            "info",
+                            "Detected Growth Mulch message, processing growth mulch reminders...",
+                        )
+                        await handle_growth_mulch_message(bot=self.bot, message=message)
+                        
                 # 💜────────────────────────────────────────────
                 #          ⛄️ Seasonal Listeners
                 # 💜────────────────────────────────────────────

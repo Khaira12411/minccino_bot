@@ -11,9 +11,9 @@ from utils.cache.cache_list import timer_cache
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.detect_pokemeow_battle")
-enable_debug(f"{__name__}.grab_enemy_id")
-enable_debug(f"{__name__}.notify_battle_ready")
+#enable_debug(f"{__name__}.detect_pokemeow_battle")
+#enable_debug(f"{__name__}.grab_enemy_id")
+#enable_debug(f"{__name__}.notify_battle_ready")
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 battle_ready_tasks = {}
 

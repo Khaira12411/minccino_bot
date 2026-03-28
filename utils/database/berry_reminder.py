@@ -116,12 +116,13 @@ async def fetch_all_due_berry_reminders(bot: discord.Client):
         async with bot.pg_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT *
+                SELECT DISTINCT ON (user_id, slot_number) *
                 FROM berry_reminder
                 WHERE remind_on <= (EXTRACT(EPOCH FROM NOW())::BIGINT + 60)
-                ORDER BY remind_on ASC;
+                ORDER BY user_id, slot_number, remind_on ASC;
                 """
             )
+
             return [dict(row) for row in rows]
     except Exception as e:
         pretty_log("warn", f"Failed to fetch due berry reminders: {e}")
