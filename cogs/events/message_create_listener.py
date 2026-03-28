@@ -62,6 +62,7 @@ from utils.listener_func.wb_reg_listener import (
 )
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
+from utils.listener_func.berry_listener import berry_listener
 
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
@@ -429,6 +430,23 @@ class MessageCreateListener(commands.Cog):
                         await clan_members_command_listener(
                             self.bot,
                             message,
+                        )
+                # 💜────────────────────────────────────────────
+                #          🧑‍🌾 Berry Reminder Listener
+                # 💜────────────────────────────────────────────
+                if first_embed:
+                    if (
+                        first_embed_description
+                        and "garden overview" in first_embed_description.lower()
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Garden Overview embed, processing berry reminders...",
+                        )
+                        await berry_listener(
+                            bot=self.bot,
+                            before_message=message,
+                            message=message,
                         )
                 # 💜────────────────────────────────────────────
                 #          ⛄️ Seasonal Listeners

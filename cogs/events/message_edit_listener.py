@@ -32,6 +32,7 @@ from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.listener_func.wb_reg_listener import handle_wb_register_command
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
+from utils.listener_func.berry_listener import berry_listener
 
 FISHING_COLOR = 0x87CEFA
 
@@ -206,6 +207,23 @@ class MessageEditListener(commands.Cog):
                         await clan_members_command_listener(
                             self.bot,
                             after,
+                        )
+                # 💜────────────────────────────────────────────
+                #          🧑‍🌾 Berry Reminder Listener
+                # 💜────────────────────────────────────────────
+                if first_embed:
+                    if (
+                        first_embed_description
+                        and "garden overview" in first_embed_description.lower()
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Garden Overview embed, processing berry reminders...",
+                        )
+                        await berry_listener(
+                            bot=self.bot,
+                            before_message=before,
+                            message=after,
                         )
                 # 💜────────────────────────────────────────────
                 #          👑 World Boss Battle Reminder Registration Confirmation
