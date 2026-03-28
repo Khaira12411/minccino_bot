@@ -15,6 +15,7 @@ from utils.loggers.pretty_logs import pretty_log
     PRIMARY KEY (user_id, slot_number)
 );"""
 
+
 async def upsert_berry_reminder(
     bot: discord.Client,
     user_id: int,
@@ -26,8 +27,7 @@ async def upsert_berry_reminder(
     channel_name: str,
     berry_name: str,
 ):
-    """Upserts a berry reminder for the given user_id and slot_number.
-    """
+    """Upserts a berry reminder for the given user_id and slot_number."""
     try:
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
@@ -60,6 +60,8 @@ async def upsert_berry_reminder(
             "warn",
             f"Failed to upsert berry reminder for user {user_id} in slot {slot_number}: {e}",
         )
+
+
 async def fetch_user_all_berry_reminder(bot: discord.Client, user_id: int):
     """
     Fetches all berry reminders for the given user_id.
@@ -80,7 +82,8 @@ async def fetch_user_all_berry_reminder(bot: discord.Client, user_id: int):
     except Exception as e:
         pretty_log("warn", f"Failed to fetch berry reminders for user {user_id}: {e}")
         return []
-    
+
+
 async def remove_berry_reminder(
     bot: discord.Client,
     user_id: int,
@@ -107,13 +110,13 @@ async def remove_berry_reminder(
 async def fetch_all_due_berry_reminders(bot: discord.Client):
     """
     Fetches all berry reminders that are due within the next minute (remind_on <= now + 60s).
-    Returns a list of dictionaries with keys: user_id, user_name, slot_number, remind_on, stage.
+    Returns a list of dictionaries with all columns from the berry_reminder table.
     """
     try:
         async with bot.pg_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT user_id, user_name, slot_number, remind_on, stage
+                SELECT *
                 FROM berry_reminder
                 WHERE remind_on <= (EXTRACT(EPOCH FROM NOW())::BIGINT + 60)
                 ORDER BY remind_on ASC;
