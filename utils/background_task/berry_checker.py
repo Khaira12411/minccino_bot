@@ -91,8 +91,9 @@ async def berry_reminder_checker(bot: discord.Client):
         berry_names = []
         for reminder in reminders:
             berry_name_raw = reminder["berry_name"]
+            slot_number = reminder["slot_number"]
             berry_emoji = berry_map.get(berry_name_raw.lower(), "")
-            berry_name = f"{berry_emoji} {berry_name_raw.title()}".strip()
+            berry_name = f"{berry_emoji} {berry_name_raw.title()} (Slot {slot_number})".strip()
             berry_names.append(berry_name)
             debug_log(f"Prepared berry name: {berry_name} (raw: {berry_name_raw})")
 
