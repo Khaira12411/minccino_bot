@@ -1,7 +1,7 @@
 import discord
 
 from config.aesthetic import *
-from config.current_setup import KHY_USER_ID
+from config.current_setup import KHY_USER_ID, STRAYMONS_GUILD_ID
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
     fetch_all_due_berry_reminders,
@@ -44,7 +44,7 @@ async def berry_reminder_checker(bot: discord.Client):
     if not due_reminders:
         debug_log("No due berry reminders found.")
         return
-
+    guild = bot.get_guild(STRAYMONS_GUILD_ID)
     # Group reminders by user and channel
     from collections import defaultdict
 
@@ -65,6 +65,8 @@ async def berry_reminder_checker(bot: discord.Client):
         channel_name,
     ), reminders in user_channel_reminders.items():
         # Sort by slot_number for consistency
+        user = guild.get_member(user_id)
+        mention = user.mention if user else user_name
         reminders.sort(key=lambda r: r["slot_number"])
         berry_names = []
         for reminder in reminders:
@@ -76,11 +78,11 @@ async def berry_reminder_checker(bot: discord.Client):
 
         # Compose message
         if len(berry_names) == 1:
-            msg = f"{Emojis.mouse_farmer} Hey {user_name}! its time to check your {berry_names[0]} thru `;berry` command!"
+            msg = f"{Emojis.mouse_farmer} Hey {mention}! its time to check your {berry_names[0]} thru `;berry` command!"
         elif len(berry_names) == 2:
-            msg = f"{Emojis.mouse_farmer} Hey {user_name}! its time to check your {berry_names[0]}, and {berry_names[1]} thru `;berry` command!"
+            msg = f"{Emojis.mouse_farmer} Hey {mention}! its time to check your {berry_names[0]}, and {berry_names[1]} thru `;berry` command!"
         else:
-            msg = f"{Emojis.mouse_farmer} Hey {user_name}, its time to check your berries using the `;berry` command"
+            msg = f"{Emojis.mouse_farmer} Hey {mention}, its time to check your berries using the `;berry` command"
 
         # Send to the correct channel in the correct guild
         for guild in bot.guilds:
