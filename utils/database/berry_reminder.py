@@ -16,6 +16,7 @@ from utils.loggers.pretty_logs import pretty_log
     water_can_type TEXT,
     watered bool DEFAULT TRUE,
     notified_for_water bool default FALSE,
+    notified bool default FALSE,
     PRIMARY KEY (user_id, slot_number)
 );"""
 

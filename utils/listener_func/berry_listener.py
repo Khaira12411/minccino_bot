@@ -139,7 +139,7 @@ def extract_berry_slots(embed_description: str):
             slot_number = int(slot_match.group(1))
             slot_content = slot_match.group(2).strip()
             # Skip if slot is empty or locked (padlock emoji)
-            if slot_content.lower() == "empty" or "🔒" in slot_content:
+            if slot_content.lower() == "empty" or "slot locked" in slot_content:
                 continue
             # Try to get berry name
             berry_name_match = berry_name_pattern.search(line)
