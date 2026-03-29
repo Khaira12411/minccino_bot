@@ -1,6 +1,7 @@
 import discord
 
 from config.current_setup import KHY_USER_ID
+from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
     upsert_berry_reminder,
@@ -8,11 +9,13 @@ from utils.database.berry_reminder import (
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
+
 # enable_debug(f"{__name__}.berry_listener")
 
 
-async def berry_listener(bot: discord.Client, before_message: discord.Message, message: discord.Message):
+async def berry_listener(
+    bot: discord.Client, before_message: discord.Message, message: discord.Message
+):
     """Listens for berry reminders from pokemeow and stores them in the database."""
     embed = message.embeds[0] if message.embeds else None
     if not embed:
@@ -29,8 +32,11 @@ async def berry_listener(bot: discord.Client, before_message: discord.Message, m
         return
 
     from utils.cache.straymon_member_cache import fetch_straymon_member_cache
+
     cache_info = fetch_straymon_member_cache(user_id)
-    member_channel_id = cache_info["channel_id"] if cache_info else STRAYMONS__TEXT_CHANNELS.kanto_park
+    member_channel_id = (
+        cache_info["channel_id"] if cache_info else STRAYMONS__TEXT_CHANNELS.kanto_park
+    )
     member_channel = guild.get_channel(member_channel_id) if member_channel_id else None
     member_channel_name = member_channel.name if member_channel else None
 
@@ -58,6 +64,8 @@ async def berry_listener(bot: discord.Client, before_message: discord.Message, m
         berry_status = slot["status"]
         growth_stage = slot["growth_stage"]
         next_stage_time = slot["next_stage_time"]
+        has_growth_paused = slot["has_growth_paused"]
+        mulch_name = slot["mulch_name"]
 
         # Upsert the berry reminder in the database
         if not are_new_reminders:
@@ -69,7 +77,7 @@ async def berry_listener(bot: discord.Client, before_message: discord.Message, m
                     if r["slot_number"] == slot_number
                     and r["berry_name"] == berry_name
                     and r["stage"] == growth_stage
-                    and r["remind_on"] == next_stage_time
+                    and r["grows_on"] == next_stage_time
                 ),
                 None,
             )
@@ -87,7 +95,7 @@ async def berry_listener(bot: discord.Client, before_message: discord.Message, m
                     user_id=user_id,
                     user_name=user_name,
                     slot_number=slot_number,
-                    remind_on=next_stage_time,
+                    grows_on=next_stage_time,
                     stage=growth_stage,
                     channel_id=member_channel.id,
                     channel_name=member_channel.name,
@@ -99,7 +107,7 @@ async def berry_listener(bot: discord.Client, before_message: discord.Message, m
                 user_id=user_id,
                 user_name=user_name,
                 slot_number=slot_number,
-                remind_on=next_stage_time,
+                grows_on=next_stage_time,
                 stage=growth_stage,
                 channel_id=member_channel.id,
                 channel_name=member_channel.name,
@@ -109,17 +117,19 @@ async def berry_listener(bot: discord.Client, before_message: discord.Message, m
 
 def extract_berry_slots(embed_description: str):
     """
-    Extracts slot_number, berry_name, status, growth_stage, and next_stage_time for each berry slot from the embed description.
-    Skips slots that are empty.
-    Returns a list of dicts with keys: slot_number, berry_name, status, growth_stage, next_stage_time
+    Extracts slot_number, berry_name, mulch_name, status, growth_stage, next_stage_time, and has_growth_paused for each berry slot from the embed description.
+    Skips slots that are empty or locked (padlock emoji).
+    Returns a list of dicts with keys: slot_number, berry_name, mulch_name, status, growth_stage, next_stage_time, has_growth_paused
     """
     import re
 
     slot_pattern = re.compile(r"\*\*Slot (\d+)\*\* — (.+?)(?:\n|$)")
     next_stage_pattern = re.compile(r"Next stage <t:(\d+):R>")
     berry_name_pattern = re.compile(r"— <:(\w+):\d+> ([^<]+)")
+    mulch_pattern = re.compile(r"<:(\w+_mulch):\d+>")
     status_pattern = re.compile(r"• ([^•\n]+)• 💧 \*\*(.*?)\*\*")
     growth_stage_pattern = re.compile(r":\d+> (\w+) \(\d+/\d+\)")
+    growth_paused_pattern = re.compile(r"growth paused", re.IGNORECASE)
 
     results = []
     lines = embed_description.splitlines()
@@ -128,11 +138,18 @@ def extract_berry_slots(embed_description: str):
         if slot_match:
             slot_number = int(slot_match.group(1))
             slot_content = slot_match.group(2).strip()
-            if slot_content.lower() == "empty":
+            # Skip if slot is empty or locked (padlock emoji)
+            if slot_content.lower() == "empty" or "🔒" in slot_content:
                 continue
             # Try to get berry name
             berry_name_match = berry_name_pattern.search(line)
             berry_name = berry_name_match.group(2).strip() if berry_name_match else None
+            # Try to get mulch name
+            mulch_name = None
+            mulch_match = mulch_pattern.search(line)
+            if mulch_match:
+                mulch_name = mulch_match.group(1)
+                mulch_name = mulch_name.replace("_", " ").title() if mulch_name else None
             # Find next stage time in this or next lines
             next_stage_time = None
             for j in range(i, min(i + 2, len(lines))):
@@ -143,6 +160,7 @@ def extract_berry_slots(embed_description: str):
             # Find status and growth stage in this or next lines
             status = None
             growth_stage = None
+            has_growth_paused = False
             for j in range(i, min(i + 3, len(lines))):
                 status_match = status_pattern.search(lines[j])
                 if status_match:
@@ -150,13 +168,17 @@ def extract_berry_slots(embed_description: str):
                 growth_stage_match = growth_stage_pattern.search(lines[j])
                 if growth_stage_match:
                     growth_stage = growth_stage_match.group(1)
+                if growth_paused_pattern.search(lines[j]):
+                    has_growth_paused = True
             results.append(
                 {
                     "slot_number": slot_number,
                     "berry_name": berry_name,
+                    "mulch_name": mulch_name,
                     "status": status,
                     "growth_stage": growth_stage,
                     "next_stage_time": next_stage_time,
+                    "has_growth_paused": has_growth_paused,
                 }
             )
     return results
