@@ -12,7 +12,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.handle_berry_pouch_message")
+#enable_debug(f"{__name__}.handle_berry_pouch_message")
 def extract_best_watering_tool_from_embed(embed) -> str:
     """
     Given a discord.Embed, finds the 'Watering Tools' field and extracts the best available watering tool.
@@ -53,16 +53,16 @@ def extract_best_watering_tool_from_embed(embed) -> str:
     elif spraylotad_count > 0:
         return "spraylotad"
     elif wailmer_count > 0:
-        return "wailmer_pail"
+        return "wailmer pail"
     else:
         return None
 
 
-async def handle_berry_pouch_message(bot, message):
+async def handle_berry_pouch_message(bot: discord.Client, before: discord.Message, message: discord.Message):
     embed = message.embeds[0] if message.embeds else None
     if not embed:
         return
-    member = await get_pokemeow_reply_member(message)
+    member = await get_pokemeow_reply_member(before)
     if not member:
         debug_log("No member found in pokemeow reply.")
         return

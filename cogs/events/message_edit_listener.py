@@ -33,6 +33,7 @@ from utils.listener_func.wb_reg_listener import handle_wb_register_command
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
 from utils.listener_func.berry_listener import berry_listener
+from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
 
 FISHING_COLOR = 0x87CEFA
 
@@ -110,7 +111,9 @@ class MessageEditListener(commands.Cog):
                     if first_embed and first_embed.footer
                     else ""
                 )
-
+                first_embed_author_text =(
+                    first_embed.author.text if first_embed and first_embed.author and hasattr(first_embed.author, "text") else ""
+                )
                 # 🔹 Fishing reco ball
                 if embed_description and "fished a wild" in embed_description:
                     await recommend_fishing_ball(message=after, bot=self.bot)
@@ -225,6 +228,24 @@ class MessageEditListener(commands.Cog):
                             before_message=before,
                             message=after,
                         )
+                # 💜────────────────────────────────────────────
+                #          🧑‍🌾 Berry Pounch Listener
+                # 💜────────────────────────────────────────────
+                if first_embed:
+                    if (
+                        first_embed_footer
+                        and "berry pouch" in first_embed_footer.lower()
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Berry Pouch embed, processing berry pouch listener...",
+                        )
+                        await handle_berry_pouch_message(
+                            bot=self.bot,
+                            before=before,
+                            message=after,
+                        )
+
                 # 💜────────────────────────────────────────────
                 #          👑 World Boss Battle Reminder Registration Confirmation
                 # 💜────────────────────────────────────────────

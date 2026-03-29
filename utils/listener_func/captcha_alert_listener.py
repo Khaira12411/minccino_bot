@@ -54,11 +54,6 @@ async def captcha_alert_handler(bot: commands.Bot, message: discord.Message):
 
         captcha_alert_info = fetch_user_captcha_alert_cache(user_id=member_id)
         if not captcha_alert_info:
-            pretty_log(
-                "info",
-                f"Skipping ...  {member.display_name} not in captcha alert cache",
-                label="🛡️ Captcha Alert",
-            )
             return
 
         notify = (captcha_alert_info.get("notify") or "off").lower()

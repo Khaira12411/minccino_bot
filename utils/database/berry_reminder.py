@@ -167,7 +167,7 @@ async def fetch_user_all_berry_reminder(bot: discord.Client, user_id: int):
         async with bot.pg_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT user_id, user_name, slot_number, grows_on, stage, channel_id, channel_name, berry_name
+                SELECT *
                 FROM berry_reminder
                 WHERE user_id = $1
                 ORDER BY slot_number ASC;

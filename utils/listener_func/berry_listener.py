@@ -10,7 +10,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-# enable_debug(f"{__name__}.berry_listener")
+#enable_debug(f"{__name__}.berry_listener")
 
 
 async def berry_listener(
@@ -53,7 +53,12 @@ async def berry_listener(
         are_new_reminders = True
 
     # Extract berry reminder details from the embed description
+    debug_log(f"Extracting berry reminder details from embed description: {embed_description}")
     berry_slots = extract_berry_slots(embed_description)
+    pretty_log(
+        "debug",
+        f"Extracted berry slots from embed description: {berry_slots}",
+    )
     if not berry_slots:
         debug_log("No berry slots found in embed description.")
         return
@@ -78,6 +83,8 @@ async def berry_listener(
                     and r["berry_name"] == berry_name
                     and r["stage"] == growth_stage
                     and r["grows_on"] == next_stage_time
+                    and r["mulch_type"] == mulch_name
+
                 ),
                 None,
             )
@@ -100,6 +107,8 @@ async def berry_listener(
                     channel_id=member_channel.id,
                     channel_name=member_channel.name,
                     berry_name=berry_name,
+                    mulch_type=mulch_name,
+
                 )
         else:
             await upsert_berry_reminder(
@@ -112,23 +121,29 @@ async def berry_listener(
                 channel_id=member_channel.id,
                 channel_name=member_channel.name,
                 berry_name=berry_name,
+                mulch_type=mulch_name,
             )
 
 
 def extract_berry_slots(embed_description: str):
     """
-    Extracts slot_number, berry_name, mulch_name, status, growth_stage, next_stage_time, and has_growth_paused for each berry slot from the embed description.
+    Extracts slot_number, berry_name, mulch_name, status, growth_stage, next_stage_time, and has_growth_paused
+    for each berry slot from the embed description.
     Skips slots that are empty or locked (padlock emoji).
-    Returns a list of dicts with keys: slot_number, berry_name, mulch_name, status, growth_stage, next_stage_time, has_growth_paused
     """
     import re
 
     slot_pattern = re.compile(r"\*\*Slot (\d+)\*\* — (.+?)(?:\n|$)")
     next_stage_pattern = re.compile(r"Next stage <t:(\d+):R>")
-    berry_name_pattern = re.compile(r"— <:(\w+):\d+> ([^<]+)")
+    berry_name_pattern = re.compile(r"— <:\w+:\d+> ([^<]+)")
     mulch_pattern = re.compile(r"<:(\w+_mulch):\d+>")
-    status_pattern = re.compile(r"• ([^•\n]+)• 💧 \*\*(.*?)\*\*")
-    growth_stage_pattern = re.compile(r":\d+> (\w+) \(\d+/\d+\)")
+    status_pattern = re.compile(r"• 💧 \*\*(.*?)\*\*")
+
+    # Growth stage regex: matches emoji, stage name, and [STAGE x/y] with optional backticks
+    growth_stage_pattern = re.compile(
+        r"<:[^:]+:\d+>\s*([^`\[]+?)\s*`?\[STAGE \d+/\d+\]`?",
+        re.IGNORECASE
+    )
     growth_paused_pattern = re.compile(r"growth paused", re.IGNORECASE)
 
     results = []
@@ -138,38 +153,48 @@ def extract_berry_slots(embed_description: str):
         if slot_match:
             slot_number = int(slot_match.group(1))
             slot_content = slot_match.group(2).strip()
-            # Skip if slot is empty or locked (padlock emoji)
-            if slot_content.lower() == "empty" or "slot locked" in slot_content:
+
+            # Skip empty or locked slots
+            normalized = slot_content.lower()
+            if (
+                "empty" in normalized
+                or "slot locked" in normalized
+                or "🔒" in slot_content
+            ):
                 continue
-            # Try to get berry name
+
+            # Berry name
             berry_name_match = berry_name_pattern.search(line)
-            berry_name = berry_name_match.group(2).strip() if berry_name_match else None
-            # Try to get mulch name
+            berry_name = berry_name_match.group(1).strip() if berry_name_match else None
+
+            # Mulch name
             mulch_name = None
             mulch_match = mulch_pattern.search(line)
             if mulch_match:
-                mulch_name = mulch_match.group(1)
-                mulch_name = mulch_name.replace("_", " ").title() if mulch_name else None
-            # Find next stage time in this or next lines
+                mulch_name = mulch_match.group(1).replace("_", " ").title()
+
+            # Next stage time
             next_stage_time = None
             for j in range(i, min(i + 2, len(lines))):
                 next_stage_match = next_stage_pattern.search(lines[j])
                 if next_stage_match:
                     next_stage_time = int(next_stage_match.group(1))
                     break
-            # Find status and growth stage in this or next lines
+
+            # Status, growth stage, growth paused
             status = None
             growth_stage = None
             has_growth_paused = False
             for j in range(i, min(i + 3, len(lines))):
                 status_match = status_pattern.search(lines[j])
                 if status_match:
-                    status = status_match.group(2).strip()
+                    status = status_match.group(1).strip()
                 growth_stage_match = growth_stage_pattern.search(lines[j])
                 if growth_stage_match:
-                    growth_stage = growth_stage_match.group(1)
+                    growth_stage = growth_stage_match.group(1).strip()
                 if growth_paused_pattern.search(lines[j]):
                     has_growth_paused = True
+
             results.append(
                 {
                     "slot_number": slot_number,
