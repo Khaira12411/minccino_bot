@@ -129,7 +129,15 @@ def find_key_by_npc_id(npc_id: int):
         if npc_id in values:
             return key
     return None
-
+IGNORE_BATTLE_FRONTIER_FOLLOWUP_LIST = [
+    "Battle Pyramid",
+    "Battle Pike",
+    "Battle Arena",
+    "Battle Factory",
+    "Battle Dome",
+    "Battle Palace",
+    "Battle Tower",
+]
 
 # 💜────────────────────────────────────────────
 #   Function: detect_pokemeow_battle (with debug)
@@ -225,9 +233,9 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 emb = m.embeds[0]
                 footer_text = emb.footer.text if emb.footer else ""
                 # If Battle Pyramid is in the footer, exit early by returning False (will be handled after followup)
-                if "Battle Pyramid" in footer_text:
+                if any(keyword in footer_text for keyword in IGNORE_BATTLE_FRONTIER_FOLLOWUP_LIST):
                     debug_log(
-                        "Battle Pyramid detected in follow-up, will exit after followup."
+                       "Battle Frontier follow-up detected in grab_enemy_id check, ignoring this message."
                     )
                     return False  # Exit early for Battle Pyramid follow-up
                 result = (
