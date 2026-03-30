@@ -11,9 +11,9 @@ from utils.cache.cache_list import timer_cache
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-#enable_debug(f"{__name__}.detect_pokemeow_battle")
-#enable_debug(f"{__name__}.grab_enemy_id")
-#enable_debug(f"{__name__}.notify_battle_ready")
+# enable_debug(f"{__name__}.detect_pokemeow_battle")
+# enable_debug(f"{__name__}.grab_enemy_id")
+# enable_debug(f"{__name__}.notify_battle_ready")
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 battle_ready_tasks = {}
 
@@ -129,6 +129,8 @@ def find_key_by_npc_id(npc_id: int):
         if npc_id in values:
             return key
     return None
+
+
 IGNORE_BATTLE_FRONTIER_FOLLOWUP_LIST = [
     "Battle Pyramid",
     "Battle Pike",
@@ -138,6 +140,7 @@ IGNORE_BATTLE_FRONTIER_FOLLOWUP_LIST = [
     "Battle Palace",
     "Battle Tower",
 ]
+
 
 # 💜────────────────────────────────────────────
 #   Function: detect_pokemeow_battle (with debug)
@@ -233,22 +236,21 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 emb = m.embeds[0]
                 footer_text = emb.footer.text if emb.footer else ""
                 # If Battle Pyramid is in the footer, exit early by returning False (will be handled after followup)
-                if any(keyword in footer_text for keyword in IGNORE_BATTLE_FRONTIER_FOLLOWUP_LIST):
+                if any(
+                    keyword in footer_text
+                    for keyword in IGNORE_BATTLE_FRONTIER_FOLLOWUP_LIST
+                ):
                     debug_log(
-                       "Battle Frontier follow-up detected in grab_enemy_id check, ignoring this message."
+                        "Battle Frontier follow-up detected in grab_enemy_id check, ignoring this message."
                     )
                     return False  # Exit early for Battle Pyramid follow-up
-                result = (
-                    emb.footer
-                    and (
-                        (
-                            "Enemy ID:" in (emb.footer.text or "")
-                            and opponent_name in (emb.description or "")
-                        )
-                        or ("Battle Pike Round" in footer_text and "Moves taken" in footer_text)
+                result = emb.footer and (
+                    (
+                        "Enemy ID:" in (emb.footer.text or "")
+                        and opponent_name in (emb.description or "")
                     )
-                    and not "Battle Pyramid" in emb.footer.text
                 )
+
                 debug_log(
                     f"Checking message for Enemy ID... "
                     f"footer={emb.footer.text if emb.footer else None}, "
@@ -284,7 +286,10 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                     )
                 else:
                     debug_log("Regex failed: Enemy ID not found in footer text ❌")
-                    if "Battle Pike Round" in footer_text and "Moves taken" in footer_text:
+                    if (
+                        "Battle Pike Round" in footer_text
+                        and "Moves taken" in footer_text
+                    ):
                         debug_log("Detected battle frontier battle")
                         enemy_id_holder["id"] = "bf"
                     else:
@@ -298,9 +303,9 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
             except Exception as e:
                 debug_log(f"Exception in grab_enemy_id: {e}")
 
-
         debug_log("Creating background task for grab_enemy_id")
         bot.loop.create_task(grab_enemy_id())
+
         # 💜 Step 4: schedule 60s notification immediately
         async def notify_battle_ready():
             try:
