@@ -15,6 +15,7 @@ from config.current_setup import (
     STAFF_SERVER_GUILD_ID,
     STRAYMONS_GUILD_ID,
     WATERSTATE_CHANNEL_ID,
+    KHY_USER_ID
 )
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.listener_func.ball_reco_ping import recommend_ball
@@ -67,7 +68,7 @@ from utils.listener_func.berry_water_listener import (
     handle_berry_water_message,
     handle_mulch_message,
 )
-
+from utils.listener_func.message_listener_tester import test_message_listener
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
 CC_BOT_LOG_ID = 1413576563559239931
@@ -146,6 +147,16 @@ class MessageCreateListener(commands.Cog):
                 and not message.webhook_id
             ):
                 return
+            # 💜────────────────────────────────────────────
+            #          🧪 Message Test Listener
+            # 💜────────────────────────────────────────────
+            if message.content and message.content.startswith("mtest") and message.author.id == KHY_USER_ID:
+                pretty_log(
+                    "info",
+                    f"Running message listener tests for message ID: {message.id}",
+                )
+                await test_message_listener(bot=self.bot, message=message)
+                
 
             # --- Weakness chart + general processing ---
             if message.guild and message.guild.id in (

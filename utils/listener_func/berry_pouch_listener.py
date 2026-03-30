@@ -1,7 +1,7 @@
 import re
 import discord
 
-from config.current_setup import KHY_USER_ID
+from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
@@ -11,8 +11,8 @@ from utils.database.berry_reminder import (
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-
-#enable_debug(f"{__name__}.handle_berry_pouch_message")
+from utils.database.watering_can_db import upsert_watering_can, get_watering_can
+# enable_debug(f"{__name__}.handle_berry_pouch_message")
 def extract_best_watering_tool_from_embed(embed) -> str:
     """
     Given a discord.Embed, finds the 'Watering Tools' field and extracts the best available watering tool.
@@ -67,20 +67,24 @@ async def handle_berry_pouch_message(bot: discord.Client, before: discord.Messag
         debug_log("No member found in pokemeow reply.")
         return
     user_id = member.id
+    user_name = member.name
     guild = message.guild
-    if user_id != KHY_USER_ID:
-        debug_log(f"Message from user_id {user_id} is not Khy{KHY_USER_ID}. Ignoring.")
-        return
-
-    # Check if she has any plants
-    user_berries = await fetch_user_all_berry_reminder(bot, user_id)
-    if not user_berries:
-        debug_log("User has no berry reminders in the database. Ignoring.")
+    if user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
+        debug_log(f"Message from user_id {user_id} is not in Allowed Berry Reminder User. Ignoring.")
         return
     current_water_can_type = extract_best_watering_tool_from_embed(embed)
     if not current_water_can_type:
         debug_log("No watering tools found in embed. Ignoring.")
         return
+    # Upsert the current water can type in the database for this user
+    await upsert_watering_can(bot, user_id, user_name, current_water_can_type)
+    
+    # Check if she has any plants
+    user_berries = await fetch_user_all_berry_reminder(bot, user_id)
+    if not user_berries:
+        debug_log("User has no berry reminders in the database. Ignoring.")
+        return
+
     debug_log(f"Extracted watering tool from embed: {current_water_can_type}")
     # Update the water can type for all of the user's berry reminders if not the same
     for berry in user_berries:

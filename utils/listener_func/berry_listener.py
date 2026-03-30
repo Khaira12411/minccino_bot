@@ -1,16 +1,18 @@
 import discord
 
-from config.current_setup import KHY_USER_ID
+from config.current_setup import HANA_USER_ID, ALLOWED_BERRY_REMINDER_USER_IDS
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
     upsert_berry_reminder,
+    remove_berry_reminder
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
+from utils.database.watering_can_db import upsert_watering_can, get_watering_can
 
-#enable_debug(f"{__name__}.berry_listener")
+# enable_debug(f"{__name__}.berry_listener")
 
 
 async def berry_listener(
@@ -27,16 +29,23 @@ async def berry_listener(
         return
     user_id = member.id
     guild = message.guild
-    if user_id != KHY_USER_ID:
-        debug_log(f"Message from user_id {user_id} is not Khy{KHY_USER_ID}. Ignoring.")
+    if user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
+        debug_log(f"Message from user_id {user_id} is not allowed in berry users. Ignoring.")
         return
-
+    # Check if they have watering can
+    water_can_type = await get_watering_can(bot, user_id)
+    if not water_can_type:
+        content =f"Hi {member.mention}, I noticed you have a berry reminder but no watering can information stored. Kindly do `;items` then go to __Berry Pouch__ to set up your watering can type for accurate watering reminders then do `;berry` again!"
+        await message.channel.send(content)
+        return
     from utils.cache.straymon_member_cache import fetch_straymon_member_cache
 
     cache_info = fetch_straymon_member_cache(user_id)
     member_channel_id = (
         cache_info["channel_id"] if cache_info else STRAYMONS__TEXT_CHANNELS.kanto_park
     )
+    if user_id == HANA_USER_ID:
+        member_channel_id = STRAYMONS__TEXT_CHANNELS.khy
     member_channel = guild.get_channel(member_channel_id) if member_channel_id else None
     member_channel_name = member_channel.name if member_channel else None
 
@@ -71,6 +80,7 @@ async def berry_listener(
         next_stage_time = slot["next_stage_time"]
         has_growth_paused = slot["has_growth_paused"]
         mulch_name = slot["mulch_name"]
+        has_ready_to_harvest = slot.get("has_ready_to_harvest", False)
 
         # Upsert the berry reminder in the database
         if not are_new_reminders:
@@ -97,6 +107,26 @@ async def berry_listener(
                 debug_log(
                     f"Berry reminder for slot {slot_number} with berry {berry_name} and stage {growth_stage} is new or has changed. Updating database."
                 )
+                if not has_ready_to_harvest:
+                    await upsert_berry_reminder(
+                        bot=bot,
+                        user_id=user_id,
+                        user_name=user_name,
+                        slot_number=slot_number,
+                        grows_on=next_stage_time,
+                        stage=growth_stage,
+                        channel_id=member_channel.id,
+                        channel_name=member_channel.name,
+                        berry_name=berry_name,
+                        mulch_type=mulch_name,
+                        water_can_type=water_can_type,
+
+                    )
+                else:
+                    # Remove the reminder from the database if it's ready to harvest
+                    await remove_berry_reminder(bot, user_id, slot_number)
+        else:
+            if not has_ready_to_harvest:
                 await upsert_berry_reminder(
                     bot=bot,
                     user_id=user_id,
@@ -108,21 +138,12 @@ async def berry_listener(
                     channel_name=member_channel.name,
                     berry_name=berry_name,
                     mulch_type=mulch_name,
+                    water_can_type=water_can_type,
 
                 )
-        else:
-            await upsert_berry_reminder(
-                bot=bot,
-                user_id=user_id,
-                user_name=user_name,
-                slot_number=slot_number,
-                grows_on=next_stage_time,
-                stage=growth_stage,
-                channel_id=member_channel.id,
-                channel_name=member_channel.name,
-                berry_name=berry_name,
-                mulch_type=mulch_name,
-            )
+            else:
+                # Remove the reminder from the database if it's ready to harvest
+                await remove_berry_reminder(bot, user_id, slot_number)
 
 
 def extract_berry_slots(embed_description: str):
@@ -135,7 +156,7 @@ def extract_berry_slots(embed_description: str):
 
     slot_pattern = re.compile(r"\*\*Slot (\d+)\*\* — (.+?)(?:\n|$)")
     next_stage_pattern = re.compile(r"Next stage <t:(\d+):R>")
-    berry_name_pattern = re.compile(r"— <:\w+:\d+> ([^<]+)")
+    berry_name_pattern = re.compile(r"— <:\w+:\d+> ([A-Za-z ]+?)(?:\s*<|\s*•|$)")
     mulch_pattern = re.compile(r"<:(\w+_mulch):\d+>")
     status_pattern = re.compile(r"• 💧 \*\*(.*?)\*\*")
 
@@ -145,7 +166,8 @@ def extract_berry_slots(embed_description: str):
         re.IGNORECASE
     )
     growth_paused_pattern = re.compile(r"growth paused", re.IGNORECASE)
-
+    ready_to_harvest_pattern = re.compile(r"ready to harvest", re.IGNORECASE)
+    has_ready_to_harvest = False
     results = []
     lines = embed_description.splitlines()
     for i, line in enumerate(lines):
@@ -194,6 +216,8 @@ def extract_berry_slots(embed_description: str):
                     growth_stage = growth_stage_match.group(1).strip()
                 if growth_paused_pattern.search(lines[j]):
                     has_growth_paused = True
+                if ready_to_harvest_pattern.search(lines[j]):
+                    has_ready_to_harvest = True
 
             results.append(
                 {
@@ -204,6 +228,7 @@ def extract_berry_slots(embed_description: str):
                     "growth_stage": growth_stage,
                     "next_stage_time": next_stage_time,
                     "has_growth_paused": has_growth_paused,
+                    "has_ready_to_harvest": has_ready_to_harvest,
                 }
             )
     return results

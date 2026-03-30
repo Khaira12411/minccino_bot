@@ -3,20 +3,20 @@ import re
 import discord
 
 from config.aesthetic import *
-from config.current_setup import KHY_USER_ID
+from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
-    upsert_berry_reminder,
+    get_user_berry_reminder_slot,
     update_mulch_info,
-    get_user_berry_reminder_slot
+    upsert_berry_reminder,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.handle_berry_water_message")
-enable_debug(f"{__name__}.handle_mulch_message")
+#enable_debug(f"{__name__}.handle_berry_water_message")
+#enable_debug(f"{__name__}.handle_mulch_message")
 
 
 def parse_berry_water_message(message: str):
@@ -27,27 +27,34 @@ def parse_berry_water_message(message: str):
     """
     import re
 
-    # Try to extract watering can emoji name from the first line
+    # Extract watering can emoji name from the first line
     watering_can_emoji = None
     first_line = message.splitlines()[0] if message.splitlines() else ""
-    emoji_match = re.match(r"<:([a-zA-Z0-9_]+):\d+>", first_line)
+    emoji_match = re.search(r"<:([a-zA-Z0-9_]+):\d+>", first_line)
     if emoji_match:
         watering_can_emoji = emoji_match.group(1)
-        watering_can_emoji = watering_can_emoji.replace("_", " ").strip().lower()
-
-    # Pattern to match each berry block
-    berry_blocks = re.findall(
-        r"Slot (\d+)[^\\n]*?:.*?[*]{2}([A-Za-z ]+)[*]{2}.*?[*]{2}([A-Za-z ]+)[*]{2}.*?at <t:(\\d+):F>",
-        message,
-        re.DOTALL,
-    )
+        watering_can_emoji = watering_can_emoji.lower().replace("_", " ")
 
     results = []
-    for block in berry_blocks:
-        slot_number = int(block[0])
-        berry_name = block[2].strip()
-        stage = block[1].strip()
-        grows_on = int(block[3])
+    # Split by "Slot" to isolate each berry block
+    for block in re.split(r"(?=Slot \d+)", message):
+        slot_match = re.search(r"Slot (\d+)", block)
+        if not slot_match:
+            continue
+        slot_number = int(slot_match.group(1))
+
+        # Berry name
+        berry_match = re.search(r"\*\*([A-Za-z ]+ Berry)\*\*", block)
+        berry_name = berry_match.group(1).strip() if berry_match else None
+
+        # Stage
+        stage_match = re.search(r"• <:[^:]+:\d+> \*\*([A-Za-z ]+)\*\*", block)
+        stage = stage_match.group(1).strip() if stage_match else None
+
+        # Grows on (unix seconds)
+        grows_on_match = re.search(r"at <t:(\d+):F>", block)
+        grows_on = int(grows_on_match.group(1)) if grows_on_match else None
+
         results.append(
             {
                 "slot_number": slot_number,
@@ -56,10 +63,11 @@ def parse_berry_water_message(message: str):
                 "grows_on": grows_on,
             }
         )
+
     return {"watering_can_emoji": watering_can_emoji, "berries": results}
 
 
-async def handle_berry_water_message(bot, message):
+async def handle_berry_water_message(bot: discord.Client, message: discord.Message):
 
     debug_log(f"Handling berry water message: {message.content}")
     member = await get_pokemeow_reply_member(message)
@@ -69,14 +77,14 @@ async def handle_berry_water_message(bot, message):
     user_id = member.id
     guild = message.guild
 
-    parsed_data_list = parse_berry_water_message(message.content)
-    if not parsed_data_list:
+    parsed_data = parse_berry_water_message(message.content)
+    if not parsed_data or not parsed_data.get("berries"):
         debug_log("Message did not match berry water format.")
         return
-    debug_log(f"Parsed berry water message: {parsed_data_list}")
+    debug_log(f"Parsed berry water message: {parsed_data}")
 
-    if user_id != KHY_USER_ID:
-        debug_log(f"Message from user_id {user_id} is not Khy{KHY_USER_ID}. Ignoring.")
+    if user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
+        debug_log(f"Message from user_id {user_id} is not allowed. Ignoring.")
         return
 
     from utils.cache.straymon_member_cache import fetch_straymon_member_cache
@@ -85,33 +93,37 @@ async def handle_berry_water_message(bot, message):
     member_channel_id = (
         cache_info["channel_id"] if cache_info else STRAYMONS__TEXT_CHANNELS.kanto_park
     )
+    if user_id == HANA_USER_ID:
+        member_channel_id = STRAYMONS__TEXT_CHANNELS.khy
+
     member_channel = guild.get_channel(member_channel_id) if member_channel_id else None
     member_channel_name = member_channel.name if member_channel else None
 
     user_name = member.name
 
     # Upsert each berry reminder in the database
-    for parsed_data in parsed_data_list:
+    for berry in parsed_data["berries"]:
         try:
             await upsert_berry_reminder(
                 bot,
                 user_id=user_id,
                 user_name=user_name,
-                slot_number=parsed_data["slot_number"],
-                grows_on=parsed_data["grows_on"],
-                stage=parsed_data["stage"],
+                slot_number=berry["slot_number"],
+                grows_on=berry["grows_on"],
+                stage=berry["stage"],
                 channel_id=member_channel_id,
                 channel_name=member_channel_name,
-                berry_name=parsed_data["berry_name"],
+                berry_name=berry["berry_name"],
+                water_can_type=parsed_data["watering_can_emoji"],
             )
             pretty_log(
                 "db",
-                f"Upserted berry reminder for {user_name} (user_id: {user_id}) in slot {parsed_data['slot_number']}, reminds on {parsed_data['grows_on']}, stage: {parsed_data['stage']}",
+                f"Upserted berry reminder for {user_name} (user_id: {user_id}) in slot {berry['slot_number']}, reminds on {berry['grows_on']}, stage: {berry['stage']}",
             )
         except Exception as e:
             pretty_log(
                 "warn",
-                f"Failed to upsert berry reminder for user {user_id} in slot {parsed_data['slot_number']}: {e}",
+                f"Failed to upsert berry reminder for user {user_id} in slot {berry['slot_number']}: {e}",
             )
 
     # Add reaction to the replied message (if any)
@@ -136,8 +148,8 @@ async def handle_mulch_message(bot, message):
     user_id = member.id
     guild = message.guild
 
-    if user_id != KHY_USER_ID:
-        debug_log(f"Message from user_id {user_id} is not Khy{KHY_USER_ID}. Ignoring.")
+    if user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
+        debug_log(f"Message from user_id {user_id} is not allowed. Ignoring.")
         return
     send_message = True
     if "growth mulch" in message.content.lower():
@@ -151,7 +163,9 @@ async def handle_mulch_message(bot, message):
         slot_number = mulch_info["slot_number"]
         mulch_type = mulch_info["mulch_type"]
         # Check if slot number exists for this user in the database
-        existing_reminder = await get_user_berry_reminder_slot(bot, user_id, slot_number)
+        existing_reminder = await get_user_berry_reminder_slot(
+            bot, user_id, slot_number
+        )
         if existing_reminder:
             await update_mulch_info(bot, user_id, slot_number, mulch_type)
             send_message = False

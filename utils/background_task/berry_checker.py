@@ -74,11 +74,11 @@ async def update_growth_stage_func(
 async def berry_reminder_checker(bot: discord.Client):
     """Checks for upcoming berry reminders and sends notifications."""
 
-    #debug_log("Fetching all due berry reminders...")
+    # debug_log("Fetching all due berry reminders...")
     due_reminders = await fetch_all_due_berry_reminders(bot)
 
     if not due_reminders:
-        #debug_log("No due berry reminders found. Exiting checker.")
+        # debug_log("No due berry reminders found. Exiting checker.")
         return
     debug_log(f"Found {len(due_reminders)} due reminders. Getting guild...")
     guild = bot.get_guild(STRAYMONS_GUILD_ID)
@@ -130,7 +130,9 @@ async def berry_reminder_checker(bot: discord.Client):
             water_can_type = reminder.get("water_can_type", "unknown")
             stage = reminder.get("stage", "unknown")
             next_stage = next_stage_map.get(reminder["stage"].lower(), "unknown")
-            mulch_type = reminder.get("mulch_type", "unknown")
+            mulch_type = reminder.get("mulch_type") or "unknown"
+            if isinstance(mulch_type, str) and mulch_type != "unknown":
+                mulch_type = mulch_type.lower()
             slot_number = reminder["slot_number"]
             context = "watering stage"
             berry_name_raw = (
@@ -167,7 +169,7 @@ async def berry_reminder_checker(bot: discord.Client):
                     debug_log(
                         f"Wailmer pail used for slot {slot_number}. mulch_type={mulch_type}, next_stage={next_stage}"
                     )
-                    if mulch_type.lower() == "damp mulch":
+                    if mulch_type == "damp mulch":
                         debug_log(
                             f"Damp mulch present for slot {slot_number}, updating growth stage."
                         )
