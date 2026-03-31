@@ -8,6 +8,7 @@ from utils.background_task.fl_cd_checker import fl_cd_checker
 from utils.background_task.special_battle_timer_checker import special_battle_timer_checker
 from utils.background_task.secret_santa_timer_checker import secret_santa_timer_checker
 from utils.background_task.berry_checker import berry_reminder_checker
+from utils.background_task.berry_water_checker import berry_water_reminder
 
 # 🍰──────────────────────────────
 #   🎀 Cog: CentralLoop
@@ -52,6 +53,9 @@ class CentralLoop(commands.Cog):
                 # 🍀 Check if any Feeling Lucky cd is due
                 await fl_cd_checker(bot=self.bot)
 
+                # 💧 Check if any berry water reminders are due
+                await berry_water_reminder(bot=self.bot)
+
                 # 🍓 Check if any berry reminder is due
                 await berry_reminder_checker(bot=self.bot)
 
@@ -92,6 +96,7 @@ async def setup(bot: commands.Bot):
     print("  ✅ 💠  flush_weekly_goal_cache")
     print("  ✅ 🍀  fl_cd_checker")
     print("  ✅ 🦭  pokemon_reminder_checker")
+    print("  ✅ 💧  berry_water_reminder")
     print("  ✅ 🍓  berry_reminder_checker")
     #print("  ✅ ⏰  special_battle_timer_checker")
     #print("  ✅ 🎅  secret_santa_timer_checker")

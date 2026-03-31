@@ -1,5 +1,6 @@
 import discord
 
+from config.aesthetic import Emojis
 from utils.loggers.pretty_logs import pretty_log
 
 # SQL TABLE
@@ -17,8 +18,116 @@ from utils.loggers.pretty_logs import pretty_log
     watered bool DEFAULT TRUE,
     notified_for_water bool default FALSE,
     notified bool default FALSE,
+    moisture_dries_on BIGINT,
     PRIMARY KEY (user_id, slot_number)
 );"""
+TWO_H_MOISTURE_DRY_OUT_DURATION = 7  # in hours,
+THREE_H_BERRY_MOISTURE_DRY_OUT_DURATION = 9  # in hours
+FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION = 8  # in hours
+FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION = 10  # in hours
+SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION = 13  # in hours
+
+berry_map = {
+    "oran berry": {
+        "emoji": Emojis.oran_berry,
+        "growth_duration": 2,
+        "moisture_dry_out_duration": TWO_H_MOISTURE_DRY_OUT_DURATION,
+    },
+    "cheri berry": {
+        "emoji": Emojis.cheri_berry,
+        "growth_duration": 2,
+        "moisture_dry_out_duration": TWO_H_MOISTURE_DRY_OUT_DURATION,
+    },
+    "rawst berry": {
+        "emoji": Emojis.rawst_berry,
+        "growth_duration": 2,
+        "moisture_dry_out_duration": TWO_H_MOISTURE_DRY_OUT_DURATION,
+    },
+    "pecha berry": {
+        "emoji": Emojis.pecha_berry,
+        "growth_duration": 2,
+        "moisture_dry_out_duration": TWO_H_MOISTURE_DRY_OUT_DURATION,
+    },
+    "aspear berry": {
+        "emoji": Emojis.aspear_berry,
+        "growth_duration": 2,
+        "moisture_dry_out_duration": TWO_H_MOISTURE_DRY_OUT_DURATION,
+    },
+    "sitrus berry": {
+        "emoji": Emojis.sitrus_berry,
+        "growth_duration": 2,
+        "moisture_dry_out_duration": TWO_H_MOISTURE_DRY_OUT_DURATION,
+    },
+    "salac berry": {
+        "emoji": Emojis.salac_berry,
+        "growth_duration": 6,
+        "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "chesto berry": {
+        "emoji": Emojis.chesto_berry,
+        "growth_duration": 3,
+        "moisture_dry_out_duration": THREE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "persim berry": {
+        "emoji": Emojis.persim_berry,
+        "growth_duration": 3,
+        "moisture_dry_out_duration": THREE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "pomeg berry": {
+        "emoji": Emojis.pomeg_berry,
+        "growth_duration": 4,
+        "moisture_dry_out_duration": FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "kelpsy berry": {
+        "emoji": Emojis.kelpsy_berry,
+        "growth_duration": 4,
+        "moisture_dry_out_duration": FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "qualot berry": {
+        "emoji": Emojis.qualot_berry,
+        "growth_duration": 4,
+        "moisture_dry_out_duration": FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "hondew berry": {
+        "emoji": Emojis.hondew_berry,
+        "growth_duration": 4,
+        "moisture_dry_out_duration": FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "grepa berry": {
+        "emoji": Emojis.grepa_berry,
+        "growth_duration": 4,
+        "moisture_dry_out_duration": FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "tamato berry": {
+        "emoji": Emojis.tomato_berry,
+        "growth_duration": 4,
+        "moisture_dry_out_duration": FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "lum berry": {
+        "emoji": Emojis.lum_berry,
+        "growth_duration": 5,
+        "moisture_dry_out_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "occa berry": {
+        "emoji": Emojis.occa_berry,
+        "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "yache berry": {
+        "emoji": Emojis.yache_berry,
+        "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "shuca berry": {
+        "emoji": Emojis.shuca_berry,
+        "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+}
+
+next_stage_map = {
+    "planted": "sprouted",
+    "sprouted": "taller",
+    "taller": "blooming",
+    "blooming": "berry",
+}
 
 
 async def upsert_berry_reminder(
@@ -36,6 +145,7 @@ async def upsert_berry_reminder(
     notified_for_water: bool = False,
     notified: bool = False,
     mulch_type: str = None,
+    moisture_dries_on: int = None,
 ):
     """Upserts a berry reminder for the given user_id and slot_number."""
     try:
@@ -46,9 +156,9 @@ async def upsert_berry_reminder(
                     user_id, user_name, slot_number, mulch_type,
                     grows_on, stage, channel_id, channel_name,
                     berry_name, water_can_type, watered,
-                    notified_for_water, notified
+                    notified_for_water, notified, moisture_dries_on
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                 ON CONFLICT (user_id, slot_number) DO UPDATE SET
                     user_name = EXCLUDED.user_name,
                     mulch_type = COALESCE(EXCLUDED.mulch_type, berry_reminder.mulch_type),
@@ -60,7 +170,8 @@ async def upsert_berry_reminder(
                     water_can_type = COALESCE(EXCLUDED.water_can_type, berry_reminder.water_can_type),
                     watered = COALESCE(EXCLUDED.watered, berry_reminder.watered),
                     notified_for_water = COALESCE(EXCLUDED.notified_for_water, berry_reminder.notified_for_water),
-                    notified = COALESCE(EXCLUDED.notified, berry_reminder.notified)
+                    notified = COALESCE(EXCLUDED.notified, berry_reminder.notified),
+                    moisture_dries_on = COALESCE(EXCLUDED.moisture_dries_on, berry_reminder.moisture_dries_on)
                 """,
                 user_id,
                 user_name,
@@ -75,6 +186,7 @@ async def upsert_berry_reminder(
                 watered,
                 notified_for_water,
                 notified,
+                moisture_dries_on,
             )
         pretty_log(
             "db",
@@ -279,4 +391,52 @@ async def fetch_all_due_berry_reminders(bot: discord.Client):
             return [dict(row) for row in rows]
     except Exception as e:
         pretty_log("warn", f"Failed to fetch due berry reminders: {e}")
+        return []
+
+
+async def update_moisture_dries_on(
+    bot: discord.Client, user_id: int, slot_number: int, moisture_dries_on: int
+):
+    """Updates the moisture_dries_on time for a specific berry reminder."""
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE berry_reminder
+                SET moisture_dries_on = $1
+                WHERE user_id = $2 AND slot_number = $3
+                """,
+                moisture_dries_on,
+                user_id,
+                slot_number,
+            )
+        pretty_log(
+            "db",
+            f"Updated moisture_dries_on to {moisture_dries_on} for user_id {user_id} in slot {slot_number}",
+        )
+    except Exception as e:
+        pretty_log(
+            "warn",
+            f"Failed to update moisture_dries_on for user {user_id} in slot {slot_number}: {e}",
+        )
+
+
+async def fetch_all_due_moisture_dries_on(bot: discord.Client):
+    """
+    Fetches all berry reminders where moisture_dries_on is due"""
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT DISTINCT ON (user_id, slot_number) *
+                FROM berry_reminder
+                WHERE moisture_dries_on <= EXTRACT(EPOCH FROM NOW())::BIGINT
+                ORDER BY user_id, slot_number, moisture_dries_on ASC;
+                """
+            )
+
+            return [dict(row) for row in rows]
+    except Exception as e:
+        pretty_log("warn", f"Failed to fetch due moisture_dries_on reminders: {e}")
+        return []
         return []

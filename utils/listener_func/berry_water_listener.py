@@ -10,13 +10,15 @@ from utils.database.berry_reminder import (
     get_user_berry_reminder_slot,
     update_mulch_info,
     upsert_berry_reminder,
+    berry_map,
+    update_moisture_dries_on
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-
-#enable_debug(f"{__name__}.handle_berry_water_message")
-#enable_debug(f"{__name__}.handle_mulch_message")
+import time
+# enable_debug(f"{__name__}.handle_berry_water_message")
+# enable_debug(f"{__name__}.handle_mulch_message")
 
 
 def parse_berry_water_message(message: str):
@@ -104,6 +106,18 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
     # Upsert each berry reminder in the database
     for berry in parsed_data["berries"]:
         try:
+            # Compute moisture dries on based on berry
+            moisture_dries_on = None
+            water_can_type=parsed_data["watering_can_emoji"]
+            if water_can_type != "sprayduck":
+                berry_info = berry_map.get(berry["berry_name"].lower())
+                if berry_info:
+                    moisture_dries_on_duration = berry_info["moisture_dry_out_duration"]
+                    # compute current time + moisture dries on in seconds
+                    moisture_dries_on = (
+                        int(time.time()) + moisture_dries_on_duration * 3600
+                    )
+
             await upsert_berry_reminder(
                 bot,
                 user_id=user_id,
@@ -115,6 +129,7 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
                 channel_name=member_channel_name,
                 berry_name=berry["berry_name"],
                 water_can_type=parsed_data["watering_can_emoji"],
+                moisture_dries_on=moisture_dries_on,
             )
             pretty_log(
                 "db",
@@ -153,7 +168,7 @@ async def handle_mulch_message(bot, message):
         return
     send_message = True
     if "growth mulch" in message.content.lower():
-        debug_log("Message does not contain 'growth mulch'. Ignoring.")
+
         content = f"{member.mention} please use `;berry` so I can update your next berry stage reminder!"
     else:
         mulch_info = extract_mulch_info_message(message.content)
@@ -169,6 +184,21 @@ async def handle_mulch_message(bot, message):
         if existing_reminder:
             await update_mulch_info(bot, user_id, slot_number, mulch_type)
             send_message = False
+            if "damp mulch" in message.content.lower():
+                berry_data = await get_user_berry_reminder_slot(bot, user_id, slot_number)
+                berry_name = berry_data["berry_name"] if berry_data else "unknown berry"
+                berry_info = berry_map.get(berry_name)
+                if berry_info:
+                    moisture_dries_on_duration = berry_info["moisture_dry_out_duration"]
+                    moisture_dries_on_time = berry_data["moisture_dries_on"]
+                    if moisture_dries_on_time and moisture_dries_on_duration:
+                        new_moisture_dries_on = moisture_dries_on_time + moisture_dries_on_duration * 3600
+                        await update_moisture_dries_on(bot, user_id, slot_number, new_moisture_dries_on)
+                        pretty_log(
+                            "db",
+                            f"Updated moisture dries on for user_id {user_id} slot {slot_number} to {new_moisture_dries_on} after damp mulch application.",
+                        )
+
         else:
             content = f"{member.mention} I noticed you applied {mulch_type} to slot {slot_number}, but I couldn't find that slot in my database. Please use `;berry` so I can update your reminders!"
 

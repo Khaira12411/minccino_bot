@@ -11,6 +11,7 @@ from utils.database.berry_reminder import (
     update_growth_stage,
     berry_map,
     next_stage_map,
+    fetch_all_due_moisture_dries_on,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
@@ -44,11 +45,11 @@ async def update_growth_stage_func(
 # 🍥──────────────────────────────────────────────
 #   Berry Reminder Checker Task
 # 🍥──────────────────────────────────────────────
-async def berry_reminder_checker(bot: discord.Client):
+async def berry_water_reminder(bot: discord.Client):
     """Checks for upcoming berry reminders and sends notifications."""
 
     # debug_log("Fetching all due berry reminders...")
-    due_reminders = await fetch_all_due_berry_reminders(bot)
+    due_reminders = await fetch_all_due_moisture_dries_on(bot)
 
     if not due_reminders:
         # debug_log("No due berry reminders found. Exiting checker.")
@@ -95,7 +96,6 @@ async def berry_reminder_checker(bot: discord.Client):
         reminders.sort(key=lambda r: r["slot_number"])
 
         to_be_watered_berry_names = []
-        to_be_harvested_berry_names = []
         for reminder in reminders:
             debug_log(
                 f"Processing reminder for slot {reminder['slot_number']}: {reminder}"
@@ -107,7 +107,6 @@ async def berry_reminder_checker(bot: discord.Client):
             if isinstance(mulch_type, str) and mulch_type != "unknown":
                 mulch_type = mulch_type.lower()
             slot_number = reminder["slot_number"]
-            context = "watering stage"
             berry_name_raw = (
                 reminder["berry_name"].lower()
                 if reminder.get("berry_name")
@@ -118,71 +117,24 @@ async def berry_reminder_checker(bot: discord.Client):
             debug_log(
                 f"water_can_type={water_can_type}, stage={stage}, next_stage={next_stage}, mulch_type={mulch_type}, slot_number={slot_number}, berry_name_raw={berry_name_raw}"
             )
-            if water_can_type != "unknown" and stage != "unknown":
-                if water_can_type.lower() == "sprayduck" and water_can_type.lower() == "wailmer pail":
-                    debug_log(
-                        f"Sprayduck/Wailmer Pail used for slot {slot_number}. next_stage={next_stage}"
-                    )
-                    if next_stage.lower() != "berry":
-                        debug_log(
-                            f"Updating growth stage for slot {slot_number} (not berry stage)"
-                        )
-                        await update_growth_stage_func(
-                            bot,
-                            user_id,
-                            slot_number,
-                            next_stage,
-                            reminder["berry_name"],
-                        )
-                        continue  # Skip sending reminder if already watered with sprayduck
-                    else:
-                        context = "harvest stage"
-
-                else:
-                    # Spray Lotad needs constant watering reminding
-                    if next_stage.lower() == "berry":
-                        context = "harvest stage"
-                    else:
-                        context = "watering stage"
-                        debug_log(
-                            f"Growth paused for slot {slot_number}, removing reminder."
-                        )
 
             berry_name = (
                 f"{berry_emoji} {berry_name_raw.title()} (Slot {slot_number})".strip()
             )
             debug_log(
-                f"Prepared berry name: {berry_name} (raw: {berry_name_raw}) for context: {context}"
+                f"Prepared berry name: {berry_name} (raw: {berry_name_raw})"
             )
-            if context == "watering stage":
-                to_be_watered_berry_names.append(berry_name)
-                debug_log(
-                    f"Added to watering list: {berry_name} for slot {slot_number}"
-                )
-            else:
-                to_be_harvested_berry_names.append(berry_name)
-                debug_log(
-                    f"Added to harvesting list: {berry_name} for slot {slot_number}"
-                )
-            if not to_be_watered_berry_names and not to_be_harvested_berry_names:
-                debug_log(
-                    f"No berries to be watered or harvested for user_id={user_id} after processing reminders. Skipping message sending."
-                )
-                continue
 
-        # Compose message depending on how many berries are due
-        if not to_be_watered_berry_names and not to_be_harvested_berry_names:
+            to_be_watered_berry_names.append(berry_name)
             debug_log(
-                f"No berries to be watered or harvested for user_id={user_id} after processing reminders. Skipping message sending."
+                f"Added to watering list: {berry_name} for slot {slot_number}"
             )
-            continue
+
 
         to_be_watered_field_name = (
             "Berries to be watered. Use `;berry water` to water them:"
         )
-        to_be_harvested_field_name = (
-            "Berries to be harvested. Use `;berry harvest` to harvest them:"
-        )
+
         debug_log(f"Composing embed for user {user_name} (ID: {user_id})")
         embed = discord.Embed(color=0x66CC66)
         if to_be_watered_berry_names:
@@ -192,14 +144,8 @@ async def berry_reminder_checker(bot: discord.Client):
                 value="\n".join(to_be_watered_berry_names),
                 inline=False,
             )
-        if to_be_harvested_berry_names:
-            debug_log(f"Adding harvested berries field: {to_be_harvested_berry_names}")
-            embed.add_field(
-                name=to_be_harvested_field_name,
-                value="\n".join(to_be_harvested_berry_names),
-                inline=False,
-            )
-        msg = f"{Emojis.mouse_farmer} Hey {mention}, its time to check your berries!"
+
+        msg = f"{Emojis.mouse_farmer} Hey {mention}, your berries are thirsty!"
 
         debug_log(f"Composed message: {msg}")
 
@@ -228,28 +174,13 @@ async def berry_reminder_checker(bot: discord.Client):
 
                 # Remove each berry reminder after sending — use the actual reminder slot_number
                 for reminder in reminders:
-                    if (
-                        next_stage_map.get(reminder["stage"].lower(), "unknown").lower()
-                        == "berry"
-                    ):
-                        debug_log(
-                            f"Removing berry reminder for user_id={user_id}, slot_number={reminder['slot_number']}"
-                        )
-                        await remove_berry_reminder(
-                            bot, user_id, slot_number=reminder["slot_number"]
-                        )
-                    else:
-                        # Update growth stage to next_stage for non-berry reminders after sending reminder
-                        debug_log(
-                            f"Updating growth stage to next_stage for user_id={user_id}, slot_number={reminder['slot_number']}"
-                        )
-                        await update_growth_stage_func(
-                            bot,
-                            user_id,
-                            reminder["slot_number"],
-                            next_stage_map.get(reminder["stage"].lower(), "unknown"),
-                            reminder["berry_name"],
-                        )
+                    debug_log(
+                        f"Removing berry reminder for user_id={user_id}, slot_number={reminder['slot_number']} after moisture dry out reminder sent."
+                    )
+                    await remove_berry_reminder(
+                        bot, user_id, slot_number=reminder["slot_number"]
+                    )
+
 
             except Exception as e:
                 pretty_log(
