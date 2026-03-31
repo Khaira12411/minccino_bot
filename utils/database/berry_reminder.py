@@ -88,7 +88,10 @@ async def upsert_berry_reminder(
             f"Failed to upsert berry reminder for user {user_id} in slot {slot_number}: {e}",
         )
 
-async def update_mulch_info(bot:discord.Client, user_id: int, slot_number: int, mulch_type: str):
+
+async def update_mulch_info(
+    bot: discord.Client, user_id: int, slot_number: int, mulch_type: str
+):
     """Updates the mulch type for a specific berry reminder."""
     try:
         async with bot.pg_pool.acquire() as conn:
@@ -110,10 +113,12 @@ async def update_mulch_info(bot:discord.Client, user_id: int, slot_number: int, 
         pretty_log(
             "warn",
             f"Failed to update mulch type for user {user_id} in slot {slot_number}: {e}",
-
         )
 
-async def get_user_berry_reminder_slot(bot: discord.Client, user_id: int, slot_number: int):
+
+async def get_user_berry_reminder_slot(
+    bot: discord.Client, user_id: int, slot_number: int
+):
     """Fetches a specific berry reminder for the given user_id and slot_number."""
     try:
         async with bot.pg_pool.acquire() as conn:
@@ -133,7 +138,11 @@ async def get_user_berry_reminder_slot(bot: discord.Client, user_id: int, slot_n
             f"Failed to fetch berry reminder for user {user_id} in slot {slot_number}: {e}",
         )
         return None
-async def update_growth_stage(bot: discord.Client, user_id: int, slot_number: int, stage: str, grows_on: int):
+
+
+async def update_growth_stage(
+    bot: discord.Client, user_id: int, slot_number: int, stage: str, grows_on: int
+):
     """Updates the growth stage and grows_on time for a specific berry reminder."""
     try:
         async with bot.pg_pool.acquire() as conn:
@@ -156,8 +165,9 @@ async def update_growth_stage(bot: discord.Client, user_id: int, slot_number: in
         pretty_log(
             "warn",
             f"Failed to update growth stage for user {user_id} in slot {slot_number}: {e}",
-
         )
+
+
 async def fetch_user_all_berry_reminder(bot: discord.Client, user_id: int):
     """
     Fetches all berry reminders for the given user_id.
@@ -179,7 +189,10 @@ async def fetch_user_all_berry_reminder(bot: discord.Client, user_id: int):
         pretty_log("warn", f"Failed to fetch berry reminders for user {user_id}: {e}")
         return []
 
-async def update_water_can_type_for_slot(bot: discord.Client, user_id: int, slot_number: int, water_can_type: str):
+
+async def update_water_can_type_for_slot(
+    bot: discord.Client, user_id: int, slot_number: int, water_can_type: str
+):
     """Updates the water can type for a specific berry reminder."""
     try:
         async with bot.pg_pool.acquire() as conn:
@@ -202,6 +215,8 @@ async def update_water_can_type_for_slot(bot: discord.Client, user_id: int, slot
             "warn",
             f"Failed to update water can type for user {user_id} in slot {slot_number}: {e}",
         )
+
+
 async def fetch_user_water_can_type(bot: discord.Client, user_id: int):
     """Fetches the water can type for the given user_id. Returns the water_can_type or None if not found."""
     try:
@@ -256,7 +271,7 @@ async def fetch_all_due_berry_reminders(bot: discord.Client):
                 """
                 SELECT DISTINCT ON (user_id, slot_number) *
                 FROM berry_reminder
-                WHERE grows_on <= (EXTRACT(EPOCH FROM NOW())::BIGINT + 60)
+                WHERE grows_on <= EXTRACT(EPOCH FROM NOW())::BIGINT
                 ORDER BY user_id, slot_number, grows_on ASC;
                 """
             )

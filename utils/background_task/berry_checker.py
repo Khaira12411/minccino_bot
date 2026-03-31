@@ -215,8 +215,14 @@ async def berry_reminder_checker(bot: discord.Client):
             )
             if context == "watering stage":
                 to_be_watered_berry_names.append(berry_name)
+                debug_log(
+                    f"Added to watering list: {berry_name} for slot {slot_number}"
+                )
             else:
                 to_be_harvested_berry_names.append(berry_name)
+                debug_log(
+                    f"Added to harvesting list: {berry_name} for slot {slot_number}"
+                )
             if not to_be_watered_berry_names and not to_be_harvested_berry_names:
                 debug_log(
                     f"No berries to be watered or harvested for user_id={user_id} after processing reminders. Skipping message sending."
@@ -303,7 +309,7 @@ async def berry_reminder_checker(bot: discord.Client):
                             next_stage_map.get(reminder["stage"].lower(), "unknown"),
                             reminder["berry_name"],
                         )
-                        
+
 
             except Exception as e:
                 pretty_log(
