@@ -291,6 +291,19 @@ async def berry_reminder_checker(bot: discord.Client):
                         await remove_berry_reminder(
                             bot, user_id, slot_number=reminder["slot_number"]
                         )
+                    else:
+                        # Update growth stage to next_stage for non-berry reminders after sending reminder
+                        debug_log(
+                            f"Updating growth stage to next_stage for user_id={user_id}, slot_number={reminder['slot_number']}"
+                        )
+                        await update_growth_stage_func(
+                            bot,
+                            user_id,
+                            reminder["slot_number"],
+                            next_stage_map.get(reminder["stage"].lower(), "unknown"),
+                            reminder["berry_name"],
+                        )
+                        
 
             except Exception as e:
                 pretty_log(
