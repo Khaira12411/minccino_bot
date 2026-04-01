@@ -21,11 +21,15 @@ from utils.loggers.pretty_logs import pretty_log
     moisture_dries_on BIGINT,
     PRIMARY KEY (user_id, slot_number)
 );"""
-TWO_H_MOISTURE_DRY_OUT_DURATION = 7  # in hours,
-THREE_H_BERRY_MOISTURE_DRY_OUT_DURATION = 9  # in hours
-FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION = 8  # in hours
-FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION = 10  # in hours
-SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION = 13  # in hours
+TWO_H_MOISTURE_DRY_OUT_DURATION = 7 * 3600  # 7 hours in seconds
+THREE_H_BERRY_MOISTURE_DRY_OUT_DURATION = 9 * 3600  # 9 hours in seconds
+# 8 hours + 20 minutes in seconds
+FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION = (8 * 3600) + (
+    20 * 60
+)  # 8 hours 20 minutes in seconds
+FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION = 10 * 3600  # 10 hours in seconds
+SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION = 13 * 3600  # 13 hours in seconds
+
 
 berry_map = {
     "oran berry": {
@@ -438,5 +442,4 @@ async def fetch_all_due_moisture_dries_on(bot: discord.Client):
             return [dict(row) for row in rows]
     except Exception as e:
         pretty_log("warn", f"Failed to fetch due moisture_dries_on reminders: {e}")
-        return []
         return []

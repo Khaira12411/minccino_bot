@@ -118,7 +118,7 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
                     moisture_dries_on_duration = berry_info["moisture_dry_out_duration"]
                     # compute current time + moisture dries on in seconds
                     moisture_dries_on = (
-                        int(time.time()) + moisture_dries_on_duration * 3600
+                        int(time.time()) + moisture_dries_on_duration
                     )
 
             await upsert_berry_reminder(
@@ -195,7 +195,7 @@ async def handle_mulch_message(bot, message):
                     moisture_dries_on_duration = berry_info["moisture_dry_out_duration"]
                     moisture_dries_on_time = berry_data["moisture_dries_on"]
                     if moisture_dries_on_time and moisture_dries_on_duration:
-                        new_moisture_dries_on = moisture_dries_on_time + moisture_dries_on_duration * 3600
+                        new_moisture_dries_on = moisture_dries_on_time + moisture_dries_on_duration 
                         await update_moisture_dries_on(bot, user_id, slot_number, new_moisture_dries_on)
                         pretty_log(
                             "db",
