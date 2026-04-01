@@ -1,16 +1,20 @@
 import discord
 
-from config.current_setup import HANA_USER_ID, ALLOWED_BERRY_REMINDER_USER_IDS
-from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
+from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID
+from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
+    remove_berry_reminder,
     upsert_berry_reminder,
-    remove_berry_reminder
+)
+from utils.database.watering_can_db import (
+    check_if_bot_already_asked,
+    get_watering_can,
+    upsert_watering_can,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-from utils.database.watering_can_db import upsert_watering_can, get_watering_can
 
 # enable_debug(f"{__name__}.berry_listener")
 
@@ -29,14 +33,26 @@ async def berry_listener(
         return
     user_id = member.id
     guild = message.guild
-    if user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
-        debug_log(f"Message from user_id {user_id} is not allowed in berry users. Ignoring.")
+    straymon_role = guild.get_role(STRAYMONS__ROLES.straymon)
+    if (
+        straymon_role not in member.roles
+        and user_id not in ALLOWED_BERRY_REMINDER_USER_IDS
+    ):
+        debug_log(
+            f"Message from user_id {user_id} is not allowed in berry users. Ignoring."
+        )
         return
     # Check if they have watering can
     water_can_type = await get_watering_can(bot, user_id)
     if not water_can_type:
-        content =f"Hi {member.mention}, I noticed you have a berry reminder but no watering can information stored. Kindly do `;items` then go to __Berry Pouch__ to set up your watering can type for accurate watering reminders then do `;berry` again!"
+        if await check_if_bot_already_asked(bot, user_id):
+            debug_log(
+                f"Bot has already asked user_id {user_id} about watering can. Not asking again."
+            )
+            return
+        content = f"Hi {member.mention}, I noticed you have a berry reminder but no watering can information stored. Kindly do `;items` then go to __Berry Pouch__ to set up your watering can type for accurate watering reminders then do `;berry` again!"
         await message.channel.send(content)
+        await upsert_watering_can(bot, user_id, member.name, None)
         return
     from utils.cache.straymon_member_cache import fetch_straymon_member_cache
 
@@ -62,7 +78,9 @@ async def berry_listener(
         are_new_reminders = True
 
     # Extract berry reminder details from the embed description
-    debug_log(f"Extracting berry reminder details from embed description: {embed_description}")
+    debug_log(
+        f"Extracting berry reminder details from embed description: {embed_description}"
+    )
     berry_slots = extract_berry_slots(embed_description)
     pretty_log(
         "debug",
@@ -94,7 +112,6 @@ async def berry_listener(
                     and r["stage"] == growth_stage
                     and r["grows_on"] == next_stage_time
                     and r["mulch_type"] == mulch_name
-
                 ),
                 None,
             )
@@ -120,7 +137,6 @@ async def berry_listener(
                         berry_name=berry_name,
                         mulch_type=mulch_name,
                         water_can_type=water_can_type,
-
                     )
                 else:
                     # Remove the reminder from the database if it's ready to harvest
@@ -139,7 +155,6 @@ async def berry_listener(
                     berry_name=berry_name,
                     mulch_type=mulch_name,
                     water_can_type=water_can_type,
-
                 )
             else:
                 # Remove the reminder from the database if it's ready to harvest
@@ -162,8 +177,7 @@ def extract_berry_slots(embed_description: str):
 
     # Growth stage regex: matches emoji, stage name, and [STAGE x/y] with optional backticks
     growth_stage_pattern = re.compile(
-        r"<:[^:]+:\d+>\s*([^`\[]+?)\s*`?\[STAGE \d+/\d+\]`?",
-        re.IGNORECASE
+        r"<:[^:]+:\d+>\s*([^`\[]+?)\s*`?\[STAGE \d+/\d+\]`?", re.IGNORECASE
     )
     growth_paused_pattern = re.compile(r"growth paused", re.IGNORECASE)
     ready_to_harvest_pattern = re.compile(r"ready to harvest", re.IGNORECASE)

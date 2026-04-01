@@ -4,7 +4,7 @@ import discord
 
 from config.aesthetic import *
 from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID
-from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
+from config.straymons_constants import STRAYMONS__TEXT_CHANNELS, STRAYMONS__ROLES
 from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
     get_user_berry_reminder_slot,
@@ -84,8 +84,8 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
         debug_log("Message did not match berry water format.")
         return
     debug_log(f"Parsed berry water message: {parsed_data}")
-
-    if user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
+    straymon_role = guild.get_role(STRAYMONS__ROLES.straymon)
+    if straymon_role not in member.roles and user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
         debug_log(f"Message from user_id {user_id} is not allowed. Ignoring.")
         return
 
@@ -166,7 +166,11 @@ async def handle_mulch_message(bot, message):
     user_id = member.id
     guild = message.guild
 
-    if user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
+    straymon_role = guild.get_role(STRAYMONS__ROLES.straymon)
+    if (
+        straymon_role not in member.roles
+        and user_id not in ALLOWED_BERRY_REMINDER_USER_IDS
+    ):
         debug_log(f"Message from user_id {user_id} is not allowed. Ignoring.")
         return
     send_message = True
@@ -195,7 +199,7 @@ async def handle_mulch_message(bot, message):
                     moisture_dries_on_duration = berry_info["moisture_dry_out_duration"]
                     moisture_dries_on_time = berry_data["moisture_dries_on"]
                     if moisture_dries_on_time and moisture_dries_on_duration:
-                        new_moisture_dries_on = moisture_dries_on_time + moisture_dries_on_duration 
+                        new_moisture_dries_on = moisture_dries_on_time + moisture_dries_on_duration
                         await update_moisture_dries_on(bot, user_id, slot_number, new_moisture_dries_on)
                         pretty_log(
                             "db",

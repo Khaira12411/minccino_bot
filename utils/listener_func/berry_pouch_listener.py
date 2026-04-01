@@ -2,7 +2,7 @@ import re
 import discord
 
 from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID
-from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
+from config.straymons_constants import STRAYMONS__ROLES
 from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
     upsert_berry_reminder,
@@ -69,7 +69,11 @@ async def handle_berry_pouch_message(bot: discord.Client, before: discord.Messag
     user_id = member.id
     user_name = member.name
     guild = message.guild
-    if user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
+    straymon_role = guild.get_role(STRAYMONS__ROLES.straymon)
+    if (
+        straymon_role not in member.roles
+        and user_id not in ALLOWED_BERRY_REMINDER_USER_IDS
+    ):
         debug_log(f"Message from user_id {user_id} is not in Allowed Berry Reminder User. Ignoring.")
         return
     current_water_can_type = extract_best_watering_tool_from_embed(embed)
@@ -78,7 +82,7 @@ async def handle_berry_pouch_message(bot: discord.Client, before: discord.Messag
         return
     # Upsert the current water can type in the database for this user
     await upsert_watering_can(bot, user_id, user_name, current_water_can_type)
-    
+
     # Check if she has any plants
     user_berries = await fetch_user_all_berry_reminder(bot, user_id)
     if not user_berries:
