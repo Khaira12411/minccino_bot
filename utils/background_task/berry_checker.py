@@ -119,7 +119,7 @@ async def berry_reminder_checker(bot: discord.Client):
                 f"water_can_type={water_can_type}, stage={stage}, next_stage={next_stage}, mulch_type={mulch_type}, slot_number={slot_number}, berry_name_raw={berry_name_raw}"
             )
             if water_can_type != "unknown" and stage != "unknown":
-                if water_can_type.lower() == "sprayduck" and water_can_type.lower() == "wailmer pail":
+                if water_can_type.lower() == "sprayduck" or water_can_type.lower() == "wailmer pail":
                     debug_log(
                         f"Sprayduck/Wailmer Pail used for slot {slot_number}. next_stage={next_stage}"
                     )
