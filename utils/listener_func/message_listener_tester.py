@@ -32,3 +32,17 @@ async def test_message_listener(bot: discord.Client, message: discord.Message):
                 "Detected Berry Water message, processing berry water reminders...",
             )
             await handle_berry_water_message(bot=bot, message=replied_message)
+    # 💜────────────────────────────────────────────
+    #          🧑‍🌾  Mulch Listener
+    # 💜────────────────────────────────────────────
+    if message.content:
+        if (
+            "Applied" in replied_message_content
+            and "Mulch" in replied_message_content
+            and "to Slot" in replied_message_content
+        ):
+            pretty_log(
+                "info",
+                "Detected Mulch message, processing growth mulch reminders...",
+            )
+            await handle_mulch_message(bot=bot, message=replied_message)

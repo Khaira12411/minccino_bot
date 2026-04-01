@@ -240,7 +240,7 @@ async def get_user_berry_reminder_slot(
         async with bot.pg_pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
-                SELECT user_id, user_name, slot_number, grows_on, stage, channel_id, channel_name, berry_name, mulch_type, water_can_type, watered, notified_for_water, notified
+                SELECT *
                 FROM berry_reminder
                 WHERE user_id = $1 AND slot_number = $2;
                 """,
