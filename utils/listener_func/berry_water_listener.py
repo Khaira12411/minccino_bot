@@ -17,7 +17,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 import time
-# enable_debug(f"{__name__}.handle_berry_water_message")
+enable_debug(f"{__name__}.handle_berry_water_message")
 # enable_debug(f"{__name__}.handle_mulch_message")
 
 
@@ -110,7 +110,10 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
             moisture_dries_on = None
             water_can_type=parsed_data["watering_can_emoji"]
             if water_can_type != "sprayduck":
-                berry_info = berry_map.get(berry["berry_name"].lower())
+                berry_name = berry["berry_name"].lower() if berry["berry_name"] else None
+                debug_log(f"Looking up berry info for {berry_name}")
+                berry_info = berry_map.get(berry_name)
+
                 if berry_info:
                     moisture_dries_on_duration = berry_info["moisture_dry_out_duration"]
                     # compute current time + moisture dries on in seconds
