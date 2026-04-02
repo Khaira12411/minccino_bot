@@ -199,7 +199,17 @@ async def berry_reminder_checker(bot: discord.Client):
                 value="\n".join(to_be_harvested_berry_names),
                 inline=False,
             )
-        msg = f"{Emojis.mouse_farmer} Hey {mention}, its time to check your berries!"
+        if not to_be_watered_berry_names and to_be_harvested_berry_names:
+            msg = f"{Emojis.mouse_harvest} Hey {mention}, its time to harvest your berries!"
+            thumbnail_url = MINC_Thumbnails.harvest
+        elif to_be_watered_berry_names and not to_be_harvested_berry_names:
+            msg = f"{Emojis.mouse_water} Hey {mention}, its time to water your berries for additional yield!"
+            thumbnail_url = MINC_Thumbnails.water
+        else:
+            msg = f"{Emojis.mouse_farmer} Hey {mention}, its time to check your berries!"
+            thumbnail_url = MINC_Thumbnails.plant
+        embed.set_thumbnail(url=thumbnail_url)
+        embed.set_image(url=MINC_DIVIDER.flowers)
 
         debug_log(f"Composed message: {msg}")
 

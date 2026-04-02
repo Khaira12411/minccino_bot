@@ -1,4 +1,7 @@
 class Emojis:
+    mouse_water = "<:mouse_water:1489170863180746783>"
+    mouse_harvest ="<:mouse_harvest:1489170861033394206>"
+    mouse_drought = "<:mouse_drought:1489170858038661140>"
     egg = "<:egg:1466648759835562105>"
     egg_shake = "<a:egg_sway:1466648747441131722>"
     santa_mouse = "<:santa_mouse:1451458853710331926>"
@@ -135,12 +138,14 @@ class MINC_Thumbnails:
     sunflower_bear = "https://media.discordapp.net/attachments/1394913073520967680/1412594109151051886/ed24412de3132345037f6871a550540f-removebg-preview_1.png?ex=68b8dc48&is=68b78ac8&hm=dc932f09d1cbfcc400e2f9d521787fc22d28ef5f4675824c1e3e295f6992b4a8&=&format=webp&quality=lossless&width=422&height=749"
     bell = "https://media.discordapp.net/attachments/1394913073520967680/1413355689757118605/bell.png?ex=68bba18f&is=68ba500f&hm=fa8f943e71f74bba34121517ffc3bd2c748b6054c1e03c555557181900d5ea6f&=&format=webp&quality=lossless&width=560&height=842"
     reminders = "https://media.discordapp.net/attachments/1394913073520967680/1415099761253421076/image.png?ex=68c1f9da&is=68c0a85a&hm=d3f2bb2a1961e23b6f949ce0b562c41029ac5045f05f40d3946fa25fc08bed70&=&format=webp&quality=lossless&width=576&height=576"
-
-
+    plant = "https://media.discordapp.net/attachments/1394913073520967680/1489172413634842634/image.png?ex=69cf7362&is=69ce21e2&hm=cb9af5c404e517a806aca2e2d5aed965a303aeed4b34a743ae4fbb2a1c83b00b&=&format=webp&quality=lossless&width=480&height=480"
+    harvest = "https://media.discordapp.net/attachments/1394913073520967680/1489166337237454868/image.png?ex=69cf6dba&is=69ce1c3a&hm=99d6ad6b13f465021dc5b8dc85d5fc0bf7dda101ef1c4c38842d64b2adf7908d&=&format=webp&quality=lossless&width=480&height=480"
+    drought = "https://media.discordapp.net/attachments/1394913073520967680/1489165703570395166/drought.png?ex=69cf6d23&is=69ce1ba3&hm=dc0b4e746005fbabf00551ccf139b62eaa9e9ed023b3ebd3e36e7139154c27f6&=&format=webp&quality=lossless&width=480&height=480"
+    water = "https://media.discordapp.net/attachments/1394913073520967680/1489165651724468318/image.png?ex=69cf6d16&is=69ce1b96&hm=f7922fe35da043988f7ced5e08275cc817688de3404df20bd6e8aedc107f3346&=&format=webp&quality=lossless&width=480&height=480"
 class MINC_DIVIDER:
     brown_stars = "https://media.discordapp.net/attachments/1393740397905313912/1412595875360014376/image.png?ex=68b8dded&is=68b78c6d&hm=1562907ed9097b683e921ce2f8790e23ea6d8c7dacc51a2587cff87882b9f4ff&=&format=webp&quality=lossless&width=1215&height=54"
     tulips = "https://media.discordapp.net/attachments/1393740397905313912/1412599439968964689/image.png?ex=68b8e13f&is=68b78fbf&hm=d6750e5a1ddc1a3c7a208efc86938938185e0f979b23c8ed53f3c2d4e358689f&=&format=webp&quality=lossless&width=1646&height=191"
-
+    flowers = "https://media.discordapp.net/attachments/1393740397905313912/1489169406738042900/image.png?ex=69cf7095&is=69ce1f15&hm=c0cd05dcd4e47dadf53d0a5bff4695c5cb21837c38a765a27da4bb91c194ee2d&=&format=webp&quality=lossless&width=904&height=68"
 
 class Image_Link:
     new_week = "https://media.discordapp.net/attachments/1358029599463968798/1396344374920613919/Welcome_to_Straymons_2.png?ex=68e5e509&is=68e49389&hm=f277d9deeadc4b8fff890fce51f6ae0b91de611d46cdec04d9608f02f3dd0979&=&format=webp&quality=lossless&width=915&height=307"

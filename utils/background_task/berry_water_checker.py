@@ -145,7 +145,9 @@ async def berry_water_reminder(bot: discord.Client):
                 inline=False,
             )
 
-        msg = f"{Emojis.mouse_farmer} Hey {mention}, your berries are thirsty!"
+        msg = f"{Emojis.mouse_drought} Hey {mention}, your berries are thirsty!"
+        embed.set_thumbnail(url=MINC_Thumbnails.drought)
+        embed.set_image(url=MINC_DIVIDER.flowers)
 
         debug_log(f"Composed message: {msg}")
 
