@@ -22,7 +22,7 @@ from utils.loggers.pretty_logs import pretty_log
     PRIMARY KEY (user_id, slot_number)
 );"""
 TWO_H_MOISTURE_DRY_OUT_DURATION = 7 * 3600  # 7 hours in seconds
-THREE_H_BERRY_MOISTURE_DRY_OUT_DURATION = 9 * 3600  # 9 hours in seconds
+THREE_H_BERRY_MOISTURE_DRY_OUT_DURATION = 8 * 3600  # 8 hours in seconds
 # 8 hours + 20 minutes in seconds
 FOUR_H_BERRY_MOISTURE_DRY_OUT_DURATION = (8 * 3600) + (
     20 * 60
