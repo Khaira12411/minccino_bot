@@ -1,7 +1,7 @@
 class Emojis:
-    mouse_water = "<:mouse_water:1489170863180746783>"
-    mouse_harvest ="<:mouse_harvest:1489170861033394206>"
-    mouse_drought = "<:mouse_drought:1489170858038661140>"
+    mouse_water = "<:mouse_water:1489174949808701491>"
+    mouse_harvest = "<:mouse_harvest:1489174947493449798>"
+    mouse_drought = "<:mouse_drought:1489174944721014865>"
     egg = "<:egg:1466648759835562105>"
     egg_shake = "<a:egg_sway:1466648747441131722>"
     santa_mouse = "<:santa_mouse:1451458853710331926>"
