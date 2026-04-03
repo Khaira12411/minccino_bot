@@ -7,9 +7,9 @@ from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNEL
 from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
     remove_berry_reminder,
-    upsert_berry_reminder,
     update_moisture_dries_on,
     update_moisture_dries_on_func,
+    upsert_berry_reminder,
 )
 from utils.database.watering_can_db import (
     check_if_bot_already_asked,
@@ -218,6 +218,22 @@ async def berry_listener(
             )
         else:
             debug_log("Failed to extract watering action from embed description.")
+
+    if (
+        "watered" in embed_description.lower()
+        and "eligible berries" in embed_description.lower()
+        and not "sprayduck" in embed_description.lower()
+    ):
+        # This means the user watered all eligible berries with a watering can that waters all berries, so we should update all moisture_dries_on for all berry reminders for this user
+        user_berries = await fetch_user_all_berry_reminder(bot, user_id)
+        for berry in user_berries:
+            await update_moisture_dries_on_func(
+                bot,
+                user_id,
+                berry["slot_number"],
+                berry["berry_name"],
+            )
+
     if "applied **damp mulch** to slot" in embed_description.lower():
         mulch_application = extract_mulch_application(embed_description)
         if mulch_application:
