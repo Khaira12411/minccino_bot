@@ -1,8 +1,10 @@
+import time
+
 import discord
 
 from config.aesthetic import Emojis
 from utils.loggers.pretty_logs import pretty_log
-import time
+
 # SQL TABLE
 """CREATE TABLE berry_reminder (
     user_id BIGINT,
@@ -114,15 +116,18 @@ berry_map = {
     },
     "occa berry": {
         "emoji": Emojis.occa_berry,
-        "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+        "growth_duration": 5,
+        "moisture_dry_out_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
     "yache berry": {
         "emoji": Emojis.yache_berry,
-        "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+        "growth_duration": 5,
+        "moisture_dry_out_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
     "shuca berry": {
         "emoji": Emojis.shuca_berry,
-        "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+        "growth_duration": 5,
+        "moisture_dry_out_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
     "chople berry": {
         "emoji": Emojis.chople_berry,
@@ -488,7 +493,13 @@ async def update_moisture_dries_on_func(
 
         moisture_dry_out_duration = berry_info["moisture_dry_out_duration"]
         new_moisture_dries_on = int(time.time()) + moisture_dry_out_duration
-        await update_moisture_dries_on(bot, user_id, slot_number, new_moisture_dries_on)
+        try:
+            await update_moisture_dries_on(bot, user_id, slot_number, new_moisture_dries_on)
+        except Exception as e:
+            pretty_log(
+                "warn",
+                f"Failed to update moisture_dries_on for user {user_id} in slot {slot_number} with berry '{berry_name}': {e}",
+            )
     except Exception as e:
         pretty_log(
             "warn",
