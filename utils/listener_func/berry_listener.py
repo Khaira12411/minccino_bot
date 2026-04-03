@@ -1,3 +1,5 @@
+import re
+
 import discord
 
 from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID
@@ -6,6 +8,8 @@ from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
     remove_berry_reminder,
     upsert_berry_reminder,
+    update_moisture_dries_on,
+    update_moisture_dries_on_func,
 )
 from utils.database.watering_can_db import (
     check_if_bot_already_asked,
@@ -17,6 +21,44 @@ from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
 # enable_debug(f"{__name__}.berry_listener")
+
+
+def extract_mulch_application(line: str):
+    """
+    Extracts the mulch emoji name, mulch label, and slot number from a mulch application line.
+    Example: "### <:damp_mulch:1486261015657185281> Applied **Damp Mulch** to Slot 1 (<:sprouted:1486510462416851014> Aspear Tree)!"
+    Returns a dict with keys: mulch_name, mulch_label, slot_number
+    """
+    pattern = re.compile(
+        r"<:(\w+):\d+>\s+Applied\s+\*\*(.+?)\*\*\s+to Slot (\d+)", re.IGNORECASE
+    )
+    match = pattern.search(line)
+    if match:
+        return {
+            "mulch_name": match.group(1),
+            "mulch_label": match.group(2),
+            "slot_number": int(match.group(3)),
+        }
+    return None
+
+
+def extract_watering_action(line: str):
+    """
+    Extracts the watering can emoji name, berry name, and slot number from a watering action line.
+    Example: "<:wailmer_pail:1486261601622425680> Watered **Aspear Berry** in Slot 3!"
+    Returns a dict with keys: water_can_emoji, berry_name, slot_number
+    """
+    pattern = re.compile(
+        r"<:(\w+):\d+>\s+Watered\s+\*\*(.+?)\*\*\s+in Slot (\d+)!", re.IGNORECASE
+    )
+    match = pattern.search(line)
+    if match:
+        return {
+            "water_can_emoji": match.group(1),
+            "berry_name": match.group(2),
+            "slot_number": int(match.group(3)),
+        }
+    return None
 
 
 async def berry_listener(
@@ -159,6 +201,38 @@ async def berry_listener(
             else:
                 # Remove the reminder from the database if it's ready to harvest
                 await remove_berry_reminder(bot, user_id, slot_number)
+    if (
+        "watered" in embed_description.lower()
+        and "in slot" in embed_description.lower()
+    ):
+        watering_action = extract_watering_action(embed_description)
+        if watering_action:
+            debug_log(
+                f"Extracted watering action from embed description: {watering_action}"
+            )
+            await update_moisture_dries_on_func(
+                bot,
+                user_id,
+                watering_action["slot_number"],
+                watering_action["berry_name"],
+            )
+        else:
+            debug_log("Failed to extract watering action from embed description.")
+    if "applied **damp mulch** to slot" in embed_description.lower():
+        mulch_application = extract_mulch_application(embed_description)
+        if mulch_application:
+            debug_log(
+                f"Extracted mulch application from embed description: {mulch_application}"
+            )
+            # Update the mulch type for this berry reminder in the database , no need for moisture_dries_on update
+            await update_moisture_dries_on(
+                bot=bot,
+                user_id=user_id,
+                slot_number=mulch_application["slot_number"],
+                moisture_dries_on=None,
+            )
+        else:
+            debug_log("Failed to extract mulch application from embed description.")
 
 
 def extract_berry_slots(embed_description: str):
