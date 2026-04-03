@@ -91,7 +91,13 @@ class Emojis:
     planted = "<:planted:1487046502890209370>"
     sprouted = "<:sprouted:1487046500767891557>"
     mouse_farmer = "<:mouse_farmer:1487315831582101615>"
-
+    passho_berry = "<:passho_berry:1489521559881383996>"
+    chople_berry = "<:chople_berry:1489521391198797964>"
+    wacan_berry = "<:wacan_berry:1489521388388749412>"
+    rindo_berry = "<:rindo_berry:1489521385989734490>"
+    liechi_berry = "<:liechi_berry:1489521383716159629>"
+    petaya_berry = "<:petaya_berry:1489521381589651526>"
+    
 class Emojis_Rarity:
     common = "<:common:1412000858329321482>"
     uncommon = "<:uncommon:1412000832161054770>"
