@@ -180,6 +180,15 @@ async def recommend_fishing_ball(message: discord.Message, bot):
         )
         return None
 
+    # --- Check per-rarity toggle for fishing ---
+    fishing_settings = user_settings.get("fishing", {})
+    # Only skip if the rarity is explicitly set to False (not missing or True)
+    if rarity in fishing_settings and fishing_settings[rarity] is False:
+        debug_log(
+            f"User {trainer_name or trainer_id} has {rarity} fishing reco disabled."
+        )
+        return None
+
     # Ignore caught messages
     if "You caught a" in embed_desc:
         debug_log(f"Ignored caught message {message.id}")
@@ -216,9 +225,7 @@ async def recommend_fishing_ball(message: discord.Message, bot):
         rarity_emoji = rarity_emojis.get(rarity_label.lower(), "")
 
         if display_all and all_balls_str:
-            msg = (
-                f"{Emojis.fish_spawn} **{user_settings['user_name']}** {rarity_emoji} → {all_balls_str}"
-            )
+            msg = f"{Emojis.fish_spawn} **{user_settings['user_name']}** {rarity_emoji} → {all_balls_str}"
         else:
             ball_emoji = ball_emojis.get(ball, "")
             msg = f"{Emojis.fish_spawn} **{user_settings['user_name']}** {rarity_emoji} → {ball_emoji} ({rate}%)"
@@ -247,4 +254,5 @@ async def recommend_fishing_ball(message: discord.Message, bot):
             bot=bot,
         )
         debug_log(f"Exception occurred: {e}")
+        return None
         return None
