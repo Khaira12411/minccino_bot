@@ -11,14 +11,15 @@ from utils.database.berry_reminder import (
     update_mulch_info,
     upsert_berry_reminder,
     berry_map,
-    update_moisture_dries_on
+    update_moisture_dries_on,
+    update_water_can_type_for_slot,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 import time
 # enable_debug(f"{__name__}.handle_berry_water_message")
-#enable_debug(f"{__name__}.handle_mulch_message")
+# enable_debug(f"{__name__}.handle_mulch_message")
 
 
 def parse_berry_water_message(message: str):
@@ -143,6 +144,47 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
                 "warn",
                 f"Failed to upsert berry reminder for user {user_id} in slot {berry['slot_number']}: {e}",
             )
+    # Handle hidden slots from "... and X more slots watered."
+    hidden_match = re.search(
+        r"\.\.\.\s+and\s+(\d+)\s+more\s+slots?\s+watered",
+        message.content,
+        re.IGNORECASE,
+    )
+    if hidden_match:
+        visible_slot_numbers = {
+            berry["slot_number"] for berry in parsed_data["berries"]
+        }
+        all_reminders = await fetch_user_all_berry_reminder(bot, user_id)
+        hidden_reminders = [
+            r for r in all_reminders if r["slot_number"] not in visible_slot_numbers
+        ]
+        water_can_type = parsed_data["watering_can_emoji"]
+        for reminder in hidden_reminders:
+            slot_number = reminder["slot_number"]
+            berry_name = reminder.get("berry_name")
+            try:
+                moisture_dries_on = None
+                if water_can_type != "sprayduck" and berry_name:
+                    berry_info = berry_map.get(berry_name.lower())
+                    if berry_info:
+                        moisture_dries_on = (
+                            int(time.time()) + berry_info["moisture_dry_out_duration"]
+                        )
+                await update_moisture_dries_on(
+                    bot, user_id, slot_number, moisture_dries_on
+                )
+                await update_water_can_type_for_slot(
+                    bot, user_id, slot_number, water_can_type
+                )
+                pretty_log(
+                    "db",
+                    f"Updated moisture for hidden slot {slot_number} for {user_name} (user_id: {user_id})",
+                )
+            except Exception as e:
+                pretty_log(
+                    "warn",
+                    f"Failed to update hidden slot {slot_number} for user {user_id}: {e}",
+                )
 
     # Add reaction to the replied message (if any)
     replied_message = message.reference and message.reference.resolved
