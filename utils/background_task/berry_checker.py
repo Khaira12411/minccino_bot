@@ -20,7 +20,7 @@ enable_debug(f"{__name__}.berry_reminder_checker")
 
 
 async def update_growth_stage_func(
-    bot: discord.Client, user_id: int, slot_number: int, stage: str, berry_name: str
+    bot: discord.Client, user_id: int, slot_number: int, stage: str, berry_name: str, mulch_type: str
 ):
     """Updates the growth stage and grows_on time for a specific berry reminder."""
     pretty_log(
@@ -33,6 +33,9 @@ async def update_growth_stage_func(
         )
         # Multiply by 3600 to convert hours to seconds
         grows_on = int(time.time()) + growth_duration * 3600
+        if mulch_type != "unknown":
+            if mulch_type.lower() == "growth mulch":
+                grows_on -= int(growth_duration * 0.25 * 3600)  # 25% faster
         await update_growth_stage(bot, user_id, slot_number, stage, grows_on)
     except Exception as e:
         pretty_log(
@@ -133,6 +136,7 @@ async def berry_reminder_checker(bot: discord.Client):
                             slot_number,
                             next_stage,
                             reminder["berry_name"],
+                            mulch_type=mulch_type,
                         )
                         continue  # Skip sending reminder if already watered with sprayduck
                     else:
@@ -253,12 +257,14 @@ async def berry_reminder_checker(bot: discord.Client):
                         debug_log(
                             f"Updating growth stage to next_stage for user_id={user_id}, slot_number={reminder['slot_number']}"
                         )
+                        mulch_type = reminder.get("mulch_type") or "unknown"
                         await update_growth_stage_func(
                             bot,
                             user_id,
                             reminder["slot_number"],
                             next_stage_map.get(reminder["stage"].lower(), "unknown"),
                             reminder["berry_name"],
+                            mulch_type=mulch_type
                         )
 
             except Exception as e:
