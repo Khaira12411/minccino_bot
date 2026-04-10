@@ -1,6 +1,6 @@
 import asyncio
 import re
-from datetime import datetime
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -8,15 +8,11 @@ from discord.ext import commands
 from config.aesthetic import Emojis
 from config.current_setup import MINCCINO_COLOR, POKEMEOW_APPLICATION_ID
 from utils.cache.cache_list import timer_cache
-from utils.loggers.debug_log import debug_log, enable_debug
+from utils.loggers.debug_log import debug_log
 from utils.loggers.pretty_logs import pretty_log
 
-# enable_debug(f"{__name__}.detect_pokemeow_battle")
-# enable_debug(f"{__name__}.grab_enemy_id")
-# enable_debug(f"{__name__}.notify_battle_ready")
-# 🗂 Track scheduled "command ready" tasks to avoid duplicates
 battle_ready_tasks = {}
-
+# enable_debug(f"{__name__}.fl_rs_checker")
 # BATTLE TOWER NPC IDS 400 TO 407
 BATTLE_TOWER_NPC_IDS = [400, 401, 402, 403, 404, 405, 406, 407]
 # MC IDS 500 to 548
@@ -131,7 +127,7 @@ def find_key_by_npc_id(npc_id: int):
     return None
 
 
-IGNORE_BATTLE_FRONTIER_FOLLOWUP_LIST = [
+IGNORE_BATTLE_FOLLOWUP_LIST = [
     "Battle Pyramid",
     "Battle Pike",
     "Battle Arena",
@@ -139,235 +135,259 @@ IGNORE_BATTLE_FRONTIER_FOLLOWUP_LIST = [
     "Battle Dome",
     "Battle Palace",
     "Battle Tower",
+    "Mega Chamber",
 ]
 
 
-# 💜────────────────────────────────────────────
-#   Function: detect_pokemeow_battle (with debug)
-# 💜────────────────────────────────────────────
+CHALLENGE_REGEX = re.compile(
+    r"(?:<:\\w+?:\\d+>\\s*)?\\*\\*(.+?)\\*\\* challenged (?:<:\\w+?:\\d+>\\s*)?\\*\\*(.+?)\\*\\*"
+)
+
+
+def _is_battle_challenge_embed(embed: discord.Embed) -> bool:
+    return bool(
+        embed.author and embed.author.name and "PokeMeow Battles" in embed.author.name
+    )
+
+
+def _parse_challenge_names(description: str) -> Optional[tuple[str, str]]:
+    match = CHALLENGE_REGEX.search(description)
+    if not match:
+        return None
+    return match.group(1).strip(), match.group(2).strip()
+
+
+def _find_member_by_name(
+    guild: discord.Guild, member_name: str
+) -> Optional[discord.Member]:
+    target = member_name.lower()
+    return discord.utils.find(
+        lambda m: m.name.lower() == target or m.display_name.lower() == target,
+        guild.members,
+    )
+
+
+def _is_ignored_battle_followup(footer_text: str) -> bool:
+    return any(keyword in footer_text for keyword in IGNORE_BATTLE_FOLLOWUP_LIST)
+
+
+def _is_relevant_enemy_followup(embed: discord.Embed, opponent_name: str) -> bool:
+    footer_text = embed.footer.text if embed.footer else ""
+    description = embed.description or ""
+    same_opponent = opponent_name in description
+    if not same_opponent:
+        return False
+
+    # Treat ignored follow-ups as relevant so we can actively block timer creation.
+    if _is_ignored_battle_followup(footer_text):
+        return True
+
+    return "Enemy ID:" in footer_text or (
+        "Battle Pike Round" in footer_text and "Moves taken" in footer_text
+    )
+
+
+def _extract_enemy_id(footer_text: str) -> Optional[str]:
+    enemy_match = re.search(r"Enemy ID:\\s*(\\d+)", footer_text)
+    if enemy_match:
+        return enemy_match.group(1)
+    if "Battle Pike Round" in footer_text and "Moves taken" in footer_text:
+        return "bf"
+    return None
+
+
+async def _wait_for_enemy_id(
+    bot: commands.Bot, opponent_name: str
+) -> tuple[Optional[str], bool]:
+    def check(m: discord.Message) -> bool:
+        if m.author.id != POKEMEOW_APPLICATION_ID or not m.embeds:
+            return False
+        return _is_relevant_enemy_followup(m.embeds[0], opponent_name)
+
+    try:
+        debug_log("Waiting for follow-up battle message")
+        followup: discord.Message = await bot.wait_for(
+            "message", timeout=10, check=check
+        )
+        followup_embed = followup.embeds[0]
+        footer_text = followup_embed.footer.text if followup_embed.footer else ""
+
+        if _is_ignored_battle_followup(footer_text):
+            debug_log(
+                "Ignored follow-up footer detected; blocking battle-ready timer creation"
+            )
+            return None, True
+
+        enemy_id = _extract_enemy_id(footer_text)
+        debug_log(f"Enemy ID lookup result: {enemy_id}")
+        return enemy_id, False
+    except asyncio.TimeoutError:
+        debug_log("Timeout while waiting for enemy follow-up")
+        return None, False
+    except Exception as e:
+        debug_log(f"Exception while waiting for enemy follow-up: {e}")
+        return None, False
+
+
+def _build_battle_command(enemy_id: Optional[str]) -> str:
+    if not enemy_id:
+        return "Your </battle:1015311084422434819> command is ready!"
+
+    if enemy_id == "bf":
+        return ";b npc bf"
+
+    if enemy_id.isdigit():
+        numeric_enemy_id = int(enemy_id)
+
+        if numeric_enemy_id in BATTLE_TOWER_NPC_IDS:
+            return ";b npc bt"
+
+        if 600 <= numeric_enemy_id <= 743:
+            mc_npc_id = find_key_by_npc_id(numeric_enemy_id)
+            if mc_npc_id is not None:
+                return f";b npc {mc_npc_id}"
+
+        # Keep legacy behavior where long IDs are interpreted as user battle IDs.
+        if len(enemy_id) >= 15 or numeric_enemy_id == 15:
+            return f";b user {enemy_id}"
+
+    return f";b npc {enemy_id}"
+
+
+async def _send_battle_ready_notification(
+    message: discord.Message,
+    challenger: discord.Member,
+    setting: str,
+    battle_command: str,
+) -> None:
+    if setting == "react":
+        debug_log("Sending battle-ready notice via reaction")
+        await message.add_reaction(Emojis.gray_check)
+        return
+
+    battle_embed = discord.Embed(color=MINCCINO_COLOR)
+    battle_embed.description = battle_command
+
+    if setting == "on":
+        debug_log("Sending battle-ready notice with mention")
+        await message.channel.send(
+            content=f"{Emojis.battle_spawn} {challenger.mention}, your </battle:1015311084422434819> command is ready!",
+            embed=battle_embed,
+        )
+        return
+
+    if setting in {"on w/o pings", "on_no_pings"}:
+        debug_log("Sending battle-ready notice without mention")
+        await message.channel.send(
+            content=f"{Emojis.battle_spawn} **{challenger.name}**, your </battle:1015311084422434819> command is ready!",
+            embed=battle_embed,
+        )
+
+
+def _cancel_existing_timer_task(challenger_id: int) -> None:
+    existing_task = battle_ready_tasks.get(challenger_id)
+    if existing_task and not existing_task.done():
+        debug_log("Cancelling existing battle-ready timer task")
+        existing_task.cancel()
+
+
 async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
     try:
         debug_log("Entered detect_pokemeow_battle()", disabled=True)
-        debug_log(f"Message author ID: {message.author.id}")
-        # ✅ Only PokéMeow messages
+
         if message.author.id != POKEMEOW_APPLICATION_ID:
-            debug_log("Message is not from PokéMeow bot, exiting.")
+            debug_log("Message not from PokeMeow; skipping")
             return
+
         if not message.embeds:
-            debug_log("Message has no embeds, exiting.")
+            debug_log("Message has no embeds; skipping")
             return
 
         embed = message.embeds[0]
-        debug_log(f"Embed author: {getattr(embed.author, 'name', None)}")
-
-        # ✅ Step 1: detect "challenged ... to a battle!"
-        if not (embed.author and "PokeMeow Battles" in embed.author.name):
-            debug_log("Ignored: embed not a battle challenge", disabled=True)
+        if not _is_battle_challenge_embed(embed):
+            debug_log("Embed is not a battle challenge; skipping", disabled=True)
             return
 
         description = embed.description or ""
-        debug_log(f"Embed description: {description}")
-
-        # Format: "**Alice** challenged **Bob** to a battle!"
-        match = re.search(
-            r"(?:<:\w+?:\d+>\s*)?\*\*(.+?)\*\* challenged (?:<:\w+?:\d+>\s*)?\*\*(.+?)\*\*",
-            description,
-        )
-        if not match:
-            debug_log("Regex failed: no challenger/opponent match")
+        parsed_names = _parse_challenge_names(description)
+        if not parsed_names:
+            debug_log("Could not parse challenger/opponent names")
             pretty_log(
                 "warning",
                 "Could not parse battle challenge message for challenger/opponent names",
             )
             return
 
-        challenger_name = match.group(1).strip()
-        opponent_name = match.group(2).strip()
-        debug_log(f"Challenger: {challenger_name}, Opponent: {opponent_name}")
+        challenger_name, opponent_name = parsed_names
+        debug_log(f"Parsed challenger={challenger_name}, opponent={opponent_name}")
 
-        # ✅ Match challenger in guild
-        guild = message.guild
-        debug_log(f"Guild: {guild}, Members: {len(guild.members) if guild else 'N/A'}")
-        challenger = discord.utils.find(
-            lambda m: m.name.lower() == challenger_name.lower()
-            or m.display_name.lower() == challenger_name.lower(),
-            guild.members,
-        )
+        if not message.guild:
+            debug_log("Message has no guild context; skipping")
+            return
+
+        challenger = _find_member_by_name(message.guild, challenger_name)
         if not challenger:
-            debug_log("Challenger not found in guild members")
+            debug_log("Could not match challenger to guild member")
             return
-        debug_log(f"Matched challenger: {challenger} ({challenger.id})", disabled=True)
 
-        # ✅ Step 2: check user settings
         user_settings = timer_cache.get(challenger.id)
-        debug_log(f"User settings: {user_settings}")
         if not user_settings:
-            debug_log("No user settings found, exiting.")
+            debug_log("No timer settings found for challenger")
             return
+
         setting = (user_settings.get("battle_setting") or "off").lower()
-        debug_log(f"Battle setting: {setting}", disabled=True)
         if setting == "off":
-            debug_log("Battle setting is off, exiting.")
+            debug_log("Battle timer is disabled for this user")
             return
 
-        # ✅ Cancel existing task if user already has one
-        if (
-            challenger.id in battle_ready_tasks
-            and not battle_ready_tasks[challenger.id].done()
-        ):
-            debug_log("Cancelling existing timer task")
-            battle_ready_tasks[challenger.id].cancel()
+        _cancel_existing_timer_task(challenger.id)
 
-        # ✅ Storage for enemy_id (filled later)
         enemy_id_holder = {"id": None}
+        timer_start = asyncio.get_running_loop().time()
 
-        # 💜 Step 3: background task to grab Enemy ID from follow-up
-        async def grab_enemy_id():
-            debug_log("Started grab_enemy_id() background task")
-
-            def check(m: discord.Message):
-                debug_log(
-                    f"Checking message in grab_enemy_id: author={m.author.id}, embeds={bool(m.embeds)}"
-                )
-                if m.author.id != POKEMEOW_APPLICATION_ID:
-                    return False
-                if not m.embeds:
-                    return False
-                emb = m.embeds[0]
-                footer_text = emb.footer.text if emb.footer else ""
-                # If Battle Pyramid is in the footer, exit early by returning False (will be handled after followup)
-                if any(
-                    keyword in footer_text
-                    for keyword in IGNORE_BATTLE_FRONTIER_FOLLOWUP_LIST
-                ):
-                    debug_log(
-                        "Battle Frontier follow-up detected in grab_enemy_id check, ignoring this message."
-                    )
-                    return False  # Exit early for Battle Pyramid follow-up
-                result = emb.footer and (
-                    (
-                        "Enemy ID:" in (emb.footer.text or "")
-                        and opponent_name in (emb.description or "")
-                    )
-                )
-
-                debug_log(
-                    f"Checking message for Enemy ID... "
-                    f"footer={emb.footer.text if emb.footer else None}, "
-                    f"description={emb.description}, "
-                    f"match={result}"
-                )
-                return result
-
+        async def notify_battle_ready(delay_seconds: float = 60.0) -> None:
             try:
-                debug_log("Waiting for follow-up message with Enemy ID...")
-                followup: discord.Message = await bot.wait_for(
-                    "message", timeout=10, check=check
+                await asyncio.sleep(delay_seconds)
+                battle_command = _build_battle_command(enemy_id_holder["id"])
+                debug_log(f"Battle-ready command resolved: {battle_command}")
+                await _send_battle_ready_notification(
+                    message=message,
+                    challenger=challenger,
+                    setting=setting,
+                    battle_command=battle_command,
                 )
-                debug_log("Follow-up embed received ✅")
+            except asyncio.CancelledError:
+                debug_log("Battle-ready timer task cancelled")
+            except Exception as e:
+                debug_log(f"Battle-ready timer task error: {e}")
 
-                emb = followup.embeds[0]
-                footer_text = emb.footer.text if emb.footer else ""
-                debug_log(f"Follow-up footer text: {footer_text}")
-
-                # Exit early if Battle Pyramid is detected in the follow-up message
-                if "Battle Pyramid" in footer_text:
+        async def prepare_and_schedule_battle_ready() -> None:
+            try:
+                enemy_id, block_timer = await _wait_for_enemy_id(bot, opponent_name)
+                if block_timer:
                     debug_log(
-                        "Exiting early: Battle Pyramid detected in follow-up message."
+                        "Blocked battle-ready timer due to ignored follow-up footer"
                     )
                     return
 
-                enemy_match = re.search(r"Enemy ID:\s*(\d+)", footer_text)
-                if enemy_match:
-                    enemy_id_holder["id"] = enemy_match.group(1)
-                    debug_log(
-                        f"Enemy ID captured: {enemy_id_holder['id']} 🎯",
-                        highlight=True,
-                    )
-                else:
-                    debug_log("Regex failed: Enemy ID not found in footer text ❌")
-                    if (
-                        "Battle Pike Round" in footer_text
-                        and "Moves taken" in footer_text
-                    ):
-                        debug_log("Detected battle frontier battle")
-                        enemy_id_holder["id"] = "bf"
-                    else:
-                        debug_log(
-                            "Follow-up embed does not appear to be a battle frontier battle"
-                        )
-                        return
-
-            except asyncio.TimeoutError:
-                debug_log("Timeout: no follow-up embed with Enemy ID found ⏰")
-            except Exception as e:
-                debug_log(f"Exception in grab_enemy_id: {e}")
-
-        debug_log("Creating background task for grab_enemy_id")
-        bot.loop.create_task(grab_enemy_id())
-
-        # 💜 Step 4: schedule 60s notification immediately
-        async def notify_battle_ready():
-            try:
-                debug_log("Timer started (60s)")
-                await asyncio.sleep(60)
-                enemy_id = enemy_id_holder["id"]
-                debug_log(f"Timer finished. Enemy ID={enemy_id}")
-                battle_embed = discord.Embed(color=MINCCINO_COLOR)
-                if enemy_id == "bf":
-                    debug_log("Detected battle frontier enemy_id.")
-                    battle_embed.description = ";b npc bf"
-
-                # Battle Tower NPC
-                elif enemy_id and int(enemy_id) in BATTLE_TOWER_NPC_IDS:
-                    debug_log("Detected Battle Tower NPC.")
-                    battle_embed.description = ";b npc bt"
-                # Mega Chamber NPC
-                elif enemy_id and 600 <= int(enemy_id) <= 743:
-                    mc_npc_id = find_key_by_npc_id(int(enemy_id))
-                    debug_log(f"Detected Mega Chamber NPC. mc_npc_id={mc_npc_id}")
-                    battle_embed.description = f";b npc {mc_npc_id}"
-
-                # If id is 15 or more than 15 digits, it's likely a user ID
-                elif enemy_id and (len(enemy_id) >= 15 or int(enemy_id) == 15):
-                    debug_log("Detected user ID for battle.")
-                    battle_embed.description = f";b user {enemy_id}"
-
-                # Regular NPC
-                elif enemy_id:
-                    debug_log("Detected regular NPC.")
-                    battle_embed.description = f";b npc {enemy_id}"
-
-                else:
-                    debug_log("No enemy_id found, using default notification.")
-                    battle_embed.description = (
-                        "Your </battle:1015311084422434819> command is ready!"
-                    )
-
-                if setting == "on":
-                    debug_log("Sending notification (ping)")
-                    await message.channel.send(
-                        content=f"{Emojis.battle_spawn} {challenger.mention}, your </battle:1015311084422434819> command is ready!",
-                        embed=battle_embed,
-                    )
-                elif setting == "on w/o pings" or setting == "on_no_pings":
-                    debug_log("Sending notification (no ping)")
-                    await message.channel.send(
-                        content=f"{Emojis.battle_spawn} **{challenger.name}**, your </battle:1015311084422434819> command is ready!",
-                        embed=battle_embed,
-                    )
-                elif setting == "react":
-                    debug_log("Adding reaction notification")
-                    await message.add_reaction(Emojis.gray_check)
-
+                enemy_id_holder["id"] = enemy_id
+                elapsed = asyncio.get_running_loop().time() - timer_start
+                remaining = max(0.0, 60 - elapsed)
+                debug_log(
+                    f"Scheduling battle-ready timer with remaining delay={remaining:.2f}s"
+                )
+                battle_ready_tasks[challenger.id] = bot.loop.create_task(
+                    notify_battle_ready(remaining)
+                )
             except asyncio.CancelledError:
-                debug_log("Timer task cancelled")
+                debug_log("Battle-ready precheck task cancelled")
             except Exception as e:
-                debug_log(f"Timer task error: {e}")
+                debug_log(f"Battle-ready precheck error: {e}")
 
-        debug_log("Creating background task for notify_battle_ready")
-        battle_ready_tasks[challenger.id] = bot.loop.create_task(notify_battle_ready())
-        debug_log("Scheduled notify_battle_ready() task", highlight=True)
+        battle_ready_tasks[challenger.id] = bot.loop.create_task(
+            prepare_and_schedule_battle_ready()
+        )
+        debug_log("Scheduled battle-ready precheck", highlight=True)
 
     except Exception as e:
         debug_log(f"Exception in detect_pokemeow_battle: {e}")
