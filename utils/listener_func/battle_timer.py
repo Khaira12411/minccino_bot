@@ -8,11 +8,14 @@ from discord.ext import commands
 from config.aesthetic import Emojis
 from config.current_setup import MINCCINO_COLOR, POKEMEOW_APPLICATION_ID
 from utils.cache.cache_list import timer_cache
-from utils.loggers.debug_log import debug_log
+from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
 battle_ready_tasks = {}
-# enable_debug(f"{__name__}.fl_rs_checker")
+enable_debug(f"{__name__}._wait_for_enemy_id")
+enable_debug(f"{__name__}._send_battle_ready_notification")
+enable_debug(f"{__name__}._cancel_existing_timer_task")
+enable_debug(f"{__name__}.detect_pokemeow_battle")
 # BATTLE TOWER NPC IDS 400 TO 407
 BATTLE_TOWER_NPC_IDS = [400, 401, 402, 403, 404, 405, 406, 407]
 # MC IDS 500 to 548
@@ -140,7 +143,8 @@ IGNORE_BATTLE_FOLLOWUP_LIST = [
 
 
 CHALLENGE_REGEX = re.compile(
-    r"(?:<:\\w+?:\\d+>\\s*)?\\*\\*(.+?)\\*\\* challenged (?:<:\\w+?:\\d+>\\s*)?\\*\\*(.+?)\\*\\*"
+    r"(?:<a?:\w+:\d+>\s*)?\*{0,2}(.+?)\*{0,2}\s+challenged\s+(?:<a?:\w+:\d+>\s*)?\*{0,2}(.+?)\*{0,2}(?:\s+to a battle!?)?",
+    re.IGNORECASE,
 )
 
 
@@ -150,11 +154,25 @@ def _is_battle_challenge_embed(embed: discord.Embed) -> bool:
     )
 
 
+def _normalize_challenge_name(raw_name: str) -> str:
+    name = raw_name.strip().strip("*")
+    name = re.sub(r"^(?:<a?:\w+:\d+>\s*)+", "", name)
+    name = re.sub(r"^[^\w]+", "", name)
+    return name.strip()
+
+
 def _parse_challenge_names(description: str) -> Optional[tuple[str, str]]:
     match = CHALLENGE_REGEX.search(description)
     if not match:
         return None
-    return match.group(1).strip(), match.group(2).strip()
+
+    challenger = _normalize_challenge_name(match.group(1))
+    opponent = _normalize_challenge_name(match.group(2))
+
+    if not challenger or not opponent:
+        return None
+
+    return challenger, opponent
 
 
 def _find_member_by_name(
@@ -188,7 +206,7 @@ def _is_relevant_enemy_followup(embed: discord.Embed, opponent_name: str) -> boo
 
 
 def _extract_enemy_id(footer_text: str) -> Optional[str]:
-    enemy_match = re.search(r"Enemy ID:\\s*(\\d+)", footer_text)
+    enemy_match = re.search(r"Enemy ID:\s*(\d+)", footer_text)
     if enemy_match:
         return enemy_match.group(1)
     if "Battle Pike Round" in footer_text and "Moves taken" in footer_text:
@@ -311,10 +329,17 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
         description = embed.description or ""
         parsed_names = _parse_challenge_names(description)
         if not parsed_names:
-            debug_log("Could not parse challenger/opponent names")
+            compact_description = " ".join(description.split())
+            if len(compact_description) > 280:
+                compact_description = compact_description[:277] + "..."
+
+            debug_log(
+                f"Could not parse challenger/opponent names | description={compact_description}"
+            )
             pretty_log(
                 "warning",
-                "Could not parse battle challenge message for challenger/opponent names",
+                "Could not parse battle challenge message for challenger/opponent names "
+                f"| description={compact_description}",
             )
             return
 
