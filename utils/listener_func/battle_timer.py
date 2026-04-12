@@ -12,10 +12,10 @@ from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
 battle_ready_tasks = {}
-enable_debug(f"{__name__}._wait_for_enemy_id")
+"""enable_debug(f"{__name__}._wait_for_enemy_id")
 enable_debug(f"{__name__}._send_battle_ready_notification")
 enable_debug(f"{__name__}._cancel_existing_timer_task")
-enable_debug(f"{__name__}.detect_pokemeow_battle")
+enable_debug(f"{__name__}.detect_pokemeow_battle")"""
 # BATTLE TOWER NPC IDS 400 TO 407
 BATTLE_TOWER_NPC_IDS = [400, 401, 402, 403, 404, 405, 406, 407]
 # MC IDS 500 to 548
