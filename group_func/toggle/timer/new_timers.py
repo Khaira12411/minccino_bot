@@ -342,6 +342,8 @@ class TimerSettingsView(discord.ui.View):
                 label="STRAYMONS",
                 bot=self.bot,
             )
+            # Update battle_timer_users_cache
+            update_battle_timer_users_cache(user_name=self.user.name, battle_setting=new_state)
 
         except Exception as e:
             pretty_log(
@@ -428,3 +430,35 @@ class TimerSettingsView(discord.ui.View):
                 )
             except Exception as e:
                 pass
+
+def update_battle_timer_users_cache(user_name: str, battle_setting: str):
+    from utils.cache.cache_list import battle_timer_users_cache, not_battle_timer_user_cache
+    if battle_setting and battle_setting.lower() != "off":
+        # Add or update user in battle_timer_users_cache
+        battle_timer_users_cache[user_name] = battle_setting
+        pretty_log(
+            tag="cache",
+            message=f"Added/Updated {user_name} in battle_timer_users_cache with Battle timer {battle_setting}",
+        )
+        # Remove from not_battle_timer_user_cache if present
+        if user_name in not_battle_timer_user_cache:
+            not_battle_timer_user_cache.remove(user_name)
+            pretty_log(
+                tag="cache",
+                message=f"Removed {user_name} from not_battle_timer_user_cache due to Battle timer enabled",
+            )
+    else:
+        # Remove from battle_timer_users_cache if present
+        if user_name in battle_timer_users_cache:
+            del battle_timer_users_cache[user_name]
+            pretty_log(
+                tag="cache",
+                message=f"Removed {user_name} from battle_timer_users_cache due to Battle timer Off",
+            )
+        # Add to not_battle_timer_user_cache
+        if user_name not in not_battle_timer_user_cache:
+            not_battle_timer_user_cache.add(user_name)
+            pretty_log(
+                tag="cache",
+                message=f"Added {user_name} to not_battle_timer_user_cache due to Battle timer Off",
+            )

@@ -8,8 +8,6 @@ from discord.ext import commands
 from config.aesthetic import Emojis
 from config.current_setup import MINCCINO_COLOR, POKEMEOW_APPLICATION_ID
 from utils.cache.cache_list import (
-    battle_timer_users_cache,
-    not_battle_timer_user_cache,
     timer_cache,
 )
 from utils.loggers.debug_log import debug_log, enable_debug
@@ -405,7 +403,7 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                 f"| description={compact_description}",
             )
             return
-
+        from utils.cache.cache_list import not_battle_timer_user_cache, battle_timer_users_cache
         challenger_name, opponent_name = parsed_names
         debug_log(f"Parsed challenger={challenger_name}, opponent={opponent_name}")
         if challenger_name in not_battle_timer_user_cache:
@@ -435,6 +433,10 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
                         f"Adding {challenger_name} to not_battle_timer_user_cache"
                     )
                     not_battle_timer_user_cache.add(challenger_name)
+                    pretty_log(
+                        tag="cache",
+                        message=f"Added {challenger_name} to not_battle_timer_user_cache due to missing timer settings",
+                    )
                 return
 
             setting = (user_settings.get("battle_setting") or "off").lower()

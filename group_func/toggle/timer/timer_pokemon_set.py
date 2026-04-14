@@ -60,8 +60,16 @@ async def timer_set_func(
                         tag="cache",
                         message=f"Added {user} to not_battle_timer_user_cache due to Battle timer Off",
                     )
+                    pretty_log(
+                        tag="cache",
+                        message=f"Added {user} to not_battle_timer_user_cache due to Battle timer Off",
+                    )
                 if user_name in battle_timer_users_cache:
                     del battle_timer_users_cache[user_name]
+                    pretty_log(
+                        tag="cache",
+                        message=f"Removed {user} from battle_timer_users_cache due to Battle timer Off",
+                    )
                     pretty_log(
                         tag="cache",
                         message=f"Removed {user} from battle_timer_users_cache due to Battle timer Off",
