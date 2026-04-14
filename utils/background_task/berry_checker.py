@@ -18,6 +18,10 @@ from utils.loggers.pretty_logs import pretty_log
 
 enable_debug(f"{__name__}.berry_reminder_checker")
 
+# Prevent immediate duplicate sends when the checker is accidentally triggered twice.
+BERRY_DISPATCH_DEDUP_SECONDS = 90
+_recent_berry_dispatches = {}
+
 
 async def update_growth_stage_func(
     bot: discord.Client,
@@ -250,6 +254,35 @@ async def berry_reminder_checker(bot: discord.Client):
             debug_log(
                 f"Attempting to send message to channel {channel.name} (ID: {channel.id}) for user {user_name} (ID: {user_id})"
             )
+
+            dispatch_key = (
+                user_id,
+                channel_id,
+                tuple(to_be_watered_berry_names),
+                tuple(to_be_harvested_berry_names),
+            )
+            now_epoch = int(time.time())
+            last_sent_epoch = _recent_berry_dispatches.get(dispatch_key)
+            if (
+                last_sent_epoch is not None
+                and now_epoch - last_sent_epoch < BERRY_DISPATCH_DEDUP_SECONDS
+            ):
+                debug_log(
+                    f"Skipping duplicate berry reminder for user_id={user_id} in channel_id={channel_id}."
+                )
+                continue
+
+            _recent_berry_dispatches[dispatch_key] = now_epoch
+            if len(_recent_berry_dispatches) > 2000:
+                cutoff = now_epoch - BERRY_DISPATCH_DEDUP_SECONDS
+                stale_keys = [
+                    key
+                    for key, sent_epoch in _recent_berry_dispatches.items()
+                    if sent_epoch < cutoff
+                ]
+                for key in stale_keys:
+                    _recent_berry_dispatches.pop(key, None)
+
             await channel.send(content=msg, embed=embed)
             pretty_log(
                 "background_task",

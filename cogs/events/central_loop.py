@@ -1,14 +1,19 @@
 import asyncio
+
 from discord.ext import commands
-from utils.loggers.pretty_logs import pretty_log
+
+from utils.background_task.berry_checker import berry_reminder_checker
+from utils.background_task.berry_water_checker import berry_water_reminder
+from utils.background_task.fl_cd_checker import fl_cd_checker
 
 # 🧹 Import your scheduled tasks
 from utils.background_task.pokemon_reminders_checker import pokemon_reminder_checker
-from utils.background_task.fl_cd_checker import fl_cd_checker
-from utils.background_task.special_battle_timer_checker import special_battle_timer_checker
 from utils.background_task.secret_santa_timer_checker import secret_santa_timer_checker
-from utils.background_task.berry_checker import berry_reminder_checker
-from utils.background_task.berry_water_checker import berry_water_reminder
+from utils.background_task.special_battle_timer_checker import (
+    special_battle_timer_checker,
+)
+from utils.loggers.pretty_logs import pretty_log
+
 
 # 🍰──────────────────────────────
 #   🎀 Cog: CentralLoop
@@ -17,7 +22,7 @@ from utils.background_task.berry_water_checker import berry_water_reminder
 class CentralLoop(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.loop_task = None
+        self.loop_task = getattr(bot, "_central_loop_task", None)
 
     def cog_unload(self):
         if self.loop_task and not self.loop_task.done():
@@ -28,11 +33,14 @@ class CentralLoop(commands.Cog):
                 label="CENTRAL LOOP",
                 bot=self.bot,
             )
+        if getattr(self.bot, "_central_loop_task", None) is self.loop_task:
+            self.bot._central_loop_task = None
 
     async def central_loop(self):
         """Background loop that ticks every 60 seconds"""
         await self.bot.wait_until_ready()
         from utils.cache.weekly_goal_tracker_cache import flush_weekly_goal_cache
+
         pretty_log(
             "",
             "✅ Central loop started!",
@@ -80,8 +88,14 @@ class CentralLoop(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         """Start the loop automatically once the bot is ready"""
-        if not self.loop_task:
+        shared_task = getattr(self.bot, "_central_loop_task", None)
+        if shared_task and not shared_task.done():
+            self.loop_task = shared_task
+            return
+
+        if not self.loop_task or self.loop_task.done():
             self.loop_task = asyncio.create_task(self.central_loop())
+            self.bot._central_loop_task = self.loop_task
 
 
 # ====================
@@ -98,7 +112,7 @@ async def setup(bot: commands.Bot):
     print("  ✅ 🦭  pokemon_reminder_checker")
     print("  ✅ 💧  berry_water_reminder")
     print("  ✅ 🍓  berry_reminder_checker")
-    #print("  ✅ ⏰  special_battle_timer_checker")
-    #print("  ✅ 🎅  secret_santa_timer_checker")
+    # print("  ✅ ⏰  special_battle_timer_checker")
+    # print("  ✅ 🎅  secret_santa_timer_checker")
     print("  🧭 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")
