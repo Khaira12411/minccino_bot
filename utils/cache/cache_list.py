@@ -30,3 +30,11 @@ webhook_url_cache: dict[int, dict] = {}
 #   },
 #   ...
 
+not_battle_timer_user_cache: set[str] = set()
+battle_timer_users_cache: dict[str, str]
+
+# Structure:
+# battle_timer_users_cache = {
+#    "user_name" : str,
+#    ...
+# }

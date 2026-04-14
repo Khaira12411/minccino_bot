@@ -1,5 +1,5 @@
 from group_func.toggle.timer.timer_db_func import fetch_all_timers
-from utils.cache.cache_list import timer_cache
+from utils.cache.cache_list import timer_cache, battle_timer_users_cache
 from utils.loggers.pretty_logs import pretty_log
 
 
@@ -28,9 +28,26 @@ async def load_timer_cache(bot):
         label="⌚ TIMER CACHE",
         bot=bot,
     )
-
+    load_battle_timer_users_cache()
     return timer_cache
 
+
+def load_battle_timer_users_cache():
+    """
+    Load users with Battle timer enabled into battle_timer_users_cache.
+    This is used to optimize battle timer processing in the listener.
+    """
+    battle_timer_users_cache.clear()
+    for settings in timer_cache.values():
+        if settings.get("battle_setting") and settings["battle_setting"] != "Off":
+            user_name = settings.get("user_name")
+            if user_name:
+                battle_timer_users_cache[user_name] = settings["battle_setting"]
+
+    pretty_log(
+        message=f"Loaded {len(battle_timer_users_cache)} users with Battle timer enabled into battle_timer_users_cache",
+        label="⌚ TIMER CACHE",
+    )
 
 def set_timer_cache(
     user_id: int,

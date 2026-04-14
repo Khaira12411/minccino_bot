@@ -42,6 +42,7 @@ async def timer_set_func(
             message=f"Set Pokemon timer for {user} to {mode}",
         )
     elif type == "Battle":
+        from utils.cache.cache_list import not_battle_timer_user_cache, battle_timer_users_cache
         if mode != "React":
             # 💾 Update the Battle timer setting in DB
             await set_timer(
@@ -51,6 +52,34 @@ async def timer_set_func(
                 tag="db",
                 message=f"Set Battle timer for {user} to {mode}",
             )
+            if mode == "Off":
+                # Add user to not_battle_timer_user_cache to skip battle timer processing
+                if user_name not in not_battle_timer_user_cache:
+                    not_battle_timer_user_cache.add(user_name)
+                    pretty_log(
+                        tag="cache",
+                        message=f"Added {user} to not_battle_timer_user_cache due to Battle timer Off",
+                    )
+                if user_name in battle_timer_users_cache:
+                    del battle_timer_users_cache[user_name]
+                    pretty_log(
+                        tag="cache",
+                        message=f"Removed {user} from battle_timer_users_cache due to Battle timer Off",
+                    )
+            else:
+                if user_name in not_battle_timer_user_cache:
+                    not_battle_timer_user_cache.discard(user_name)
+                    pretty_log(
+                        tag="cache",
+                        message=f"Removed {user} from not_battle_timer_user_cache due to Battle timer set to {mode}",
+                    )
+                if user_name not in battle_timer_users_cache:
+                    battle_timer_users_cache[user_name] = mode
+                    pretty_log(
+                        tag="cache",
+                        message=f"Added {user} to battle_timer_users_cache with Battle timer {mode}",
+                    )
+
         else:
             await handler.error(content="You can't set the battle timer to React")
 

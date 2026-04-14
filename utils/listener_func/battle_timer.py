@@ -7,11 +7,17 @@ from discord.ext import commands
 
 from config.aesthetic import Emojis
 from config.current_setup import MINCCINO_COLOR, POKEMEOW_APPLICATION_ID
-from utils.cache.cache_list import timer_cache
+from utils.cache.cache_list import (
+    battle_timer_users_cache,
+    not_battle_timer_user_cache,
+    timer_cache,
+)
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
 battle_ready_tasks = {}
+FOLLOWUP_REJECT_LOG_COOLDOWN_SECONDS = 10.0
+followup_reject_log_cache: dict[str, float] = {}
 """enable_debug(f"{__name__}._wait_for_enemy_id")
 enable_debug(f"{__name__}._send_battle_ready_notification")
 enable_debug(f"{__name__}._cancel_existing_timer_task")
@@ -189,11 +195,26 @@ def _is_ignored_battle_followup(footer_text: str) -> bool:
     return any(keyword in footer_text for keyword in IGNORE_BATTLE_FOLLOWUP_LIST)
 
 
-def _is_relevant_enemy_followup(embed: discord.Embed, opponent_name: str) -> bool:
+def _should_log_rejected_followup(
+    reason_key: str, cooldown_seconds: float = FOLLOWUP_REJECT_LOG_COOLDOWN_SECONDS
+) -> bool:
+    now = asyncio.get_running_loop().time()
+    last_logged = followup_reject_log_cache.get(reason_key, 0.0)
+    if now - last_logged < cooldown_seconds:
+        return False
+
+    followup_reject_log_cache[reason_key] = now
+    return True
+
+
+def _is_relevant_enemy_followup(
+    embed: discord.Embed, challenger_name: str, opponent_name: str
+) -> bool:
     footer_text = embed.footer.text if embed.footer else ""
-    description = embed.description or ""
-    same_opponent = opponent_name in description
-    if not same_opponent:
+    description = (embed.description or "").lower()
+    same_challenger = challenger_name.lower() in description
+    same_opponent = opponent_name.lower() in description
+    if not (same_challenger and same_opponent):
         return False
 
     # Treat ignored follow-ups as relevant so we can actively block timer creation.
@@ -215,12 +236,49 @@ def _extract_enemy_id(footer_text: str) -> Optional[str]:
 
 
 async def _wait_for_enemy_id(
-    bot: commands.Bot, opponent_name: str
+    bot: commands.Bot,
+    challenger_name: str,
+    opponent_name: str,
+    source_channel_id: int,
 ) -> tuple[Optional[str], bool]:
     def check(m: discord.Message) -> bool:
         if m.author.id != POKEMEOW_APPLICATION_ID or not m.embeds:
             return False
-        return _is_relevant_enemy_followup(m.embeds[0], opponent_name)
+
+        embed = m.embeds[0]
+        footer_text = embed.footer.text if embed.footer else ""
+        is_enemy_followup = "Enemy ID:" in footer_text or (
+            "Battle Pike Round" in footer_text and "Moves taken" in footer_text
+        )
+
+        if m.channel.id != source_channel_id:
+            if is_enemy_followup:
+                reason_key = (
+                    "channel_mismatch:"
+                    f"{source_channel_id}:{m.channel.id}:{challenger_name.lower()}:{opponent_name.lower()}"
+                )
+                if _should_log_rejected_followup(reason_key):
+                    pretty_log(
+                        "info",
+                        "Ignored battle follow-up from different channel "
+                        f"(expected={source_channel_id}, got={m.channel.id}) "
+                        f"for challenger={challenger_name}, opponent={opponent_name}",
+                    )
+            return False
+
+        is_relevant = _is_relevant_enemy_followup(embed, challenger_name, opponent_name)
+        if not is_relevant and is_enemy_followup:
+            reason_key = (
+                "name_mismatch:"
+                f"{source_channel_id}:{challenger_name.lower()}:{opponent_name.lower()}"
+            )
+            if _should_log_rejected_followup(reason_key):
+                pretty_log(
+                    "info",
+                    "Ignored battle follow-up due to challenger/opponent mismatch "
+                    f"for challenger={challenger_name}, opponent={opponent_name}",
+                )
+        return is_relevant
 
     try:
         debug_log("Waiting for follow-up battle message")
@@ -238,6 +296,11 @@ async def _wait_for_enemy_id(
 
         enemy_id = _extract_enemy_id(footer_text)
         debug_log(f"Enemy ID lookup result: {enemy_id}")
+        pretty_log(
+            "info",
+            "Detected battle follow-up with "
+            f"enemy ID={enemy_id} for challenger={challenger_name}, opponent={opponent_name}",
+        )
         return enemy_id, False
     except asyncio.TimeoutError:
         debug_log("Timeout while waiting for enemy follow-up")
@@ -345,25 +408,50 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
 
         challenger_name, opponent_name = parsed_names
         debug_log(f"Parsed challenger={challenger_name}, opponent={opponent_name}")
+        if challenger_name in not_battle_timer_user_cache:
+            debug_log(
+                f"Challenger {challenger_name} is in not_battle_timer_user_cache; skipping"
+            )
+            return
 
         if not message.guild:
             debug_log("Message has no guild context; skipping")
             return
 
-        challenger = _find_member_by_name(message.guild, challenger_name)
-        if not challenger:
-            debug_log("Could not match challenger to guild member")
-            return
+        challenger: Optional[discord.Member] = None
 
-        user_settings = timer_cache.get(challenger.id)
-        if not user_settings:
-            debug_log("No timer settings found for challenger")
-            return
+        # Check if challenger has battle timer enabled before doing expensive operations
+        if challenger_name not in battle_timer_users_cache:
+            challenger = _find_member_by_name(message.guild, challenger_name)
+            if not challenger:
+                debug_log("Could not match challenger to guild member")
+                return
 
-        setting = (user_settings.get("battle_setting") or "off").lower()
+            user_settings = timer_cache.get(challenger.id)
+            if not user_settings:
+                debug_log("No timer settings found for challenger")
+                if challenger_name not in not_battle_timer_user_cache:
+                    debug_log(
+                        f"Adding {challenger_name} to not_battle_timer_user_cache"
+                    )
+                    not_battle_timer_user_cache.add(challenger_name)
+                return
+
+            setting = (user_settings.get("battle_setting") or "off").lower()
+        else:
+            setting = battle_timer_users_cache.get(challenger_name, "off").lower()
+
         if setting == "off":
             debug_log("Battle timer is disabled for this user")
+            debug_log(f"Adding {challenger_name} to not_battle_timer_user_cache")
+            not_battle_timer_user_cache.add(challenger_name)
             return
+
+        if challenger is None:
+            challenger = _find_member_by_name(message.guild, challenger_name)
+            if not challenger:
+                debug_log("Could not match challenger to guild member")
+                return
 
         _cancel_existing_timer_task(challenger.id)
 
@@ -388,7 +476,12 @@ async def detect_pokemeow_battle(bot: commands.Bot, message: discord.Message):
 
         async def prepare_and_schedule_battle_ready() -> None:
             try:
-                enemy_id, block_timer = await _wait_for_enemy_id(bot, opponent_name)
+                enemy_id, block_timer = await _wait_for_enemy_id(
+                    bot,
+                    challenger_name=challenger_name,
+                    opponent_name=opponent_name,
+                    source_channel_id=message.channel.id,
+                )
                 if block_timer:
                     debug_log(
                         "Blocked battle-ready timer due to ignored follow-up footer"
