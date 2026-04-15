@@ -1,17 +1,20 @@
 # 🎉 loop_tasks/pokemeow_reminder_checker.py
 import asyncio
 from datetime import datetime
+
 import discord
 
 from config.aesthetic import *
 from config.current_setup import MINCCINO_COLOR, STRAYMONS_GUILD_ID
-
-from utils.loggers.pretty_logs import pretty_log
+from config.straymons_constants import (STRAYMONS__ROLES,
+                                        STRAYMONS__TEXT_CHANNELS)
 from utils.database.fl_cd_db_func import remove_feeling_lucky_cd
 from utils.database.fl_reminders_db_func import fetch_fl_reminder_db
-from config.straymons_constants import STRAYMONS__TEXT_CHANNELS, STRAYMONS__ROLES
+from utils.loggers.pretty_logs import pretty_log
+from utils.essentials.retry_function import _retry_discord_call
 # Default Feeling Lucky channel (if user has no personal channel)
 FEELING_LUCKY_CHANNEL_ID = STRAYMONS__TEXT_CHANNELS.feeling_lucky  # replace with your actual channel ID
+
 
 
 # 🐾────────────────────────────────────────────
@@ -26,17 +29,17 @@ async def fl_cd_checker(bot: discord.Client):
     for user_id, data in list(feeling_lucky_cache.items()):
         cooldown_until = data.get("cooldown_until", 0)
         if now >= cooldown_until:
+            user_name = data.get("user_name")
             expired_users.append(
                 {
                     "user_id": user_id,
-                    "user_name": data.get("user_name"),
+                    "user_name": user_name,
                 }
             )
 
             # Remove from DB & cache
             try:
                 await remove_feeling_lucky_cd(bot, user_id)
-                user_name = data.get("user_name")
                 fl_reminder_info = await fetch_fl_reminder_db(bot=bot, user_id=user_id)
                 reminder_type = fl_reminder_info.get("reminder_type")
                 channel_id = fl_reminder_info.get("channel_id")
@@ -50,14 +53,18 @@ async def fl_cd_checker(bot: discord.Client):
                 # Remove role
                 fl_cd_role = guild.get_role(STRAYMONS__ROLES.fl_cd)
                 if member and fl_cd_role in member.roles:
-                    await member.remove_roles(fl_cd_role, reason="Feeling Lucky cooldown expired")
+                    await _retry_discord_call(
+                        member.remove_roles,
+                        fl_cd_role,
+                        reason="Feeling Lucky cooldown expired",
+                    )
 
                 if reminder_type == "channel":
                     target_channel = bot.get_channel(
                         channel_id or FEELING_LUCKY_CHANNEL_ID
                     )
                     if target_channel:
-                        await target_channel.send(message_text)
+                        await _retry_discord_call(target_channel.send, message_text)
                         pretty_log(
                             "info",
                             f"Sent Feeling Lucky reminder in channel for {user_name} ({user_id})",
@@ -68,7 +75,7 @@ async def fl_cd_checker(bot: discord.Client):
                 elif reminder_type == "dm":
                     if member:
                         try:
-                            await member.send(message_text)
+                            await _retry_discord_call(member.send, message_text)
                             pretty_log(
                                 "info",
                                 f"Sent Feeling Lucky DM reminder to {user_name} ({user_id})",
@@ -109,3 +116,4 @@ async def fl_cd_checker(bot: discord.Client):
         label="🍀 FL CD CHECKER",
         bot=bot,
     )"""
+

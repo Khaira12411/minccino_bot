@@ -10,8 +10,9 @@ from config.current_setup import POKEMEOW_APPLICATION_ID
 from utils.cache.cache_list import timer_cache  # 💜 import your cache
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
+from utils.essentials.retry_function import _retry_discord_call
 
-#enable_debug(f"{__name__}.detect_pokemeow_reply")
+# enable_debug(f"{__name__}.detect_pokemeow_reply")
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 ready_tasks = {}
 
@@ -61,7 +62,9 @@ async def detect_pokemeow_reply(message: discord.Message):
         # 💜 Check timer_cache settings
         # -------------------------------
         # show 3 timer cache
-        debug_log(f"Current timer_cache keys: {list(timer_cache.keys())[:3]} (showing 3)")
+        debug_log(
+            f"Current timer_cache keys: {list(timer_cache.keys())[:3]} (showing 3)"
+        )
         user_settings = timer_cache.get(member.id)
 
         debug_log(f"User settings from timer_cache: {user_settings}")
@@ -98,17 +101,19 @@ async def detect_pokemeow_reply(message: discord.Message):
                 )"""
                 if setting == "on":
                     debug_log(f"Notifying with mention for {member}")
-                    await message.channel.send(
-                        f"{Emojis.pokespawn} {member.mention}, your </pokemon:1015311085441654824> command is ready!"
+                    await _retry_discord_call(
+                        message.channel.send,
+                        f"{Emojis.pokespawn} {member.mention}, your </pokemon:1015311085441654824> command is ready!",
                     )
                 elif setting == "on w/o pings" or setting == "on_no_pings":
                     debug_log(f"Notifying without mention for {member}")
-                    await message.channel.send(
-                        f"{Emojis.pokespawn} **{member.name}**, your </pokemon:1015311085441654824> command is ready!"
+                    await _retry_discord_call(
+                        message.channel.send,
+                        f"{Emojis.pokespawn} **{member.name}**, your </pokemon:1015311085441654824> command is ready!",
                     )
                 elif setting == "react":
                     debug_log(f"Adding reaction for {member}")
-                    await message.add_reaction(Emojis.brown_check)
+                    await _retry_discord_call(message.add_reaction, Emojis.brown_check)
 
             except asyncio.CancelledError:
                 debug_log(f"notify_ready: Cancelled for {member}")
