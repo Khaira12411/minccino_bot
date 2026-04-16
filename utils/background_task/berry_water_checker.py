@@ -6,14 +6,15 @@ from config.aesthetic import *
 from config.current_setup import KHY_USER_ID, STRAYMONS_GUILD_ID
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
+    berry_map,
     fetch_all_due_berry_reminders,
+    fetch_all_due_moisture_dries_on,
+    next_stage_map,
     remove_berry_reminder,
     update_growth_stage,
-    berry_map,
-    next_stage_map,
-    fetch_all_due_moisture_dries_on,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.essentials.retry_function import _retry_discord_call
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
@@ -121,15 +122,10 @@ async def berry_water_reminder(bot: discord.Client):
             berry_name = (
                 f"{berry_emoji} {berry_name_raw.title()} (Slot {slot_number})".strip()
             )
-            debug_log(
-                f"Prepared berry name: {berry_name} (raw: {berry_name_raw})"
-            )
+            debug_log(f"Prepared berry name: {berry_name} (raw: {berry_name_raw})")
 
             to_be_watered_berry_names.append(berry_name)
-            debug_log(
-                f"Added to watering list: {berry_name} for slot {slot_number}"
-            )
-
+            debug_log(f"Added to watering list: {berry_name} for slot {slot_number}")
 
         to_be_watered_field_name = (
             "Berries to be watered. Use `;berry water` to water them:"
@@ -164,7 +160,7 @@ async def berry_water_reminder(bot: discord.Client):
                 debug_log(
                     f"Attempting to send message to channel {channel.name} (ID: {channel.id}) for user {user_name} (ID: {user_id})"
                 )
-                await channel.send(content=msg, embed=embed)
+                await _retry_discord_call(channel.send, content=msg, embed=embed)
                 pretty_log(
                     "background_task",
                     f"Sent berry reminder for {user_name} (user_id: {user_id}) in channel {channel.name} (ID: {channel.id})",
@@ -182,7 +178,6 @@ async def berry_water_reminder(bot: discord.Client):
                     await remove_berry_reminder(
                         bot, user_id, slot_number=reminder["slot_number"]
                     )
-
 
             except Exception as e:
                 pretty_log(

@@ -13,6 +13,7 @@ from utils.database.berry_reminder import (
     update_growth_stage,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.essentials.retry_function import _retry_discord_call
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
@@ -283,7 +284,7 @@ async def berry_reminder_checker(bot: discord.Client):
                 for key in stale_keys:
                     _recent_berry_dispatches.pop(key, None)
 
-            await channel.send(content=msg, embed=embed)
+            await _retry_discord_call(channel.send, content=msg, embed=embed)
             pretty_log(
                 "background_task",
                 f"Sent berry reminder for {user_name} (user_id: {user_id}) in channel {channel.name} (ID: {channel.id})",
