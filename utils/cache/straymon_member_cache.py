@@ -111,3 +111,4 @@ def fetch_straymon_user_id_by_username(user_name: str) -> int | None:
             return user_id
 
     return None
+

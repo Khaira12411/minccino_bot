@@ -1,24 +1,25 @@
 import re
+import time
 
 import discord
 
 from config.aesthetic import *
 from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID
-from config.straymons_constants import STRAYMONS__TEXT_CHANNELS, STRAYMONS__ROLES
+from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
+    berry_map,
     fetch_user_all_berry_reminder,
     get_user_berry_reminder_slot,
-    update_mulch_info,
-    upsert_berry_reminder,
-    berry_map,
     update_moisture_dries_on,
+    update_mulch_info,
     update_water_can_type_for_slot,
+    upsert_berry_reminder,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-import time
-# enable_debug(f"{__name__}.handle_berry_water_message")
+
+enable_debug(f"{__name__}.handle_berry_water_message")
 # enable_debug(f"{__name__}.handle_mulch_message")
 
 
@@ -39,9 +40,9 @@ def parse_berry_water_message(message: str):
         watering_can_emoji = watering_can_emoji.lower().replace("_", " ")
 
     results = []
-    # Split by "Slot" to isolate each berry block
-    for block in re.split(r"(?=Slot \d+)", message):
-        slot_match = re.search(r"Slot (\d+)", block)
+    # Split by "Slot" at the start of a line to isolate each berry block
+    for block in re.split(r"(?m)(?=^Slot \d+)", message):
+        slot_match = re.search(r"Slot (\d+) —", block)
         if not slot_match:
             continue
         slot_number = int(slot_match.group(1))
@@ -86,7 +87,10 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
         return
     debug_log(f"Parsed berry water message: {parsed_data}")
     straymon_role = guild.get_role(STRAYMONS__ROLES.straymon)
-    if straymon_role not in member.roles and user_id not in ALLOWED_BERRY_REMINDER_USER_IDS:
+    if (
+        straymon_role not in member.roles
+        and user_id not in ALLOWED_BERRY_REMINDER_USER_IDS
+    ):
         debug_log(f"Message from user_id {user_id} is not allowed. Ignoring.")
         return
 
@@ -109,18 +113,18 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
         try:
             # Compute moisture dries on based on berry
             moisture_dries_on = None
-            water_can_type=parsed_data["watering_can_emoji"]
+            water_can_type = parsed_data["watering_can_emoji"]
             if water_can_type != "sprayduck":
-                berry_name = berry["berry_name"].lower() if berry["berry_name"] else None
+                berry_name = (
+                    berry["berry_name"].lower() if berry["berry_name"] else None
+                )
                 debug_log(f"Looking up berry info for {berry_name}")
                 berry_info = berry_map.get(berry_name)
 
                 if berry_info:
                     moisture_dries_on_duration = berry_info["moisture_dry_out_duration"]
                     # compute current time + moisture dries on in seconds
-                    moisture_dries_on = (
-                        int(time.time()) + moisture_dries_on_duration
-                    )
+                    moisture_dries_on = int(time.time()) + moisture_dries_on_duration
 
             await upsert_berry_reminder(
                 bot,
