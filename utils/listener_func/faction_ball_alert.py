@@ -11,7 +11,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 from utils.listener_func.ball_reco_ping import extract_trainer_name_from_description
-#enable_debug(f"{__name__}.faction_ball_alert")
+enable_debug(f"{__name__}.faction_ball_alert")
 FISHING_COLOR = 0x87CEFA
 processed_faction_ball_alerts = set()
 

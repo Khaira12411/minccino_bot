@@ -19,6 +19,7 @@ async def test_message_listener(bot: discord.Client, message: discord.Message):
         return
     replied_message_content = getattr(replied_message, "content", "")
     debug_log(f"Fetched replied message content: '{replied_message_content}'")
+
     # 💜────────────────────────────────────────────
     #          🧑‍🌾 Message Variables
     # 💜────────────────────────────────────────────
@@ -70,11 +71,11 @@ async def test_message_listener(bot: discord.Client, message: discord.Message):
     # 💜────────────────────────────────────────────
     #          🧑‍🌾 Faction Ball Alert
     # 💜────────────────────────────────────────────
-        # Faction Ball Alert
-        if first_embed:
-            if (
-                first_embed.description
-                and "<:team_logo:" in first_embed.description
-                and "found a wild" in first_embed.description
-            ):
-                await faction_ball_alert(before=message, after=message)
+    # Faction Ball Alert
+    if first_embed:
+        if (
+            first_embed.description
+            and "<:team_logo:" in first_embed.description
+            and "found a wild" in first_embed.description
+        ):
+            await faction_ball_alert(before=message, after=message)
