@@ -8,6 +8,7 @@ from discord.ext import commands
 from config.aesthetic import Emojis
 from config.current_setup import POKEMEOW_APPLICATION_ID
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.essentials.retry_function import _retry_discord_call
 from utils.loggers.pretty_logs import pretty_log
 
 FISH_TIMER = 25
@@ -88,13 +89,13 @@ async def fish_timer_handler(message: discord.Message):
                 await asyncio.sleep(FISH_TIMER)
 
                 if setting == "on":
-                    await message.channel.send(
-                        f"{Emojis.fish_spawn} {member.mention}, your </fish spawn:1015311084812501026> command is ready! "
-                    )  
+                    content = f"{Emojis.fish_spawn} {member.mention}, your </fish spawn:1015311084812501026> command is ready! "
                 elif setting == "on_no_pings":
-                    await message.channel.send(
-                        f"{Emojis.fish_spawn} **{member.name}**, your </fish spawn:1015311084812501026> command is ready!"
-                    )
+                    content = f"{Emojis.fish_spawn} **{member.name}**, your </fish spawn:1015311084812501026> command is ready!"
+                else:
+                    return
+
+                await _retry_discord_call(message.channel.send, content)
 
             except asyncio.CancelledError:
                 # 💙 [CANCELLED] Scheduled ready notification cancelled

@@ -156,7 +156,7 @@ class MessageCreateListener(commands.Cog):
                     f"Running message listener tests for message ID: {message.id}",
                 )
                 await test_message_listener(bot=self.bot, message=message)
-                
+
 
             # --- Weakness chart + general processing ---
             if message.guild and message.guild.id in (
