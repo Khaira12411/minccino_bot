@@ -93,8 +93,12 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                 trainer_name = extract_trainer_name_from_description(description_text)
                 debug_log(f"Fallback extracted trainer name: {trainer_name}")
 
-                from utils.cache.ball_reco_cache import get_user_id_by_name
-                user_id = get_user_id_by_name(trainer_name) if trainer_name else None
+                from utils.cache.faction_ball_alert_cache import fetch_user_id_via_user_name_cache
+                user_id = (
+                    fetch_user_id_via_user_name_cache(trainer_name)
+                    if trainer_name
+                    else None
+                )
                 debug_log(f"Fallback found user_id: {user_id} from trainer_name: {trainer_name}")
                 member = after.guild.get_member(user_id) if user_id else None
                 debug_log(f"Fetched member from guild: {member}")
@@ -215,7 +219,3 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
             label="FACTION_BALL_ALERT",
         )
         debug_log(f"Exception occurred: {e}", highlight=True)
-
-
-
-

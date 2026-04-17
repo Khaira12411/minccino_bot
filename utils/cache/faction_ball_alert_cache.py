@@ -122,3 +122,12 @@ def update_faction_ball_alert_notify_type_cache(user: discord.Member, new_notify
             f"Updated alert_type for {user_name} → {new_notify_type}",
             label="🐾 faction ball alert CACHE",
         )
+
+def fetch_user_id_via_user_name_cache(user_name: str) -> int | None:
+    """
+    Fetch a user's ID based on their name from cache.
+    """
+    for user_id, data in faction_ball_alert_cache.items():
+        if data.get("user_name") == user_name:
+            return user_id
+    return None
