@@ -3,13 +3,16 @@ import re
 import discord
 from discord.ext import commands
 
-from config.straymons_constants import STRAYMONS__EMOJIS, STRAYMONS__TEXT_CHANNELS
+from config.straymons_constants import (STRAYMONS__EMOJIS,
+                                        STRAYMONS__TEXT_CHANNELS)
 from utils.embeds.design_embed import design_embed
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.essentials.webhook import send_webhook
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
+
 processing_fl_rs_msg_id = set()
+sent_fl_rs_msg_id = set()
 # enable_debug(f"{__name__}.fl_rs_checker")
 rarity_meta = {
     "common": {"color": 810198, "emoji": STRAYMONS__EMOJIS.common},
@@ -74,6 +77,10 @@ def extract_member_username_from_embed(embed: discord.Embed) -> str | None:
 #     ✨ Feeling Lucky Rare Pokémon Checker
 # 🐾────────────────────────────────────────────
 async def fl_rs_checker(bot: discord.Client, message: discord.Message):
+    if message.id in sent_fl_rs_msg_id:
+        debug_log("Message ID already sent to reports. Exiting FL RS Checker.")
+        return
+
     if not message.embeds:
         return
 
@@ -114,7 +121,8 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
             return
 
         debug_log(f"Extracted username from embed: {username}")
-        from utils.cache.straymon_member_cache import fetch_straymon_user_id_by_username
+        from utils.cache.straymon_member_cache import \
+            fetch_straymon_user_id_by_username
 
         user_id = fetch_straymon_user_id_by_username(username)
         if not user_id:
@@ -189,42 +197,45 @@ async def fl_rs_checker(bot: discord.Client, message: discord.Message):
         debug_log("Message ID already being processed. Exiting FL RS Checker.")
         return
     processing_fl_rs_msg_id.add(message.id)
+    try:
+        image_url = embed.image.url if embed.image else None
 
-    image_url = embed.image.url if embed.image else None
+        emoji = rarity_meta.get(rarity, rarity_meta["default"]).get("emoji", "❓")
+        display_pokemon_name = f"{emoji} {pokemon_name.title()}"
+        reward_map = {
+            "legendary": f"{STRAYMONS__EMOJIS.pokecoin} 50k",
+            "shiny": f"{STRAYMONS__EMOJIS.pokecoin} 250k",
+        }
+        reward = reward_map.get(rarity, "Unknown")
+        desc = (
+            f"**Member:** {member.mention}\n"
+            f"**Pokemon:** {display_pokemon_name}\n"
+            f"**Reward:** {reward}\n\n"
+            f"Don't forget to forward the rare spawn in <#1167381632429342794>!"
+        )
 
-    emoji = rarity_meta.get(rarity, rarity_meta["default"]).get("emoji", "❓")
-    display_pokemon_name = f"{emoji} {pokemon_name.title()}"
-    reward_map = {
-        "legendary": f"{STRAYMONS__EMOJIS.pokecoin} 50k",
-        "shiny": f"{STRAYMONS__EMOJIS.pokecoin} 250k",
-    }
-    reward = reward_map.get(rarity, "Unknown")
-    desc = (
-        f"**Member:** {member.mention}\n"
-        f"**Pokemon:** {display_pokemon_name}\n"
-        f"**Reward:** {reward}\n\n"
-        f"Don't forget to forward the rare spawn in <#1167381632429342794>!"
-    )
+        log_embed = discord.Embed(
+            title="Feeling Lucky Rare Spawn",
+            url=message.jump_url,
+            description=desc,
+            color=embed_color,
+        )
+        log_embed = design_embed(
+            user=member, embed=log_embed, thumbnail_url=image_url if image_url else None
+        )
+        log_embed.color = message.embeds[0].color
 
-    log_embed = discord.Embed(
-        title="Feeling Lucky Rare Spawn",
-        url=message.jump_url,
-        description=desc,
-        color=embed_color,
-    )
-    log_embed = design_embed(
-        user=member, embed=log_embed, thumbnail_url=image_url if image_url else None
-    )
-    log_embed.color = message.embeds[0].color
+        report_channel = message.guild.get_channel(STRAYMONS__TEXT_CHANNELS.reports)
+        if report_channel:
+            await send_webhook(bot, report_channel, embed=log_embed)
+            sent_fl_rs_msg_id.add(message.id)
 
-    report_channel = message.guild.get_channel(STRAYMONS__TEXT_CHANNELS.reports)
-    if report_channel:
-        await send_webhook(bot, report_channel, embed=log_embed)
+        pretty_log(
+            tag="info",
+            message=f"Detected rare Pokémon: {pokemon_name}",
+            label="🍀 FL RS CHECKER",
+            bot=bot,
+        )
+    finally:
+        processing_fl_rs_msg_id.discard(message.id)
 
-    pretty_log(
-        tag="info",
-        message=f"Detected rare Pokémon: {pokemon_name}",
-        label="🍀 FL RS CHECKER",
-        bot=bot,
-    )
-    processing_fl_rs_msg_id.discard(message.id)
