@@ -112,3 +112,11 @@ def fetch_straymon_user_id_by_username(user_name: str) -> int | None:
 
     return None
 
+def get_user_id_by_name(user_name: str) -> int | None:
+    """
+    Utility function to get user ID by name from the Straymon member cache.
+    """
+    member_info = fetch_straymon_member_cache_by_name(user_name)
+    if member_info:
+        return member_info.get("user_id")
+    return None

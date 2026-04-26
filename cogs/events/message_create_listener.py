@@ -228,6 +228,7 @@ class MessageCreateListener(commands.Cog):
                 # 💜────────────────────────────────────────────
                 if first_embed_author and "PokeMeow Battles" in first_embed_author:
                     await detect_pokemeow_battle(bot=self.bot, message=message)
+
                 # Process battle won
                 if message.content and battle_won_trigger in message.content:
 

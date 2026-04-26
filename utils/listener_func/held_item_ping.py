@@ -5,7 +5,8 @@ from discord.ext import commands
 
 from group_func.toggle.held_item.held_item_ping_helpers import held_item_message
 from utils.loggers.pretty_logs import pretty_log
-
+from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.loggers.debug_log import debug_log, enable_debug
 
 async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
     """
@@ -18,21 +19,30 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
         "info", f"Processing message {message.id}", label="🐭 HELD ITEM PING", bot=bot
     )"""
 
-    if not message.reference or not message.reference.resolved:
-        """pretty_log(
-            "skip",
-            "Skipped: not a reply or replied msg not cached",
-            label="🐭 HELD ITEM PING",
-            bot=bot,
-        )"""
-        return
-
-    target_user = message.reference.resolved.author
+    target_user = await get_pokemeow_reply_member(message)
     if not target_user:
         """pretty_log(
             "skip", "Skipped: reply has no author", label="🐭 HELD ITEM PING", bot=bot
         )"""
-        return
+        trainer_name = re.search(r"\*\*(.+?)\*\* found a wild", message.content)
+        if not trainer_name:
+            debug_log("No username match found in message content.")
+            return
+
+        # If we got a trainer name from the embed, we can try to find the user ID from the name
+        from utils.cache.straymon_member_cache import get_user_id_by_name   
+        target_user_id = get_user_id_by_name(trainer_name)
+        if not target_user_id:
+            debug_log(
+                f"Skipped: could not find user ID for trainer name '{trainer_name}' extracted from embed author"
+            )
+            return
+        target_user = await bot.fetch_user(target_user_id)
+        if not target_user:
+            debug_log(
+                f"Skipped: could not fetch user with ID {target_user_id} extracted from embed author"
+            )
+            return
 
     # ✅ Skip if user is not in held_item_cache
     if target_user.id not in held_item_cache:
