@@ -1,6 +1,7 @@
 import time
 
 import discord
+
 from utils.loggers.pretty_logs import pretty_log
 
 straymon_member_cache: dict[int, dict] = {}
@@ -42,6 +43,7 @@ async def load_straymon_member_cache(bot):
         )
 
     return straymon_member_cache
+
 
 def fetch_straymon_member_cache(user_id: int):
     """
@@ -92,6 +94,7 @@ def fetch_straymon_member_cache_by_username(user_name: str) -> tuple[int, dict] 
 
     return None
 
+
 def fetch_straymon_user_id_by_username(user_name: str) -> int | None:
     """
     Fetch a member's user_id from the Straymon cache by their user_name.
@@ -112,11 +115,9 @@ def fetch_straymon_user_id_by_username(user_name: str) -> int | None:
 
     return None
 
+
 def get_user_id_by_name(user_name: str) -> int | None:
     """
     Utility function to get user ID by name from the Straymon member cache.
     """
-    member_info = fetch_straymon_member_cache_by_name(user_name)
-    if member_info:
-        return member_info.get("user_id")
-    return None
+    return fetch_straymon_user_id_by_username(user_name)

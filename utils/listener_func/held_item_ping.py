@@ -4,9 +4,11 @@ import discord
 from discord.ext import commands
 
 from group_func.toggle.held_item.held_item_ping_helpers import held_item_message
-from utils.loggers.pretty_logs import pretty_log
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
+
+enable_debug(f"{__name__}.held_item_ping_handler")
+
 
 async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
     """
@@ -15,22 +17,20 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
     """
     from utils.cache.held_item_cache import held_item_cache
 
-    """pretty_log(
-        "info", f"Processing message {message.id}", label="🐭 HELD ITEM PING", bot=bot
-    )"""
-
     target_user = await get_pokemeow_reply_member(message)
     if not target_user:
-        """pretty_log(
-            "skip", "Skipped: reply has no author", label="🐭 HELD ITEM PING", bot=bot
-        )"""
-        trainer_name = re.search(r"\*\*(.+?)\*\* found a wild", message.content)
-        if not trainer_name:
+        debug_log(
+            "Message is not a reply to a PokéMeow message or failed to fetch user from reply."
+        )
+        trainer_match = re.search(r"\*\*(.+?)\*\* found a wild", message.content)
+        if not trainer_match:
             debug_log("No username match found in message content.")
             return
+        trainer_name = trainer_match.group(1).strip()
 
         # If we got a trainer name from the embed, we can try to find the user ID from the name
-        from utils.cache.straymon_member_cache import get_user_id_by_name   
+        from utils.cache.straymon_member_cache import get_user_id_by_name
+
         target_user_id = get_user_id_by_name(trainer_name)
         if not target_user_id:
             debug_log(
@@ -46,36 +46,22 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
 
     # ✅ Skip if user is not in held_item_cache
     if target_user.id not in held_item_cache:
-        """pretty_log(
-            "skip",
-            f"User {target_user.id} not in held_item_cache, skipping",
-            label="🐭 HELD ITEM PING",
-            bot=bot,
-        )"""
+        debug_log(f"User {target_user.id} not in held_item_cache, skipping")
         return
 
     user_sub = held_item_cache[target_user.id]
-    """pretty_log(
-        "info", f"Target user: {target_user.id}", label="🐭 HELD ITEM PING", bot=bot
-    )"""
+    debug_log(f"Target user: {target_user.id}")
 
     user_sub = held_item_cache.get(target_user.id, {})
 
     if not message.embeds:
-        """pretty_log(
-            "skip", "Skipped: message has no embeds", label="🐭 HELD ITEM PING", bot=bot
-        )"""
+        debug_log("Skipped: message has no embeds")
         return
 
     for embed in message.embeds:
         desc = embed.description or ""
 
-        """pretty_log(
-            "debug",
-            f"Embed description raw: {repr(desc)}",
-            label="🐭 HELD ITEM PING",
-            bot=bot,
-        )"""
+        debug_log(f"Embed description raw: {repr(desc)}")
 
         # Regex: extract optional held item and Pokemon name
         pattern = (
@@ -93,12 +79,7 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
             has_held_item = bool(match.group("held"))
 
             # Log every Pokemon
-            """pretty_log(
-                "info",
-                f"Detected Pokemon: {pokemon_name}, Held item? {has_held_item}",
-                label="🐭 HELD ITEM PING",
-                bot=bot,
-            )"""
+            debug_log(f"Detected Pokemon: {pokemon_name}, Held item? {has_held_item}")
 
             # Only ping if the spawn actually has a held item
             if not has_held_item:
@@ -106,26 +87,13 @@ async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
 
             msg = held_item_message(pokemon_name, user_sub)
             if not msg:
-                """pretty_log(
-                    "skip",
-                    f"User {target_user.id} not subscribed for {pokemon_name}'s items",
-                    label="🐭 HELD ITEM PING",
-                    bot=bot,
-                )"""
+                debug_log(
+                    f"User {target_user.id} not subscribed for {pokemon_name}'s items"
+                )
                 continue
 
             try:
                 await message.channel.send(f"<@{target_user.id}> {msg}")
-                pretty_log(
-                    "info",
-                    f"Pinged {target_user.id} for {pokemon_name}",
-                    label="🐭 HELD ITEM PING",
-                    bot=bot,
-                )
+                debug_log(f"Pinged {target_user.id} for {pokemon_name}")
             except Exception as e:
-                pretty_log(
-                    "error",
-                    f"Failed to ping {target_user.id} for {pokemon_name}: {e}",
-                    label="🐭 HELD ITEM PING",
-                    bot=bot,
-                )
+                debug_log(f"Failed to ping {target_user.id} for {pokemon_name}: {e}")

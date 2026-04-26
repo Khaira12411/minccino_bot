@@ -281,21 +281,9 @@ async def pokemon_caught_listener(
             return
         user_id = fetch_straymon_user_id_by_username(username)
         if not user_id:
-            pretty_log(
-                "info",
-                f"Could not find user ID for username '{username}' from embed for message ID {message.id}",
-                label="💠 POKÉMON CAUGHT LISTENER",
-                bot=bot,
-            )
             return
         member = message.guild.get_member(user_id)
         if not member:
-            pretty_log(
-                "info",
-                f"Could not find member in guild for user ID {user_id} (username: '{username}') for message ID {message.id}",
-                label="💠 POKÉMON CAUGHT LISTENER",
-                bot=bot,
-            )
             return
 
     member_id = member.id
