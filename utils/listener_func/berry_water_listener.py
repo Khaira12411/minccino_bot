@@ -4,7 +4,7 @@ import time
 import discord
 
 from config.aesthetic import *
-from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID
+from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID, MIMA_USER_ID
 from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
     berry_map,
@@ -102,7 +102,8 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
     )
     if user_id == HANA_USER_ID:
         member_channel_id = STRAYMONS__TEXT_CHANNELS.khy
-
+    if user_id == MIMA_USER_ID:
+        member_channel_id = STRAYMONS__TEXT_CHANNELS.hoenn_spot
     member_channel = guild.get_channel(member_channel_id) if member_channel_id else None
     member_channel_name = member_channel.name if member_channel else None
 
