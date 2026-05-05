@@ -8,12 +8,15 @@ from utils.cache.daily_fa_ball_cache import daily_faction_ball_cache
 from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache
 from utils.cache.straymon_member_cache import straymon_member_cache
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
+from utils.essentials.retry_function import _retry_discord_call
+from utils.listener_func.ball_reco_ping import extract_trainer_name_from_description
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-from utils.listener_func.ball_reco_ping import extract_trainer_name_from_description
-#enable_debug(f"{__name__}.faction_ball_alert")
+
+# enable_debug(f"{__name__}.faction_ball_alert")
 FISHING_COLOR = 0x87CEFA
 processed_faction_ball_alerts = set()
+
 
 # 🛡️────────────────────────────────────────────
 #      🛡️ Faction Ball Alert Listener
@@ -73,7 +76,9 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                     debug_log(f"Extracted trainer ID from reference: {trainer_id}")
 
                 if not trainer_id and after.embeds[0].description:
-                    name_match = re.search(r"\*\*(.+?)\*\*", after.embeds[0].description)
+                    name_match = re.search(
+                        r"\*\*(.+?)\*\*", after.embeds[0].description
+                    )
                     if name_match:
                         trainer_name = name_match.group(1)
                         debug_log(f"Extracted trainer name: {trainer_name}")
@@ -93,13 +98,18 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                 trainer_name = extract_trainer_name_from_description(description_text)
                 debug_log(f"Fallback extracted trainer name: {trainer_name}")
 
-                from utils.cache.faction_ball_alert_cache import fetch_user_id_via_user_name_cache
+                from utils.cache.faction_ball_alert_cache import (
+                    fetch_user_id_via_user_name_cache,
+                )
+
                 user_id = (
                     fetch_user_id_via_user_name_cache(trainer_name)
                     if trainer_name
                     else None
                 )
-                debug_log(f"Fallback found user_id: {user_id} from trainer_name: {trainer_name}")
+                debug_log(
+                    f"Fallback found user_id: {user_id} from trainer_name: {trainer_name}"
+                )
                 member = after.guild.get_member(user_id) if user_id else None
                 debug_log(f"Fetched member from guild: {member}")
                 if not member:
@@ -112,7 +122,9 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
         elif trainer_id:
             user_id = trainer_id
         elif trainer_name:
-            user = discord.utils.find(lambda m: m.display_name == trainer_name, after.guild.members)
+            user = discord.utils.find(
+                lambda m: m.display_name == trainer_name, after.guild.members
+            )
             user_id = user.id if user else None
 
         user_faction_ball_alert = faction_ball_alert_cache.get(user_id)
@@ -126,8 +138,12 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                 )
 
                 # print(straymon_member_cache)
-                debug_log(f"straymon_member_cache keys: {list(straymon_member_cache.keys())}")
-                debug_log(f"straymon_member_cache values: {[data.get('user_name') for data in straymon_member_cache.values()]}")
+                debug_log(
+                    f"straymon_member_cache keys: {list(straymon_member_cache.keys())}"
+                )
+                debug_log(
+                    f"straymon_member_cache values: {[data.get('user_name') for data in straymon_member_cache.values()]}"
+                )
                 result = fetch_straymon_member_cache_by_username(trainer_name)
                 if result:
                     user_id, straymon_info = result
@@ -160,8 +176,16 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
             else embed_faction.title()
         )
 
-        user_name = member.display_name if member else fishing_user.display_name if fishing_user else "Trainer"
-        user_mention = member.mention if member else fishing_user.mention if fishing_user else "Trainer"
+        user_name = (
+            member.display_name
+            if member
+            else fishing_user.display_name if fishing_user else "Trainer"
+        )
+        user_mention = (
+            member.mention
+            if member
+            else fishing_user.mention if fishing_user else "Trainer"
+        )
 
         user_faction = straymon_member_cache.get(user_id, {}).get("faction")
         debug_log(f"User faction: {user_faction}")
@@ -173,7 +197,7 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
         debug_log(f"Faction daily ball: {faction_ball}")
         if not faction_ball:
             content = f"{user_mention} I don't know your faction's daily ball yet, can you do `;fa`? Thanks!."
-            await after.channel.send(content=content)
+            await _retry_discord_call(after.channel.send, content=content)
             pretty_log(
                 "info",
                 f"Could not send faction ball alert to {user_name} ({user_id}) for {embed_faction} daily ball because their faction {user_faction} has no daily ball set.",
@@ -188,7 +212,7 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
         if ball_emoji:
             if user_faction_ball_notify == "on":
                 content = f"<@{user_id}>, This Pokemon is a daily {display_embed_faction} hunt! Use {ball_emoji}!"
-                await after.channel.send(content)
+                await _retry_discord_call(after.channel.send, content)
                 pretty_log(
                     "sent",
                     f"Sent faction ball alert to {user_name} ({user_id}) for {embed_faction} daily ball {faction_ball}",
@@ -196,7 +220,7 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                 debug_log("Sent faction ball alert with ping")
             elif user_faction_ball_notify == "on_no_pings":
                 content = f"{user_name}, This Pokemon is a daily {display_embed_faction} hunt! Use {ball_emoji}!"
-                await after.channel.send(content)
+                await _retry_discord_call(after.channel.send, content)
                 pretty_log(
                     "sent",
                     f"Sent faction ball alert (no ping) to {user_name} ({user_id}) for {embed_faction} daily ball {faction_ball}",
