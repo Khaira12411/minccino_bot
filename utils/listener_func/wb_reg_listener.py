@@ -177,12 +177,7 @@ async def start_world_boss_task(
             )
         return
     # Otherwise, create a new task for this boss
-    try:
-        await message.add_reaction(Emojis.calendar)
-    except Exception as e:
-        debug_log(
-            f"start_world_boss_task: Failed to add reaction to message for user {user.name}: {e}"
-        )
+    # Register entry BEFORE any awaits to prevent race conditions causing duplicate tasks
     try:
         wb_tasks[wb_name] = {
             "time": unix_seconds,
@@ -197,6 +192,12 @@ async def start_world_boss_task(
     except Exception as e:
         debug_log(
             f"start_world_boss_task: Failed to create world boss waiter task for boss {wb_name} and user {user.name}: {e}"
+        )
+    try:
+        await message.add_reaction(Emojis.calendar)
+    except Exception as e:
+        debug_log(
+            f"start_world_boss_task: Failed to add reaction to message for user {user.name}: {e}"
         )
 
 
@@ -287,7 +288,7 @@ async def register_wb_battle_reminder(
         pretty_log("info", "No boss name found in the embed description.")
         return
 
-#
+    #
     try:
         await centralize_wb_register_handler(
             bot=bot,
