@@ -18,7 +18,7 @@ from utils.essentials.retry_function import _retry_discord_call
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-#enable_debug(f"{__name__}.berry_reminder_checker")
+# enable_debug(f"{__name__}.berry_reminder_checker")
 
 
 async def update_growth_stage_func(
@@ -97,6 +97,7 @@ async def berry_water_reminder(bot: discord.Client):
         reminders.sort(key=lambda r: r["slot_number"])
 
         to_be_watered_berry_names = []
+        reminders_to_remove = []
         for reminder in reminders:
             debug_log(
                 f"Processing reminder for slot {reminder['slot_number']}: {reminder}"
@@ -104,6 +105,14 @@ async def berry_water_reminder(bot: discord.Client):
             water_can_type = reminder.get("water_can_type", "unknown")
             stage = reminder.get("stage", "unknown")
             next_stage = next_stage_map.get(reminder["stage"].lower(), "unknown")
+
+            # Harvest-ready reminders should be handled by berry checker, not water checker.
+            if stage.lower() == "berry" or next_stage.lower() == "berry":
+                debug_log(
+                    f"Skipping water reminder for slot {reminder['slot_number']} because it is harvest-ready (stage={stage}, next_stage={next_stage})."
+                )
+                continue
+
             mulch_type = reminder.get("mulch_type") or "unknown"
             if isinstance(mulch_type, str) and mulch_type != "unknown":
                 mulch_type = mulch_type.lower()
@@ -125,7 +134,14 @@ async def berry_water_reminder(bot: discord.Client):
             debug_log(f"Prepared berry name: {berry_name} (raw: {berry_name_raw})")
 
             to_be_watered_berry_names.append(berry_name)
+            reminders_to_remove.append(reminder)
             debug_log(f"Added to watering list: {berry_name} for slot {slot_number}")
+
+        if not to_be_watered_berry_names:
+            debug_log(
+                f"No water reminders to send for user_id={user_id}; all due entries were harvest-ready or filtered out."
+            )
+            continue
 
         to_be_watered_field_name = (
             "Berries to be watered. Use `;berry water` to water them:"
@@ -170,8 +186,8 @@ async def berry_water_reminder(bot: discord.Client):
                     f"Sent message to channel {channel.name} (ID: {channel.id}) for user {user_name} (ID: {user_id})"
                 )
 
-                # Remove each berry reminder after sending — use the actual reminder slot_number
-                for reminder in reminders:
+                # Remove only reminders included in this water message.
+                for reminder in reminders_to_remove:
                     debug_log(
                         f"Removing berry reminder for user_id={user_id}, slot_number={reminder['slot_number']} after moisture dry out reminder sent."
                     )

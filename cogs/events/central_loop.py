@@ -61,11 +61,11 @@ class CentralLoop(commands.Cog):
                 # 🍀 Check if any Feeling Lucky cd is due
                 await fl_cd_checker(bot=self.bot)
 
-                # 💧 Check if any berry water reminders are due
-                await berry_water_reminder(bot=self.bot)
-
                 # 🍓 Check if any berry reminder is due
                 await berry_reminder_checker(bot=self.bot)
+
+                # 💧 Check if any berry water reminders are due
+                await berry_water_reminder(bot=self.bot)
 
                 # 🦭 Check if any pokemon reminder is due
                 await pokemon_reminder_checker(self.bot)
