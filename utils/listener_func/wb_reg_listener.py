@@ -19,7 +19,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.handle_wb_register_command")
+#enable_debug(f"{__name__}.handle_wb_register_command")
 """enable_debug(f"{__name__}.register_wb_battle_reminder")
 enable_debug(f"{__name__}.world_boss_waiter")
 enable_debug(f"{__name__}.start_world_boss_task")"""

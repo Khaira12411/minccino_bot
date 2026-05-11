@@ -18,19 +18,23 @@ from dotenv import load_dotenv
 
 # ── 🧸 Project-Specific Imports 🧸 ──
 from config.current_setup import *
+from utils.background_task.scheduler import setup_scheduler
 from utils.cache.centralized_cache import load_all_caches
 from utils.essentials.get_pg_pool import get_pg_pool
 from utils.essentials.role_checks import *
+from utils.listener_func.ball_reco_ping import processed_pokemon_spawns
+from utils.listener_func.explore_caught_listener import (
+    processed_explore_caught_messages,
+)
+from utils.listener_func.faction_ball_alert import processed_faction_ball_alerts
+from utils.listener_func.fish_reco_ping import processed_fishing_messages
+from utils.listener_func.halloween_contest_listener import (
+    processed_halloween_score_message_ids,
+)
+from utils.listener_func.pokemon_caught import processed_caught_messages
+from utils.listener_func.weekly_stats_syncer import processed_weekly_stats_messages
 from utils.loggers.pretty_logs import pretty_log, set_minccino_bot
 from utils.loggers.rate_limit_logger import setup_rate_limit_logging
-from utils.background_task.scheduler import setup_scheduler
-from utils.listener_func.fish_reco_ping import processed_fishing_messages
-from utils.listener_func.pokemon_caught import processed_caught_messages
-from utils.listener_func.explore_caught_listener import processed_explore_caught_messages
-from utils.listener_func.halloween_contest_listener import processed_halloween_score_message_ids
-from utils.listener_func.faction_ball_alert import processed_faction_ball_alerts
-from utils.listener_func.ball_reco_ping import processed_pokemon_spawns
-from utils.listener_func.weekly_stats_syncer import processed_weekly_stats_messages
 
 # ╭───────────────────────────────╮
 # │   🤎  Suppress Logs  🤍      │
@@ -98,7 +102,7 @@ ALLOWED_GUILD_IDS = [
     OKA_SERVER_ID,
     STRAYMONS_GUILD_ID,
     CC_GUILD_ID,
-    1154753039685660793
+    1154753039685660793,
 ]
 
 
@@ -203,7 +207,9 @@ async def startup_tasks():
         status_rotator.start()
     activity_type, message = pick_status_tuple()"""
     await bot.change_presence(
-        activity=discord.Activity(type=discord.ActivityType.playing, name="🐭 /commands")
+        activity=discord.Activity(
+            type=discord.ActivityType.playing, name="🐭 /commands"
+        )
     )
     pretty_log(
         tag="",
@@ -228,8 +234,12 @@ async def refresh_all_caches():
     processed_pokemon_spawns.clear()
     processed_faction_ball_alerts.clear()
     processed_weekly_stats_messages.clear()
-    #processed_halloween_score_message_ids.clear()
-    pretty_log(tag="", message="All caches refreshed and processed messages are cleared.", label="🧸 Cache Refresher")
+    # processed_halloween_score_message_ids.clear()
+    pretty_log(
+        tag="",
+        message="All caches refreshed and processed messages are cleared.",
+        label="🧸 Cache Refresher",
+    )
 
 
 # ╭───────────────────────────────╮
@@ -322,6 +332,7 @@ async def setup_hook():
     # ── 🤎 Scheduler Setup ──
     await setup_scheduler(bot)
 
+
 # ╭───────────────────────────────╮
 # │     🤎  Startup Checklist  🤍  │
 # ╰───────────────────────────────╯
@@ -329,20 +340,21 @@ async def startup_checklist(bot: commands.Bot):
     from utils.cache import (
         ball_reco_cache,
         boosted_channels_cache,
-        get_water_state,
-        held_item_cache,
-        timer_cache,
-        user_reminders_cache,
-        feeling_lucky_cache,
-        user_captcha_alert_cache,
-        res_fossils_alert_cache,
-        straymon_member_cache,
-        weekly_goal_cache,
         daily_faction_ball_cache,
         faction_ball_alert_cache,
+        feeling_lucky_cache,
+        get_water_state,
         halloween_con_top_cache,
         halloween_contests_alert_cache,
+        held_item_cache,
+        res_fossils_alert_cache,
+        straymon_member_cache,
+        timer_cache,
+        user_captcha_alert_cache,
+        user_reminders_cache,
+        weekly_goal_cache,
     )
+
     fourth_place_score = halloween_con_top_cache.get("fourth_place", {}).get("score", 0)
     print("\n★━━━━━━━━━━━━━━━━━━━━★")
     print(f"✅ {len(bot.cogs)} 🌼 Cogs Loaded")
@@ -359,8 +371,8 @@ async def startup_checklist(bot: commands.Bot):
     print(f"✅ {len(user_captcha_alert_cache)} 🛡️  Captcha Alert Users")
     print(f"✅ {len(res_fossils_alert_cache)} 🦴  Research Fossils Alert Users")
     print(f"✅ {len(faction_ball_alert_cache)} 🥟  Faction Ball Alert Users")
-    #print(f"✅ {len(halloween_contests_alert_cache)} 🎃  Halloween Contest Alert Users")
-    #print(f"✅ {fourth_place_score:,} 🎃  Halloween Con Fourth Place Score")
+    # print(f"✅ {len(halloween_contests_alert_cache)} 🎃  Halloween Contest Alert Users")
+    # print(f"✅ {fourth_place_score:,} 🎃  Halloween Con Fourth Place Score")
     print(f"✅ {status_rotator.is_running()} 🍵 Status Rotator Running")
     print(f"✅ {startup_tasks.is_running()} 🖌️  Startup Tasks Running")
     pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"
@@ -377,18 +389,61 @@ async def main():
     load_dotenv()
     pretty_log("ready", "MinccinoBot is starting...")
 
-    retry_delay = 5
+    token = (os.getenv("DISCORD_TOKEN") or "").strip()
+    if not token:
+        pretty_log("error", "DISCORD_TOKEN is missing or empty. Aborting startup.")
+        return
+
+    retry_delay = 10
+    max_general_delay = 120
+    max_429_delay = 900
+
     while True:
         try:
-            await bot.start(os.getenv("DISCORD_TOKEN"))
+            await bot.start(token)
+            retry_delay = 10
         except KeyboardInterrupt:
             pretty_log("ready", "Shutting down MinccinoBot...")
             break
+        except discord.LoginFailure as e:
+            # Invalid token/auth issues should not be retried in a loop.
+            pretty_log(
+                "error",
+                f"Discord login failed: {e}. Aborting startup.",
+                include_trace=True,
+            )
+            break
+        except discord.HTTPException as e:
+            if getattr(e, "status", None) == 429:
+                # Cloudflare/Discord edge rate-limit during static_login.
+                jitter = random.randint(5, 20)
+                retry_delay = min(retry_delay * 2, max_429_delay)
+                sleep_for = retry_delay + jitter
+                pretty_log(
+                    "warn",
+                    f"Startup rate-limited (HTTP 429). Retrying in {sleep_for}s (base={retry_delay}s, jitter={jitter}s).",
+                )
+                await asyncio.sleep(sleep_for)
+                continue
+
+            jitter = random.randint(1, 6)
+            sleep_for = retry_delay + jitter
+            pretty_log(
+                "error",
+                f"Discord HTTP error during startup (status={getattr(e, 'status', 'unknown')}): {e}",
+                include_trace=True,
+            )
+            pretty_log("ready", f"Restarting MinccinoBot in {sleep_for} seconds...")
+            await asyncio.sleep(sleep_for)
+            retry_delay = min(retry_delay * 2, max_general_delay)
+            continue
         except Exception as e:
             pretty_log("error", f"Bot crashed: {e}", include_trace=True)
-            pretty_log("ready", f"Restarting MinccinoBot in {retry_delay} seconds...")
-            await asyncio.sleep(retry_delay)
-            retry_delay = min(retry_delay * 2, 60)
+            jitter = random.randint(1, 6)
+            sleep_for = retry_delay + jitter
+            pretty_log("ready", f"Restarting MinccinoBot in {sleep_for} seconds...")
+            await asyncio.sleep(sleep_for)
+            retry_delay = min(retry_delay * 2, max_general_delay)
 
 
 if __name__ == "__main__":

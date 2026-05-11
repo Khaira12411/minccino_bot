@@ -17,7 +17,7 @@ from utils.essentials.retry_function import _retry_discord_call
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.berry_reminder_checker")
+#enable_debug(f"{__name__}.berry_reminder_checker")
 
 # Prevent immediate duplicate sends when the checker is accidentally triggered twice.
 BERRY_DISPATCH_DEDUP_SECONDS = 90

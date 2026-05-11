@@ -7,7 +7,7 @@ from group_func.toggle.held_item.held_item_ping_helpers import held_item_message
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 
-enable_debug(f"{__name__}.held_item_ping_handler")
+#enable_debug(f"{__name__}.held_item_ping_handler")
 
 
 async def held_item_ping_handler(bot: commands.Bot, message: discord.Message):
