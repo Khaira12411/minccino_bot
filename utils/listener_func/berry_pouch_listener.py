@@ -1,17 +1,20 @@
 import re
+
 import discord
 
 from config.current_setup import ALLOWED_BERRY_REMINDER_USER_IDS, HANA_USER_ID
 from config.straymons_constants import STRAYMONS__ROLES
 from utils.database.berry_reminder import (
     fetch_user_all_berry_reminder,
-    upsert_berry_reminder,
+    update_moisture_dries_on,
     update_water_can_type_for_slot,
 )
+from utils.database.watering_can_db import get_watering_can, upsert_watering_can
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
-from utils.database.watering_can_db import upsert_watering_can, get_watering_can
+
+
 # enable_debug(f"{__name__}.handle_berry_pouch_message")
 def extract_best_watering_tool_from_embed(embed) -> str:
     """
@@ -27,8 +30,6 @@ def extract_best_watering_tool_from_embed(embed) -> str:
             break
     if not watering_tools_value:
         return None
-
-
 
     sprayduck_pattern = re.compile(
         r"<:sprayduck:[0-9]+>\s*\*\*(\d+)\*\*x", re.IGNORECASE
@@ -58,7 +59,9 @@ def extract_best_watering_tool_from_embed(embed) -> str:
         return None
 
 
-async def handle_berry_pouch_message(bot: discord.Client, before: discord.Message, message: discord.Message):
+async def handle_berry_pouch_message(
+    bot: discord.Client, before: discord.Message, message: discord.Message
+):
     embed = message.embeds[0] if message.embeds else None
     if not embed:
         return
@@ -74,7 +77,9 @@ async def handle_berry_pouch_message(bot: discord.Client, before: discord.Messag
         straymon_role not in member.roles
         and user_id not in ALLOWED_BERRY_REMINDER_USER_IDS
     ):
-        debug_log(f"Message from user_id {user_id} is not in Allowed Berry Reminder User. Ignoring.")
+        debug_log(
+            f"Message from user_id {user_id} is not in Allowed Berry Reminder User. Ignoring."
+        )
         return
     current_water_can_type = extract_best_watering_tool_from_embed(embed)
     if not current_water_can_type:
@@ -107,6 +112,14 @@ async def handle_berry_pouch_message(bot: discord.Client, before: discord.Messag
                 "db",
                 f"Updated water can type to {current_water_can_type} for user_id {user_id} in slot {slot_number}",
             )
+            if current_water_can_type == "sprayduck":
+                # If the user just got a sprayduck, update the moisture_dries_on for all their berries to null so they wont get notified
+                await update_moisture_dries_on(
+                    bot,
+                    user_id,
+                    slot_number,
+                    None,
+                )
     pretty_log(
         "db",
         f"Finished processing berry pouch message for user_id {user_id}. Updated water can type to {current_water_can_type} for all slots.",
