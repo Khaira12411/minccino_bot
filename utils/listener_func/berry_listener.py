@@ -206,6 +206,7 @@ async def berry_listener(
     if (
         "watered" in embed_description.lower()
         and "in slot" in embed_description.lower()
+        and not "sprayduck" in embed_description.lower()
     ):
         watering_action = extract_watering_action(embed_description)
         if watering_action:
