@@ -7,6 +7,7 @@ from utils.database.special_npc_timer_db_func import (
 )
 from utils.loggers.pretty_logs import pretty_log
 
+
 # 🍭 Helper function to fetch spooky_hour row
 async def fetch_spooky_hour(bot: discord.Client):
     """
@@ -26,6 +27,9 @@ async def fetch_spooky_hour(bot: discord.Client):
             f"Failed to fetch spooky_hour row: {e}",
         )
         return None
+
+
+NPC_ID_MAP = {"alph_scientist": 970}
 
 
 # 🍭 Background task to check special battle timers
@@ -55,7 +59,8 @@ async def special_battle_timer_checker(bot: discord.Client):
             if member:
                 # Remove timer from database
                 content = f"{Emojis.battle_spawn} {member.mention}, you can now battle {display_npc_name} again!"
-                desc = f";b npc {npc_name}"
+                npc_id = NPC_ID_MAP.get(npc_name, npc_name)
+                desc = f";b npc {npc_id}"
                 embed = discord.Embed(description=desc, color=0xC1B1A5)
                 try:
                     await channel.send(content=content, embed=embed)
