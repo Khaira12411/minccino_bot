@@ -11,8 +11,8 @@ from utils.database.special_npc_timer_db_func import (
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
 from config.aesthetic import Emojis
-BATTLE_TIMER = 30 * 60  # 30 minutes in seconds
-
+BATTLE_TIMER = 5 * 60  # 30 minutes in seconds
+NPC_NAME = "alph_scientist"
 REACTION_EMOJI = Emojis.calendar
 
 # Extracts the timestamp from a string like '<t:1766190355:R>'
@@ -40,14 +40,14 @@ async def special_battle_npc_timer_listener(
     user_id = member.id
     user_name = member.name
     channel_id = message.channel.id
-    npc_name = "xmas_blue"
+    npc_name = NPC_NAME
 
     # Extract timestamp
     ends_on = extract_timestamp_from_message(message.content)
     if not ends_on:
         return
 
-    existing_timer = await fetch_ends_on_for_user_npc(bot, user_id, "xmas_blue")
+    existing_timer = await fetch_ends_on_for_user_npc(bot, user_id, npc_name)
     if existing_timer:
         # Check if different
         if existing_timer != ends_on:
@@ -87,7 +87,7 @@ async def special_battle_npc_listener(bot: discord.Client, message: discord.Mess
     user_name = str(member)
 
     channel_id = message.channel.id
-    npc_name = "xmas_blue"
+    npc_name = NPC_NAME
 
     # Ends on timestamp = now + BATTLE_TIMER
     ends_on = int(time.time()) + BATTLE_TIMER

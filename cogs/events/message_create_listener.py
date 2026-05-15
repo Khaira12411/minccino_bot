@@ -105,7 +105,7 @@ triggers = {
     "clan_member": "Clan Member Information - Straymons",
 }
 
-
+UNOWN_NPC_NA_LINE = ":x: You can only challenge the **Alph Scientist** once every"
 class MessageCreateListener(commands.Cog):
     # 💜────────────────────────────────────────────
     # [🟣 INIT] Cog Initialization
@@ -156,7 +156,6 @@ class MessageCreateListener(commands.Cog):
                     f"Running message listener tests for message ID: {message.id}",
                 )
                 await test_message_listener(bot=self.bot, message=message)
-
 
             # --- Weakness chart + general processing ---
             if message.guild and message.guild.id in (
@@ -347,17 +346,17 @@ class MessageCreateListener(commands.Cog):
                 if first_embed:
                     if (
                         first_embed.description
-                        and "challenged <:xmas_blue:1451059140955734110> **XMAS Blue** to a battle!"
+                        and "challenged <:alph_scientist:1504637214217470032> **Alph Scientist** to a battle!"
                         in first_embed.description
                     ):
                         pretty_log(
                             "info",
-                            f"🔹 Matched Special Battle NPC Listener for XMAS BLUE | message_id={message.id}",
+                            f"🔹 Matched Special Battle NPC Listener | message_id={message.id}",
                         )
                         await special_battle_npc_listener(bot=self.bot, message=message)
                 if (
                     content
-                    and ":x: You cannot fight XMAS Blue yet! He will be available for you to re-battle"
+                    and UNOWN_NPC_NA_LINE
                     in content
                 ):
                     pretty_log(
