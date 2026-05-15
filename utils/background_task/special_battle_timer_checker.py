@@ -5,6 +5,7 @@ from utils.database.special_npc_timer_db_func import (
     fetch_due_special_battle_timers,
     remove_special_battle_timer,
 )
+from utils.essentials.retry_function import _retry_discord_call
 from utils.loggers.pretty_logs import pretty_log
 
 
@@ -36,11 +37,6 @@ NPC_ID_MAP = {"alph_scientist": 970}
 async def special_battle_timer_checker(bot: discord.Client):
     """Background task to check and notify about special battle timers."""
 
-    # Check if spooky hour is active
-    """spooky_hour = await fetch_spooky_hour(bot)
-    if not spooky_hour:
-        return  # Spooky hour not active"""
-
     # Fetch due special battle timers
     due_timers = await fetch_due_special_battle_timers(bot)
     if not due_timers:
@@ -63,10 +59,12 @@ async def special_battle_timer_checker(bot: discord.Client):
                 desc = f";b npc {npc_id}"
                 embed = discord.Embed(description=desc, color=0xC1B1A5)
                 try:
-                    await channel.send(content=content, embed=embed)
+                    await _retry_discord_call(
+                        channel.send, content=content, embed=embed
+                    )
                     pretty_log(
                         "info",
-                        f"Notified member.name about special battle timer for npc {npc_name} and removed from database",
+                        f"Notified {member.name} about special battle timer for npc {npc_name} and removed from database",
                     )
                     await remove_special_battle_timer(bot, user_id, npc_name)
                 except Exception as e:
@@ -85,5 +83,5 @@ async def special_battle_timer_checker(bot: discord.Client):
             await remove_special_battle_timer(bot, user_id, npc_name)
             pretty_log(
                 "warn",
-                f"Channel {channel_id} not found for notifying {member.name} about special battle timer for npc {npc_name}",
+                f"Channel {channel_id} not found for notifying about special battle timer for npc {npc_name}",
             )
