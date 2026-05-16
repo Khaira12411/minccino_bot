@@ -1,19 +1,23 @@
+import asyncio
 import re
 import time
 
 import discord
 
+from config.aesthetic import Emojis
 from utils.database.special_npc_timer_db_func import (
+    fetch_ends_on_for_user_npc,
     get_special_battle_timer,
     upsert_special_battle_timer,
-    fetch_ends_on_for_user_npc,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.pretty_logs import pretty_log
-from config.aesthetic import Emojis
+
 BATTLE_TIMER = 5 * 60  # 30 minutes in seconds
 NPC_NAME = "alph_scientist"
 REACTION_EMOJI = Emojis.calendar
+_TRANSIENT_HTTP_STATUSES = {500, 502, 503, 504}
+_MAX_REACTION_RETRIES = 3
 
 # Extracts the timestamp from a string like '<t:1766190355:R>'
 
@@ -27,6 +31,53 @@ def extract_timestamp_from_message(content: str) -> int | None:
     if match:
         return int(match.group(1))
     return None
+
+
+async def _safe_add_reaction_to_reference(
+    *,
+    bot: discord.Client,
+    message: discord.Message,
+    reaction_emoji: str,
+):
+    """Add reaction to a referenced message with retries for transient Discord failures."""
+    resolved_message = message.reference.resolved if message.reference else None
+    if not isinstance(resolved_message, discord.Message):
+        pretty_log(
+            "warn",
+            f"Skipping reaction for message {message.id}: missing resolved referenced message.",
+            bot=bot,
+        )
+        return
+
+    for attempt in range(1, _MAX_REACTION_RETRIES + 1):
+        try:
+            await resolved_message.add_reaction(reaction_emoji)
+            return
+        except discord.DiscordServerError as error:
+            if attempt == _MAX_REACTION_RETRIES:
+                pretty_log(
+                    "warn",
+                    f"Failed to add reaction after retries for message {message.id}: {error}",
+                    bot=bot,
+                )
+                return
+            await asyncio.sleep(2 ** (attempt - 1))
+        except discord.HTTPException as error:
+            if (
+                error.status in _TRANSIENT_HTTP_STATUSES
+                and attempt < _MAX_REACTION_RETRIES
+            ):
+                await asyncio.sleep(2 ** (attempt - 1))
+                continue
+            pretty_log(
+                "warn",
+                (
+                    f"Failed to add reaction for message {message.id} "
+                    f"(status={error.status}): {error}"
+                ),
+                bot=bot,
+            )
+            return
 
 
 async def special_battle_npc_timer_listener(
@@ -59,7 +110,11 @@ async def special_battle_npc_timer_listener(
                 "info",
                 f"Updated special battle timer for {user_name}, npc {npc_name}, ends_on {ends_on}",
             )
-            await message.reference.resolved.add_reaction(REACTION_EMOJI)
+            await _safe_add_reaction_to_reference(
+                bot=bot,
+                message=message,
+                reaction_emoji=REACTION_EMOJI,
+            )
         elif existing_timer == ends_on:
             pretty_log(
                 "info",
@@ -70,7 +125,11 @@ async def special_battle_npc_timer_listener(
         await upsert_special_battle_timer(
             bot, user_id, user_name, npc_name, ends_on, channel_id
         )
-        await message.reference.resolved.add_reaction(REACTION_EMOJI)
+        await _safe_add_reaction_to_reference(
+            bot=bot,
+            message=message,
+            reaction_emoji=REACTION_EMOJI,
+        )
         pretty_log(
             "info",
             f"Inserted new special battle timer for {user_name}, npc {npc_name}, ends_on {ends_on}",
@@ -96,4 +155,8 @@ async def special_battle_npc_listener(bot: discord.Client, message: discord.Mess
     await upsert_special_battle_timer(
         bot, user_id, user_name, npc_name, ends_on, channel_id
     )
-    await message.reference.resolved.add_reaction(REACTION_EMOJI)
+    await _safe_add_reaction_to_reference(
+        bot=bot,
+        message=message,
+        reaction_emoji=REACTION_EMOJI,
+    )
