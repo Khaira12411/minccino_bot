@@ -106,6 +106,8 @@ triggers = {
 }
 
 UNOWN_NPC_NA_LINE = ":x: You can only challenge the **Alph Scientist** once every"
+
+
 class MessageCreateListener(commands.Cog):
     # 💜────────────────────────────────────────────
     # [🟣 INIT] Cog Initialization

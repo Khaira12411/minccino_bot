@@ -19,7 +19,7 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-#enable_debug(f"{__name__}.handle_wb_register_command")
+# enable_debug(f"{__name__}.handle_wb_register_command")
 """enable_debug(f"{__name__}.register_wb_battle_reminder")
 enable_debug(f"{__name__}.world_boss_waiter")
 enable_debug(f"{__name__}.start_world_boss_task")"""
@@ -252,25 +252,37 @@ async def register_wb_battle_reminder(
             f"Member {member.name} has no notify settings or it's turned off.",
         )
         return
+    fallback_channel_id = STRAYMONS__TEXT_CHANNELS.kanto_park
     channel_id = await get_registered_personal_channel(bot, member.id)
     if not channel_id:
         debug_log(
-            f"Member {member.name} has no registered personal channel. Falling back to default channel {STRAYMONS__TEXT_CHANNELS.kanto_park}."
+            f"Member {member.name} has no registered personal channel. Falling back to default channel {fallback_channel_id}."
         )
-        # Fall back to one of the play channels
-        channel_id = STRAYMONS__TEXT_CHANNELS.kanto_park
+        channel_id = fallback_channel_id
         pretty_log(
             "info",
             f"Member {member.name} has no registered personal channel. Using fallback channel {channel_id}.",
         )
+
     notify_channel = bot.get_channel(channel_id)
-    if not notify_channel:
+    if not notify_channel and channel_id != fallback_channel_id:
         debug_log(
-            f"Notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
+            f"Registered personal channel ID {channel_id} not found for member {member.name}. Falling back to default channel {fallback_channel_id}."
         )
         pretty_log(
             "info",
-            f"Notify channel ID {channel_id} not found for member {member.name}.",
+            f"Registered personal channel ID {channel_id} not found for member {member.name}. Using fallback channel {fallback_channel_id}.",
+        )
+        channel_id = fallback_channel_id
+        notify_channel = bot.get_channel(channel_id)
+
+    if not notify_channel:
+        debug_log(
+            f"Fallback notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
+        )
+        pretty_log(
+            "info",
+            f"Fallback notify channel ID {channel_id} not found for member {member.name}.",
         )
         return
 
@@ -403,25 +415,37 @@ async def handle_wb_register_command(
             f"Member {member.name} has no notify settings or it's turned off.",
         )
         return
+    fallback_channel_id = STRAYMONS__TEXT_CHANNELS.kanto_park
     channel_id = await get_registered_personal_channel(bot, member.id)
     if not channel_id:
         debug_log(
-            f"Member {member.name} has no registered personal channel. Falling back to default channel {STRAYMONS__TEXT_CHANNELS.kanto_park}."
+            f"Member {member.name} has no registered personal channel. Falling back to default channel {fallback_channel_id}."
         )
-        # Fall back to one of the play channels
-        channel_id = STRAYMONS__TEXT_CHANNELS.kanto_park
+        channel_id = fallback_channel_id
         pretty_log(
             "info",
             f"Member {member.name} has no registered personal channel. Using fallback channel {channel_id}.",
         )
+
     notify_channel = bot.get_channel(channel_id)
-    if not notify_channel:
+    if not notify_channel and channel_id != fallback_channel_id:
         debug_log(
-            f"Notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
+            f"Registered personal channel ID {channel_id} not found for member {member.name}. Falling back to default channel {fallback_channel_id}."
         )
         pretty_log(
             "info",
-            f"Notify channel ID {channel_id} not found for member {member.name}.",
+            f"Registered personal channel ID {channel_id} not found for member {member.name}. Using fallback channel {fallback_channel_id}.",
+        )
+        channel_id = fallback_channel_id
+        notify_channel = bot.get_channel(channel_id)
+
+    if not notify_channel:
+        debug_log(
+            f"Fallback notify channel ID {channel_id} not found for member {member.name}. Cannot send notification."
+        )
+        pretty_log(
+            "info",
+            f"Fallback notify channel ID {channel_id} not found for member {member.name}.",
         )
         return
 
