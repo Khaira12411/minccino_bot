@@ -102,9 +102,9 @@ async def berry_water_reminder(bot: discord.Client):
             debug_log(
                 f"Processing reminder for slot {reminder['slot_number']}: {reminder}"
             )
-            water_can_type = reminder.get("water_can_type", "unknown")
-            stage = reminder.get("stage", "unknown")
-            next_stage = next_stage_map.get(reminder["stage"].lower(), "unknown")
+            water_can_type = reminder.get("water_can_type") or "unknown"
+            stage = reminder.get("stage") or "unknown"
+            next_stage = next_stage_map.get(stage.lower(), "unknown")
 
             # Harvest-ready reminders should be handled by berry checker, not water checker.
             if stage.lower() == "berry" or next_stage.lower() == "berry":
@@ -168,7 +168,7 @@ async def berry_water_reminder(bot: discord.Client):
         debug_log(
             f"Looking up channel by id: {channel_id}, expected name: {channel_name}"
         )
-        if channel and channel.name == channel_name:
+        if channel:
             debug_log(
                 f"Found channel: {channel} (name: {channel.name}) in guild: {channel.guild.name}"
             )
@@ -204,3 +204,9 @@ async def berry_water_reminder(bot: discord.Client):
                 debug_log(
                     f"Exception occurred while sending/removing berry reminder: {e}"
                 )
+        else:
+            pretty_log(
+                "warn",
+                f"Channel ID {channel_id} ({channel_name}) not found in cache for user {user_name} (ID: {user_id}); water reminder not sent.",
+                bot=bot,
+            )
