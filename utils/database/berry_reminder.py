@@ -139,7 +139,6 @@ berry_map = {
         "growth_duration": 6,
         "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
-
     "passho berry": {
         "emoji": Emojis.passho_berry,
         "growth_duration": 6,
@@ -419,14 +418,12 @@ async def fetch_all_due_berry_reminders(bot: discord.Client):
     """
     try:
         async with bot.pg_pool.acquire() as conn:
-            rows = await conn.fetch(
-                """
+            rows = await conn.fetch("""
                 SELECT DISTINCT ON (user_id, slot_number) *
                 FROM berry_reminder
                 WHERE grows_on <= EXTRACT(EPOCH FROM NOW())::BIGINT
                 ORDER BY user_id, slot_number, grows_on ASC;
-                """
-            )
+                """)
 
             return [dict(row) for row in rows]
     except Exception as e:
@@ -461,19 +458,43 @@ async def update_moisture_dries_on(
         )
 
 
+async def update_moisture_and_grows_on(
+    bot: discord.Client, user_id: int, slot_number: int
+):
+    """Nulls out both moisture_dries_on and grows_on so the berry won't advance until re-watered."""
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE berry_reminder
+                SET moisture_dries_on = NULL, grows_on = NULL
+                WHERE user_id = $1 AND slot_number = $2
+                """,
+                user_id,
+                slot_number,
+            )
+        pretty_log(
+            "db",
+            f"Nulled moisture_dries_on and grows_on for user_id {user_id} in slot {slot_number}",
+        )
+    except Exception as e:
+        pretty_log(
+            "warn",
+            f"Failed to null moisture_dries_on/grows_on for user {user_id} in slot {slot_number}: {e}",
+        )
+
+
 async def fetch_all_due_moisture_dries_on(bot: discord.Client):
     """
     Fetches all berry reminders where moisture_dries_on is due"""
     try:
         async with bot.pg_pool.acquire() as conn:
-            rows = await conn.fetch(
-                """
+            rows = await conn.fetch("""
                 SELECT DISTINCT ON (user_id, slot_number) *
                 FROM berry_reminder
                 WHERE moisture_dries_on <= EXTRACT(EPOCH FROM NOW())::BIGINT
                 ORDER BY user_id, slot_number, moisture_dries_on ASC;
-                """
-            )
+                """)
 
             return [dict(row) for row in rows]
     except Exception as e:
@@ -494,7 +515,9 @@ async def update_moisture_dries_on_func(
         moisture_dry_out_duration = berry_info["moisture_dry_out_duration"]
         new_moisture_dries_on = int(time.time()) + moisture_dry_out_duration
         try:
-            await update_moisture_dries_on(bot, user_id, slot_number, new_moisture_dries_on)
+            await update_moisture_dries_on(
+                bot, user_id, slot_number, new_moisture_dries_on
+            )
         except Exception as e:
             pretty_log(
                 "warn",

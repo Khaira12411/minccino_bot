@@ -10,15 +10,15 @@ from utils.database.berry_reminder import (
     fetch_all_due_berry_reminders,
     fetch_all_due_moisture_dries_on,
     next_stage_map,
-    remove_berry_reminder,
     update_growth_stage,
+    update_moisture_and_grows_on,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.essentials.retry_function import _retry_discord_call
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-# enable_debug(f"{__name__}.berry_reminder_checker")
+enable_debug(f"{__name__}.berry_water_reminder")
 
 
 async def update_growth_stage_func(
@@ -186,13 +186,14 @@ async def berry_water_reminder(bot: discord.Client):
                     f"Sent message to channel {channel.name} (ID: {channel.id}) for user {user_name} (ID: {user_id})"
                 )
 
-                # Remove only reminders included in this water message.
+                # Null out moisture_dries_on and grows_on so the berry won't advance
+                # until the user actually waters it again.
                 for reminder in reminders_to_remove:
                     debug_log(
-                        f"Removing berry reminder for user_id={user_id}, slot_number={reminder['slot_number']} after moisture dry out reminder sent."
+                        f"Resetting moisture_dries_on and grows_on to NULL for user_id={user_id}, slot_number={reminder['slot_number']} after water reminder sent."
                     )
-                    await remove_berry_reminder(
-                        bot, user_id, slot_number=reminder["slot_number"]
+                    await update_moisture_and_grows_on(
+                        bot, user_id, reminder["slot_number"]
                     )
 
             except Exception as e:
