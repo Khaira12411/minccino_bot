@@ -107,9 +107,9 @@ async def berry_water_reminder(bot: discord.Client):
             next_stage = next_stage_map.get(stage.lower(), "unknown")
 
             # Harvest-ready reminders should be handled by berry checker, not water checker.
-            if stage.lower() == "berry" or next_stage.lower() == "berry":
+            if stage.lower() == "berry":
                 debug_log(
-                    f"Skipping water reminder for slot {reminder['slot_number']} because it is harvest-ready (stage={stage}, next_stage={next_stage})."
+                    f"Skipping water reminder for slot {reminder['slot_number']} because it is harvest-ready (stage={stage})."
                 )
                 continue
 
