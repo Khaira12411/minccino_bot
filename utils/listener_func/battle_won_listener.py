@@ -89,7 +89,8 @@ async def battle_won_listener(bot: discord.Client, message: discord.Message):
         await message.channel.send(content)
 
         weekly_guardian_role = message.guild.get_role(STRAYMONS__ROLES.weekly_guardian)
-        if weekly_guardian_role and weekly_guardian_role not in user.roles:
+        probation_role = message.guild.get_role(STRAYMONS__ROLES.probation)
+        if weekly_guardian_role and weekly_guardian_role not in user.roles and probation_role not in user.roles:
             try:
                 await user.add_roles(
                     weekly_guardian_role,
