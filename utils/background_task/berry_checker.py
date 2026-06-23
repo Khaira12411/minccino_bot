@@ -16,8 +16,9 @@ from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.essentials.retry_function import _retry_discord_call
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
+
 # just added  for recommit
-#enable_debug(f"{__name__}.berry_reminder_checker")
+# enable_debug(f"{__name__}.berry_reminder_checker")
 
 # Prevent immediate duplicate sends when the checker is accidentally triggered twice.
 BERRY_DISPATCH_DEDUP_SECONDS = 90
@@ -132,7 +133,9 @@ async def berry_reminder_checker(bot: discord.Client):
                 debug_log(
                     f"water_can_type={water_can_type}, stage={stage}, next_stage={next_stage}, mulch_type={mulch_type}, slot_number={slot_number}, berry_name_raw={berry_name_raw}"
                 )
-                if water_can_type != "unknown" and stage != "unknown":
+                if stage.lower() == "berry":
+                    context = "harvest stage"
+                elif water_can_type != "unknown" and stage != "unknown":
                     if (
                         water_can_type.lower() == "sprayduck"
                         or water_can_type.lower() == "wailmer pail"
