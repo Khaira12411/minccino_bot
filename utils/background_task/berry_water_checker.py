@@ -12,6 +12,7 @@ from utils.database.berry_reminder import (
     next_stage_map,
     update_growth_stage,
     update_moisture_and_grows_on,
+    update_moisture_dries_on,
 )
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.essentials.retry_function import _retry_discord_call
@@ -19,6 +20,10 @@ from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
 enable_debug(f"{__name__}.berry_water_reminder")
+
+# If grows_on is within this many seconds, skip the water reminder and let
+# berry_checker handle the harvest notification instead.
+NEAR_HARVEST_THRESHOLD = 5 * 60  # 5 minutes
 
 
 async def update_growth_stage_func(
@@ -98,6 +103,7 @@ async def berry_water_reminder(bot: discord.Client):
 
         to_be_watered_berry_names = []
         reminders_to_remove = []
+        reminders_near_harvest = []
         for reminder in reminders:
             debug_log(
                 f"Processing reminder for slot {reminder['slot_number']}: {reminder}"
@@ -111,6 +117,24 @@ async def berry_water_reminder(bot: discord.Client):
                 debug_log(
                     f"Skipping water reminder for slot {reminder['slot_number']} because it is harvest-ready (stage={stage})."
                 )
+                continue
+
+            # If the next stage is berry (harvest-ready) and grows_on is within the
+            # threshold, skip the water reminder and hand off to berry_checker by
+            # nulling moisture_dries_on (keeps grows_on intact).
+            grows_on = reminder.get("grows_on")
+            now_epoch = int(time.time())
+            if (
+                next_stage.lower() == "berry"
+                and grows_on
+                and (grows_on - now_epoch) <= NEAR_HARVEST_THRESHOLD
+            ):
+                debug_log(
+                    f"Skipping water reminder for slot {reminder['slot_number']} because grows_on is within "
+                    f"{NEAR_HARVEST_THRESHOLD // 60} min (grows_on={grows_on}, now={now_epoch}). "
+                    f"Will null moisture_dries_on so berry_checker handles it."
+                )
+                reminders_near_harvest.append(reminder)
                 continue
 
             mulch_type = reminder.get("mulch_type") or "unknown"
@@ -137,9 +161,17 @@ async def berry_water_reminder(bot: discord.Client):
             reminders_to_remove.append(reminder)
             debug_log(f"Added to watering list: {berry_name} for slot {slot_number}")
 
+        # Null only moisture_dries_on for near-harvest berries so berry_checker can
+        # still fire when grows_on is due.
+        for reminder in reminders_near_harvest:
+            debug_log(
+                f"Nulling moisture_dries_on for near-harvest slot {reminder['slot_number']} (user_id={user_id})."
+            )
+            await update_moisture_dries_on(bot, user_id, reminder["slot_number"], None)
+
         if not to_be_watered_berry_names:
             debug_log(
-                f"No water reminders to send for user_id={user_id}; all due entries were harvest-ready or filtered out."
+                f"No water reminders to send for user_id={user_id}; all due entries were harvest-ready or near-harvest."
             )
             continue
 
