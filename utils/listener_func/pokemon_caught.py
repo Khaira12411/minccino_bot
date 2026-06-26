@@ -342,20 +342,20 @@ async def pokemon_caught_listener(
             guild=guild,
         )
 
-    # Plume fossil alert
-    if ":plume_fossil" in embed_description and member_id in res_fossils_alert_cache:
+    # jaw fossil alert
+    if ":jaw_fossil" in embed_description and member_id in res_fossils_alert_cache:
         user_data = res_fossils_alert_cache[member_id]
         notify = str(user_data.get("notify", "off")).lower()  # ✅ CORRECT!
 
         if notify == "on":
-            embed_msg = discord.Embed(description=";res ex plume_fossil")
+            embed_msg = discord.Embed(description=";res ex jaw_fossil")
             await message.channel.send(
-                f"{member.mention} Oh a plume fossil! Don't forget to do the command",
+                f"{member.mention} Oh a jaw fossil! Don't forget to do the command",
                 embed=embed_msg,
             )
             pretty_log(
                 "info",
-                f"Sent Plume Fossil alert to {member_name} ({member_id})",
+                f"Sent jaw Fossil alert to {member_name} ({member_id})",
                 label="🦴 RESEARCH FOSSILS ALERT",
                 bot=bot,
             )

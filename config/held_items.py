@@ -33,7 +33,7 @@ class HELD_ITEM_EMOJI:
 
 class HELD_ITEM_POKEMON:
     assaultvest = ["aggron", "shuckle"]
-    blackbelt = ["makuhita", "hariyama", "throh", "sawk"]
+    blackbelt = ["makuhita", "hariyama", "throh", "sawk", "mankey"]
     blackglasses = ["poochyena", "mightyena", "sandile", "krokorok"]
 
     charcoal = ["numel", "camerupt", "vulpix", "ninetales", "torkoal"]
