@@ -3,7 +3,7 @@ import time
 import discord
 
 from config.aesthetic import *
-from config.current_setup import KHY_USER_ID, STRAYMONS_GUILD_ID
+from config.current_setup import ACTIVE_LOG_CHANNEL, KHY_USER_ID, STRAYMONS_GUILD_ID
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.database.berry_reminder import (
     berry_map,
@@ -287,15 +287,48 @@ async def berry_reminder_checker(bot: discord.Client):
                 for key in stale_keys:
                     _recent_berry_dispatches.pop(key, None)
 
-            await _retry_discord_call(channel.send, content=msg, embed=embed)
-            pretty_log(
-                "background_task",
-                f"Sent berry reminder for {user_name} (user_id: {user_id}) in channel {channel.name} (ID: {channel.id})",
-                bot=bot,
-            )
-            debug_log(
-                f"Sent message to channel {channel.name} (ID: {channel.id}) for user {user_name} (ID: {user_id})"
-            )
+            # Notify log channel before attempting the send so you can correlate
+            # the timestamp with logs if the reminder fails to deliver.
+            log_channel = bot.get_channel(ACTIVE_LOG_CHANNEL)
+            if log_channel:
+                try:
+                    await log_channel.send(
+                        f"\U0001f33f Berry reminder dispatching for **{user_name}** (`{user_id}`) "
+                        f"→ <#{channel.id}>"
+                    )
+                except Exception as log_exc:
+                    pretty_log(
+                        "warn",
+                        f"Could not send berry pre-send log: {log_exc}",
+                        bot=bot,
+                    )
+
+            try:
+                await _retry_discord_call(channel.send, content=msg, embed=embed)
+                pretty_log(
+                    "background_task",
+                    f"Sent berry reminder for {user_name} (user_id: {user_id}) in channel {channel.name} (ID: {channel.id})",
+                    bot=bot,
+                )
+                debug_log(
+                    f"Sent message to channel {channel.name} (ID: {channel.id}) for user {user_name} (ID: {user_id})"
+                )
+            except Exception as send_exc:
+                pretty_log(
+                    "error",
+                    f"FAILED to send berry reminder to {user_name} (user_id: {user_id}) "
+                    f"in channel {channel.name} (ID: {channel.id}): {send_exc}",
+                    bot=bot,
+                )
+                if log_channel:
+                    try:
+                        await log_channel.send(
+                            f"\u274c Berry reminder **FAILED** for **{user_name}** (`{user_id}`) "
+                            f"→ <#{channel.id}>: `{send_exc}`"
+                        )
+                    except Exception:
+                        pass
+                continue
 
             # Remove each berry reminder after sending — use the actual reminder slot_number
             for reminder in reminders:
