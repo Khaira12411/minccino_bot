@@ -9,7 +9,8 @@ from utils.cache.faction_ball_alert_cache import faction_ball_alert_cache
 from utils.cache.straymon_member_cache import straymon_member_cache
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.essentials.retry_function import _retry_discord_call
-from utils.listener_func.ball_reco_ping import extract_trainer_name_from_description
+from utils.listener_func.ball_reco_ping import \
+    extract_trainer_name_from_description
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
@@ -98,9 +99,8 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
                 trainer_name = extract_trainer_name_from_description(description_text)
                 debug_log(f"Fallback extracted trainer name: {trainer_name}")
 
-                from utils.cache.faction_ball_alert_cache import (
-                    fetch_user_id_via_user_name_cache,
-                )
+                from utils.cache.faction_ball_alert_cache import \
+                    fetch_user_id_via_user_name_cache
 
                 user_id = (
                     fetch_user_id_via_user_name_cache(trainer_name)
@@ -133,9 +133,8 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
             debug_log("No faction ball alert settings for user, returning early")
             # try using fishing trainer_id if available
             if trainer_name:
-                from utils.cache.straymon_member_cache import (
-                    fetch_straymon_member_cache_by_username,
-                )
+                from utils.cache.straymon_member_cache import \
+                    fetch_straymon_member_cache_by_username
 
                 # print(straymon_member_cache)
                 debug_log(
@@ -207,7 +206,10 @@ async def faction_ball_alert(before: discord.Message, after: discord.Message):
             )
             return
 
-        ball_emoji = getattr(Emojis_Balls, faction_ball.lower())
+        ball_attr = faction_ball.lower()
+        if not ball_attr.endswith("ball"):
+            ball_attr += "ball"
+        ball_emoji = getattr(Emojis_Balls, ball_attr, None)
         debug_log(f"Ball emoji for daily ball: {ball_emoji}")
         if ball_emoji:
             if user_faction_ball_notify == "on":

@@ -15,7 +15,6 @@
             "sideBarTitle.foreground": "#d1d7da",
             "list.activeSelectionBackground": "#2b355e80",
             "list.activeSelectionForeground": "#ffffff",
-            "tab.activeBackground": "#686b76",
             "tab.activeForeground": "#ffffff",
             "tab.inactiveBackground": "#0f0f10",
             "tab.inactiveForeground": "#a0a5ad",
