@@ -5,10 +5,8 @@ import discord
 from config.current_setup import STRAYMONS_GUILD_ID
 from utils.database.weekly_goal_tracker_db_func import upsert_weekly_goal
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
-from utils.listener_func.pokemon_caught import (
-    is_saturday_1155pm_est,
-    weekly_goal_checker,
-)
+from utils.listener_func.pokemon_caught import (is_saturday_1155pm_est,
+                                                weekly_goal_checker)
 from utils.loggers.pretty_logs import pretty_log
 
 processed_weekly_stats_messages = set()
@@ -30,15 +28,10 @@ def extract_current_page_number(footer_text: str) -> int | None:
 # 🌸───────────────────────────────────────────────🌸
 async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Message):
     from utils.cache.straymon_member_cache import (
-        fetch_straymon_member_cache,
-        fetch_straymon_member_cache_by_name,
-    )
+        fetch_straymon_member_cache, fetch_straymon_member_cache_by_name)
     from utils.cache.weekly_goal_tracker_cache import (
-        fetch_weekly_goal_cache_by_name,
-        mark_weekly_goal_dirty,
-        set_weekly_stats,
-        weekly_goal_cache,
-    )
+        fetch_weekly_goal_cache_by_name, mark_weekly_goal_dirty,
+        set_weekly_stats, weekly_goal_cache)
 
     pretty_log(
         "info",
@@ -133,7 +126,7 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
 
     # Get top line catches
     user_top_line_match = re.search(
-        r"You're Rank \d+ in your clan's weekly stats — with ([\d,]+) catches!",
+        r"You're Rank \d+ in your clan's weekly stats(?: for \w+)? — (?:with )?([\d,]+)",
         embed_description,
     )
     top_line_catches = 0
@@ -147,9 +140,11 @@ async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Mes
         )
 
     # Updated regex to handle the actual bolded format
-    # Format: **1** **empyyy_ (newline) stats line ending with **
+    # Format: **1** **[optional emoji] username (newline) stats line ending with **
     bolded_pattern = re.compile(
-        r"\*\*(\d+)\*\* \*\*(.+?)\n<:dexcaught:[^>]+> (\d+(?:,\d+)*) • <:oldrod:[^>]+> (\d+(?:,\d+)*) • <:poke_egg:[^>]+> \d+ • :tickets: \d+ • :robot: \d+ • :crossed_swords: (\d+(?:,\d+)*)\*\*"
+        r"\*\*(\d+)\*\* \*\*(?:<:[^>]+>\s*)?(.+?)\n"
+        r"<:dexcaught:[^>]+> (\d+(?:,\d+)*) • <:oldrod:[^>]+> (\d+(?:,\d+)*) • <:poke_egg:[^>]+> \d+(?:,\d+)* • "
+        r"(?:🎟️?|🎟|:tickets:) \d+(?:,\d+)* • (?:🤖|:robot:) \d+(?:,\d+)* • (?:⚔️?|⚔|:crossed_swords:) (\d+(?:,\d+)*)\*\*"
     )
 
     match = bolded_pattern.search(embed_description)
