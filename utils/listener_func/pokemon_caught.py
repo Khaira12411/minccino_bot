@@ -69,7 +69,7 @@ async def weekly_goal_checker(
     # Early exit for those with probation role
     probation_role = guild.get_role(STRAYMONS__ROLES.probation)
     if probation_role and probation_role in member.roles:
-        pretty_log("info", f"{probation_members_cache}")
+        #pretty_log("info", f"{probation_members_cache}")
         # Check their status
         probation_data = probation_members_cache.get(member.id)
         if not probation_data:
