@@ -5,11 +5,10 @@ from discord.ext import commands
 
 from config.aesthetic import MINC_Thumbnails
 from config.current_setup import POKEMEOW_APPLICATION_ID, STRAYMONS_GUILD_ID
-from config.straymons_constants import STRAYMONS__CATEGORIES, STRAYMONS__TEXT_CHANNELS
-from utils.database.boosted_channels_db_func import (
-    delete_boosted_channel,
-    insert_boosted_channel,
-)
+from config.straymons_constants import (STRAYMONS__CATEGORIES,
+                                        STRAYMONS__TEXT_CHANNELS)
+from utils.database.boosted_channels_db_func import (delete_boosted_channel,
+                                                     insert_boosted_channel)
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
 from utils.essentials.webhook import send_webhook
 from utils.loggers.debug_log import debug_log
@@ -97,11 +96,12 @@ async def newly_boosted_channel_listener(bot: commands.Bot, message: discord.Mes
             return
 
         guild = member.guild
-        boosted_channel = guild.get_channel(boosted_channel_id)
+        boosted_channel = guild.get_channel(boosted_channel_id) or bot.get_channel(
+            boosted_channel_id
+        )
         if not boosted_channel:
-            pretty_log(
-                "warn",
-                f"Boosted channel {boosted_channel_id} not found in guild {guild.name} ({guild.id}).",
+            debug_log(
+                f"Boosted channel {boosted_channel_id} not found in guild {guild.name} ({guild.id})."
             )
             return
 
@@ -156,28 +156,27 @@ async def remove_boosted_channel_listener(bot: commands.Bot, message: discord.Me
             return
 
         unboosted_channel_id = int(match.group(1))
+        if unboosted_channel_id not in boosted_channels_cache:
+            debug_log(
+                f"Unboosted channel {unboosted_channel_id} not in cache, skipping."
+            )
+            return
+
         member = await get_pokemeow_reply_member(message=message)
         if not member:
             return
 
         guild = member.guild
-        unboosted_channel = guild.get_channel(unboosted_channel_id)
-        if not unboosted_channel:
-            pretty_log(
-                "warn",
-                f"Unboosted channel {unboosted_channel_id} not found in guild {guild.name} ({guild.id}).",
+        unboosted_channel = guild.get_channel(unboosted_channel_id) or bot.get_channel(
+            unboosted_channel_id
+        )
+        unboosted_channel_name = (
+            unboosted_channel.name
+            if unboosted_channel
+            else boosted_channels_cache.get(
+                unboosted_channel_id, f"<#{unboosted_channel_id}>"
             )
-            return
-
-        unboosted_channel_name = unboosted_channel.name
-
-        if unboosted_channel_id not in boosted_channels_cache:
-            pretty_log(
-                "info",
-                f"Tried to remove {unboosted_channel_name} ({unboosted_channel_id}) "
-                f"but it was not in cache.",
-            )
-            return
+        )
 
         boosted_channels_cache.pop(unboosted_channel_id, None)
         await delete_boosted_channel(bot, unboosted_channel_id)

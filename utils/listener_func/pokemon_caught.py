@@ -88,12 +88,12 @@ async def weekly_goal_checker(
             return  # They have passed probation
 
         elif status == "pending":
-            pretty_log(
+            """pretty_log(
                 "info",
                 f"{member.name} ({member.id}) is currently on probation. Checking if they have caught {REQUIRED_PROBATION_CATCHES} Pokémon to pass probation.",
                 label="💠 PROBATION DEBUG",
                 bot=bot,
-            )
+            )"""
             if total_caught >= REQUIRED_PROBATION_CATCHES:
                 # Update status to Passed
                 await update_probation_member_status(bot, member.id, "Passed")

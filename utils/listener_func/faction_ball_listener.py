@@ -51,7 +51,7 @@ async def extract_faction_ball_from_daily(bot, message: discord.Message):
 
     # Regex to match: <:team_logo:ID> **|** Your Faction's daily ball-type is <:ball_emoji:ID> BallName
     match = re.search(
-        r"(<:team_logo:\d+>) \*\*\|\*\* Your Faction's daily ball-type is (<:[^:]+:\d+>) ([A-Za-z]+)",
+        r"(<:team_logo:\d+>) \*\*\|\*\* Your Faction's daily ball-type is <:([a-zA-Z0-9_]+):\d+>",
         embed.description,
     )
     debug_log(f"Regex match result: {match}")
@@ -64,12 +64,10 @@ async def extract_faction_ball_from_daily(bot, message: discord.Message):
         return
 
     faction_team_emoji = match.group(1)
-    daily_ball_emoji = match.group(2)
-    daily_ball = match.group(3)
+    daily_ball = match.group(2).lower()
     debug_log(
-        f"Matched faction_team_emoji: {faction_team_emoji}, daily_ball_emoji: {daily_ball_emoji}, daily_ball: {daily_ball}"
+        f"Matched faction_team_emoji: {faction_team_emoji}, daily_ball: {daily_ball}"
     )
-    daily_ball = daily_ball.lower()
     pretty_log(
         "info",
         f"Extracted faction ball from daily message in {message.channel.name}: Faction Emoji: {faction_team_emoji}, Ball: {daily_ball}",
