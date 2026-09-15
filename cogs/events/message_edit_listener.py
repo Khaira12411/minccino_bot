@@ -7,33 +7,30 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from config.current_setup import (
-    ACTIVE_GUILD_ID,
-    MINCCINO_APP_ID,
-    OKA_SERVER_ID,
-    POKEMEOW_APPLICATION_ID,
-    STAFF_SERVER_GUILD_ID,
-    STRAYMONS_GUILD_ID,
-)
+from config.current_setup import (ACTIVE_GUILD_ID, MINCCINO_APP_ID,
+                                  OKA_SERVER_ID, POKEMEOW_APPLICATION_ID,
+                                  STAFF_SERVER_GUILD_ID, STRAYMONS_GUILD_ID)
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.listener_func.battle_won_listener import battle_won_listener
-from utils.listener_func.boosted_channel_listener import handle_boosted_channel_on_edit
-from utils.listener_func.clan_members_listener import clan_members_command_listener
+from utils.listener_func.berry_listener import berry_listener
+from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
+from utils.listener_func.boosted_channel_listener import \
+    handle_boosted_channel_on_edit
+from utils.listener_func.clan_members_listener import \
+    clan_members_command_listener
 from utils.listener_func.explore_caught_listener import explore_caught_listener
 from utils.listener_func.faction_ball_alert import faction_ball_alert
 from utils.listener_func.fish_reco_ping import recommend_fishing_ball
+from utils.listener_func.fish_timer import fish_timer_handler
 from utils.listener_func.fl_rs import fl_rs_checker
-from utils.listener_func.halloween_contest_listener import (
-    halloween_contest_score_listener,
-)
+from utils.listener_func.halloween_contest_listener import \
+    halloween_contest_score_listener
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.pokemon_caught import pokemon_caught_listener
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.listener_func.wb_reg_listener import handle_wb_register_command
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
-from utils.listener_func.berry_listener import berry_listener
-from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
 
 FISHING_COLOR = 0x87CEFA
 
@@ -114,7 +111,24 @@ class MessageEditListener(commands.Cog):
                 first_embed_author_text =(
                     first_embed.author.text if first_embed and first_embed.author and hasattr(first_embed.author, "text") else ""
                 )
+
+                # ————————————————————————————————
+                # ⚡ Fish Timer
+                # ————————————————————————————————
+                if (
+                    first_embed_description
+                    and "cast a" in first_embed_description
+                    and "into the water" in first_embed_description
+                ):
+                    pretty_log(
+                        "info",
+                        f"Detected edited fishing result | Message ID: {after.id} | Channel: {after.channel.name}",
+                    )
+                    await fish_timer_handler(after)
+
+                # ————————————————————————————————
                 # 🔹 Fishing reco ball
+                # ————————————————————————————————
                 if embed_description and "fished a wild" in embed_description:
                     await recommend_fishing_ball(message=after, bot=self.bot)
 
