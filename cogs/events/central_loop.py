@@ -5,6 +5,7 @@ from discord.ext import commands
 from utils.background_task.berry_checker import berry_reminder_checker
 from utils.background_task.berry_water_checker import berry_water_reminder
 from utils.background_task.fl_cd_checker import fl_cd_checker
+from utils.background_task.pokemeow_timers_checker import pokemeow_timer_checker
 
 # 🧹 Import your scheduled tasks
 from utils.background_task.pokemon_reminders_checker import pokemon_reminder_checker
@@ -75,6 +76,9 @@ class CentralLoop(commands.Cog):
 
                 # 🎅 Check if any Secret Santa reminders are due
                 # await secret_santa_timer_checker(bot=self.bot)
+
+                # 🐱 Check if any pokemeow timers are due
+                await pokemeow_timer_checker(bot=self.bot)
 
             except Exception as e:
                 pretty_log(

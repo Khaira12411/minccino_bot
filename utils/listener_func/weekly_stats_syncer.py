@@ -5,8 +5,10 @@ import discord
 from config.current_setup import STRAYMONS_GUILD_ID
 from utils.database.weekly_goal_tracker_db_func import upsert_weekly_goal
 from utils.essentials.pokemeow_helpers import get_pokemeow_reply_member
-from utils.listener_func.pokemon_caught import (is_saturday_1155pm_est,
-                                                weekly_goal_checker)
+from utils.listener_func.pokemon_caught import (
+    is_saturday_1155pm_est,
+    weekly_goal_checker,
+)
 from utils.loggers.pretty_logs import pretty_log
 
 processed_weekly_stats_messages = set()
@@ -23,15 +25,21 @@ def extract_current_page_number(footer_text: str) -> int | None:
         return int(match.group(1))
     return None
 
+
 # 🌸───────────────────────────────────────────────🌸
 # 🩷 ⏰ Weekly Stats Syncer Listener               🩷
 # 🌸───────────────────────────────────────────────🌸
 async def weekly_stats_syncer(bot, before: discord.Message, message: discord.Message):
     from utils.cache.straymon_member_cache import (
-        fetch_straymon_member_cache, fetch_straymon_member_cache_by_name)
+        fetch_straymon_member_cache,
+        fetch_straymon_member_cache_by_name,
+    )
     from utils.cache.weekly_goal_tracker_cache import (
-        fetch_weekly_goal_cache_by_name, mark_weekly_goal_dirty,
-        set_weekly_stats, weekly_goal_cache)
+        fetch_weekly_goal_cache_by_name,
+        mark_weekly_goal_dirty,
+        set_weekly_stats,
+        weekly_goal_cache,
+    )
 
     pretty_log(
         "info",

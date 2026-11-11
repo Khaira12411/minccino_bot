@@ -3,8 +3,8 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from utils.background_task.daily_ball_reset import daily_ball_reset
+from utils.background_task.monthly_catchlist_reset import monthly_catchlist_reset
 from utils.background_task.weekly_goal_reset import reset_weekly_goals
-
 from utils.essentials.sched_helper import SchedulerManager
 from utils.loggers.pretty_logs import pretty_log
 
@@ -85,5 +85,33 @@ async def setup_scheduler(bot):
         pretty_log(
             tag="error",
             message=f"Failed to schedule daily faction ball reset job: {e}",
+            bot=bot,
+        )
+
+    # 🌸─────────────────────────────────────────────────────────
+    # 💛 MONTHLY CATCHLIST RESET — First day of every month at Midnight (NYC)
+    # 🌸─────────────────────────────────────────────────────────
+    try:
+        monthly_catchlist_reset_job = scheduler_manager.add_cron_job(
+            monthly_catchlist_reset,
+            "monthly_catchlist_reset",
+            hour=0,
+            minute=0,
+            day_of_month=1,
+            args=[bot],
+            timezone=NYC,
+        )
+        readable_next_run = format_next_run_manila(
+            monthly_catchlist_reset_job.next_run_time
+        )
+        pretty_log(
+            tag="background_task",
+            message=f"Monthly catchlist reset job scheduled at {readable_next_run}",
+            bot=bot,
+        )
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to schedule monthly catchlist reset job: {e}",
             bot=bot,
         )

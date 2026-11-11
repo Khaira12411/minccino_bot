@@ -1,6 +1,6 @@
-# 🟣────────────────────────────────────────────
-#           💜 Message Create Listener Cog 💜
-# ─────────────────────────────────────────────
+# ————————————————————————————————
+# 💜 Message Create Listener Cog
+# ————————————————————————————————
 
 import asyncio
 
@@ -10,23 +10,37 @@ from discord.ext import commands
 from config.current_setup import (
     ACTIVE_GUILD_ID,
     CC_GUILD_ID,
+    KHY_USER_ID,
     MINCCINO_APP_ID,
     POKEMEOW_APPLICATION_ID,
     STAFF_SERVER_GUILD_ID,
     STRAYMONS_GUILD_ID,
     WATERSTATE_CHANNEL_ID,
-    KHY_USER_ID
 )
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
 from utils.listener_func.ball_reco_ping import recommend_ball
 from utils.listener_func.battle_timer import detect_pokemeow_battle
 from utils.listener_func.battle_won_listener import battle_won_listener
+from utils.listener_func.berry_listener import berry_listener
+from utils.listener_func.berry_water_listener import (
+    handle_berry_water_message,
+    handle_mulch_message,
+)
 from utils.listener_func.boosted_channel_listener import (
     newly_boosted_channel_listener,
     remove_boosted_channel_listener,
 )
 from utils.listener_func.captcha_alert_listener import captcha_alert_handler
 from utils.listener_func.catchbot_listener import *
+from utils.listener_func.catchlist_cl_compact_listener import (
+    is_catchlist_compact_embed,
+    parse_catchlist_cl_compact,
+)
+from utils.listener_func.catchlist_cl_listener import (
+    is_catchlist_noncompact_embed,
+    parse_catchlist_cl_noncompact,
+)
+from utils.listener_func.cl_pokemon_spawn_listener import catchlist_spawn_listener
 from utils.listener_func.clan_members_listener import clan_members_command_listener
 from utils.listener_func.egg_listener import (
     egg_hatched_listener,
@@ -44,7 +58,12 @@ from utils.listener_func.halloween_contest_listener import (
 )
 from utils.listener_func.held_item_ping import held_item_ping_handler
 from utils.listener_func.hiker import hiker_snow_damage_listener
+from utils.listener_func.message_listener_tester import test_message_listener
 from utils.listener_func.perks_listener import auto_update_catchboost
+from utils.listener_func.pin_command_listener import pin_command_listener
+from utils.listener_func.pokemon_pin_numbers_listener import (
+    pokemon_pin_numbers_listener,
+)
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
 from utils.listener_func.relics_listener import handle_relics_message
 from utils.listener_func.reminder_embed_handler import handle_reminder_embed
@@ -57,18 +76,10 @@ from utils.listener_func.special_battle_npc_listener import (
     special_battle_npc_timer_listener,
 )
 from utils.listener_func.waterstate_listener import on_waterstate_message
-from utils.listener_func.wb_reg_listener import (
-
-    register_wb_battle_reminder,
-)
+from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.weekly_stats_syncer import weekly_stats_syncer
 from utils.loggers.pretty_logs import pretty_log
-from utils.listener_func.berry_listener import berry_listener
-from utils.listener_func.berry_water_listener import (
-    handle_berry_water_message,
-    handle_mulch_message,
-)
-from utils.listener_func.message_listener_tester import test_message_listener
+
 weekly_stats_trigger = "**Clan Weekly Stats — Straymons**"
 battle_won_trigger = "won the battle! :tada:"
 CC_BOT_LOG_ID = 1413576563559239931
@@ -105,19 +116,25 @@ triggers = {
     "clan_member": "Clan Member Information - Straymons",
 }
 
+
 UNOWN_NPC_NA_LINE = ":x: You can only challenge the **Alph Scientist** once every"
 
 
+def get_number_after_exclamation(text):
+    match = re.search(r"!\s*(\d+)", text)
+    return match.group(1) if match else None
+
+
 class MessageCreateListener(commands.Cog):
-    # 💜────────────────────────────────────────────
-    # [🟣 INIT] Cog Initialization
-    # ─────────────────────────────────────────────
+    # ————————————————————————————————
+    # 🟣 Cog Initialization
+    # ————————————————————————————————
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # 💜────────────────────────────────────────────
-    # [🟣 HELPER] Retry Discord calls on 503
-    # ─────────────────────────────────────────────
+    # ————————————————————————————————
+    # 🔁 Retry Discord Calls on 503
+    # ————————————————————————————————
     async def retry_discord_call(self, func, *args, retries=3, delay=2, **kwargs):
         for attempt in range(1, retries + 1):
             try:
@@ -136,9 +153,9 @@ class MessageCreateListener(commands.Cog):
                 else:
                     raise
 
-    # 💜────────────────────────────────────────────
-    # [🟣 LISTENER] on_message Event
-    # ─────────────────────────────────────────────
+    # ————————————————————————————————
+    # 👂 on_message Event
+    # ————————————————————————————————
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         try:
@@ -149,17 +166,34 @@ class MessageCreateListener(commands.Cog):
                 and not message.webhook_id
             ):
                 return
-            # 💜────────────────────────────────────────────
-            #          🧪 Message Test Listener
-            # 💜────────────────────────────────────────────
-            if message.content and message.content.startswith("mtest") and message.author.id == KHY_USER_ID:
+            # ————————————————————————————————
+            # 🧪 Message Test Listener
+            # ————————————————————————————————
+            if (
+                message.content
+                and message.content.startswith("mtest")
+                and message.author.id == KHY_USER_ID
+            ):
                 pretty_log(
                     "info",
                     f"Running message listener tests for message ID: {message.id}",
                 )
                 await test_message_listener(bot=self.bot, message=message)
 
-            # --- Weakness chart + general processing ---
+            # ————————————————————————————————
+            # 🩵 Pin Command Listener
+            # ————————————————————————————————
+            if message.content.lower().split(maxsplit=1)[:1] == ["!pins"]:
+                pretty_log(
+                    "info",
+                    f"Detected !pins command message: Message ID {message.id}",
+                    label="Pin Command Listener",
+                )
+                await pin_command_listener(bot=self.bot, message=message)
+
+            # ————————————————————————————————
+            # 📊 Weakness Chart and General Processing
+            # ————————————————————————————————
             if message.guild and message.guild.id in (
                 ACTIVE_GUILD_ID,
                 STAFF_SERVER_GUILD_ID,
@@ -183,19 +217,41 @@ class MessageCreateListener(commands.Cog):
                     if first_embed and first_embed.footer
                     else ""
                 )
-                # 💜────────────────────────────────────────────
-                #           ⏲️ Pokemon Timer Processing Only
-                # 💜────────────────────────────────────────────
+                first_embed_title = (
+                    first_embed.title if first_embed and first_embed.title else ""
+                )
+                # ————————————————————————————————
+                # ⏲️ Pokémon Timer Processing
+                # ————————————————————————————————
                 if message.embeds and message.embeds[0]:
                     embed = message.embeds[0]
                     embed_description = embed.description if embed else None
                     if embed_description and "found a wild" in embed_description:
                         await detect_pokemeow_reply(message)
+                        await catchlist_spawn_listener(self.bot, message, message, ";p")
 
-                        # 🥎 Recommend ball
+                        # ————————————————————————————————
+                        # 🥎 Recommend Ball
+                        # ————————————————————————————————
                         await recommend_ball(message, self.bot)
-
-                # Faction Ball Alert
+                        # ————————————————————————————————
+                        # ⚡ Pin Number Alerts
+                        # ————————————————————————————————
+                        pin_number = get_number_after_exclamation(first_embed_author)
+                        if pin_number:
+                            pretty_log(
+                                "info",
+                                f"Detected pin number: {pin_number} for message ID: {message.id}",
+                            )
+                            await pokemon_pin_numbers_listener(
+                                bot=self.bot,
+                                message=message,
+                                pin_number=pin_number,
+                                source="pokemon",
+                            )
+                # ————————————————————————————————
+                # 🛡️ Faction Ball Alert
+                # ————————————————————————————————
                 if first_embed:
                     if (
                         first_embed.description
@@ -203,17 +259,17 @@ class MessageCreateListener(commands.Cog):
                         and "found a wild" in first_embed.description
                     ):
                         await faction_ball_alert(before=message, after=message)
-                # 💜────────────────────────────────────────────
-                # ⚔️ Held Item Ping Processing Only
-                # 💜────────────────────────────────────────────
+                # ————————————————————————————————
+                # ⚔️ Held Item Ping
+                # ————————————————————————————————
                 if (
                     first_embed_description
                     and "<:held_item:" in first_embed_description
                 ):
                     await held_item_ping_handler(self.bot, message)
-                # 💜────────────────────────────────────────────
-                #           🎣 Fish Timer Processing Only
-                # 💜────────────────────────────────────────────
+                # ————————————————————————————————
+                # 🎣 Fish Timer
+                # ————————————————————————————————
                 if message.embeds and message.embeds[0]:
                     embed = message.embeds[0]
                     embed_description = embed.description if embed else None
@@ -224,27 +280,31 @@ class MessageCreateListener(commands.Cog):
                     ):
                         await fish_timer_handler(message)
 
-                # 💜────────────────────────────────────────────
-                # ⚔️ Battle Timer Processing Only
-                # 💜────────────────────────────────────────────
+                # ————————————————————————————————
+                # ⚔️ Battle Timer
+                # ————————————————————————————————
                 if first_embed_author and "PokeMeow Battles" in first_embed_author:
                     await detect_pokemeow_battle(bot=self.bot, message=message)
 
-                # Process battle won
+                # ————————————————————————————————
+                # 🏆 Battle Won
+                # ————————————————————————————————
                 if message.content and battle_won_trigger in message.content:
 
                     await battle_won_listener(bot=self.bot, message=message)
 
-                # 💜────────────────────────────────────────────
-                # ⚔️ Relics Processing Only
-                # 💜────────────────────────────────────────────
+                # ————————————————————————————————
+                # ⚔️ Relics
+                # ————————————————————————————————
                 if (
                     first_embed_author
                     and "pokemeow research lab" in first_embed_author.lower()
                 ):
                     await handle_relics_message(bot=self.bot, message=message)
 
-                # 🧪 Autoupdate catch boost via ;perks
+                # ————————————————————————————————
+                # 🧪 Auto-Update Catch Boost via ;perks
+                # ————————————————————————————————
                 if first_embed:
                     embed_author_name = (
                         first_embed.author.name
@@ -257,18 +317,26 @@ class MessageCreateListener(commands.Cog):
                         await auto_update_catchboost(bot=self.bot, message=message)
 
                 if message.channel.id == STRAYMONS__TEXT_CHANNELS.feeling_lucky:
+                    # ————————————————————————————————
                     # 🍀 Feeling Lucky Cooldown
+                    # ————————————————————————————————
                     await feeling_lucky_cd(bot=self.bot, message=message)
 
-                # 🌟 Newly Channel Boost Listener
+                # ————————————————————————————————
+                # 🌟 Newly Boosted Channel Listener
+                # ————————————————————————————————
                 if newly_boosted_trigger.lower() in message.content.lower():
                     await newly_boosted_channel_listener(bot=self.bot, message=message)
 
+                # ————————————————————————————————
                 # 😢 Remove Channel Boost Listener
+                # ————————————————————————————————
                 if remove_boosted_trigger.lower() in message.content.lower():
                     await remove_boosted_channel_listener(bot=self.bot, message=message)
 
+                # ————————————————————————————————
                 # ⏰ Weekly Stats Syncer
+                # ————————————————————————————————
                 embed = message.embeds[0] if message.embeds else None
                 if embed:
                     embed_title = embed.title or ""
@@ -283,7 +351,9 @@ class MessageCreateListener(commands.Cog):
                             message=message,
                         )
 
-                # Faction Ball Listener from ;fa command
+                # ————————————————————————————————
+                # 🛡️ Faction Ball Listener from ;fa
+                # ————————————————————————————————
                 if first_embed:
                     if first_embed.author and any(
                         f in first_embed.author.name.lower() for f in FACTIONS
@@ -292,20 +362,20 @@ class MessageCreateListener(commands.Cog):
                             bot=self.bot, message=message
                         )
 
-                # Daily Faction Ball Listener
+                # ————————————————————————————————
+                # 🛡️ Daily Faction Ball Listener
+                # ————————————————————————————————
                 if first_embed:
                     if (
                         first_embed.title
                         and "daily streak" in first_embed.title.lower()
                     ):
-                        pretty_log(
-                            "info",
-                            f"Matched Daily Faction Ball Listener | Message ID: {message.id} | Channel: {message.channel.name}",
-                        )
                         await extract_faction_ball_from_daily(
                             bot=self.bot, message=message
                         )
-                # World Boss Battle Reminder Registration
+                # ————————————————————————————————
+                # 👑 World Boss Battle Reminder Registration
+                # ————————————————————————————————
                 if first_embed:
                     embed_description = first_embed.description or ""
                     if (
@@ -319,9 +389,9 @@ class MessageCreateListener(commands.Cog):
                         )
                         await register_wb_battle_reminder(bot=self.bot, message=message)
 
-                # 💜────────────────────────────────────────────
-                # Egg Hatching Listeners
-                # 💜────────────────────────────────────────────
+                # ————————————————————————————————
+                # 🥚 Egg Hatching Listeners
+                # ————————————————————————————————
                 if message.content and message.author.id == POKEMEOW_APPLICATION_ID:
                     if (
                         "your egg is ready to hatch! `/egg hatch` to hatch it."
@@ -332,7 +402,9 @@ class MessageCreateListener(commands.Cog):
                             f"🔹 Matched Egg Ready to Hatch Listener | message_id={message.id}",
                         )
                         await egg_ready_to_hatch_listener(bot=self.bot, message=message)
-                # Egg Hatched Listener
+                # ————————————————————————————————
+                # 🥚 Egg Hatched Listener
+                # ————————————————————————————————
                 if first_embed:
                     if (
                         first_embed_footer
@@ -344,7 +416,9 @@ class MessageCreateListener(commands.Cog):
                         )
                         await egg_hatched_listener(bot=self.bot, message=message)
 
-                # Special Battle NPC Listener (Disabled for now)
+                # ————————————————————————————————
+                # ⚔️ Special Battle NPC Listener (Disabled for Now)
+                # ————————————————————————————————
                 if first_embed:
                     if (
                         first_embed.description
@@ -356,11 +430,7 @@ class MessageCreateListener(commands.Cog):
                             f"🔹 Matched Special Battle NPC Listener | message_id={message.id}",
                         )
                         await special_battle_npc_listener(bot=self.bot, message=message)
-                if (
-                    content
-                    and UNOWN_NPC_NA_LINE
-                    in content
-                ):
+                if content and UNOWN_NPC_NA_LINE in content:
                     pretty_log(
                         "info",
                         f"🔹 Matched Special Battle NPC Timer Listener for XMAS BLUE | message_id={message.id}",
@@ -368,7 +438,9 @@ class MessageCreateListener(commands.Cog):
                     await special_battle_npc_timer_listener(
                         bot=self.bot, message=message
                     )
+                # ————————————————————————————————
                 # 🛡️ Captcha Alert Listener
+                # ————————————————————————————————
                 if first_embed:
                     title = first_embed.title.lower() if first_embed.title else ""
                     description = (
@@ -384,9 +456,13 @@ class MessageCreateListener(commands.Cog):
 
                         await captcha_alert_handler(bot=self.bot, message=message)
 
-                # 🟣 Catchbot processing
+                # ————————————————————————————————
+                # 🤖 CatchBot Processing
+                # ————————————————————————————————
                 if message.content:
-                    # 1️⃣ CatchBot return text
+                    # ————————————————————————————————
+                    # 1️⃣ CatchBot Return Text
+                    # ————————————————————————————————
                     if cb_return_trigger.lower() in message.content.lower():
                         pretty_log(
                             "info",
@@ -394,7 +470,9 @@ class MessageCreateListener(commands.Cog):
                         )
                         await handle_cb_return_message(bot=self.bot, message=message)
 
-                    # 2️⃣ CatchBot run message
+                    # ————————————————————————————————
+                    # 2️⃣ CatchBot Run Message
+                    # ————————————————————————————————
                     elif CATCHBOT_SPENT_PATTERN.search(message.content):
                         pretty_log(
                             "info",
@@ -402,10 +480,14 @@ class MessageCreateListener(commands.Cog):
                         )
                         await handle_cb_run_message(bot=self.bot, message=message)
 
-                # 3️⃣ CatchBot embeds
+                # ————————————————————————————————
+                # 3️⃣ CatchBot Embeds
+                # ————————————————————————————————
                 if first_embed:
 
-                    # 🔹 Check fields
+                    # ————————————————————————————————
+                    # 🔹 Check Fields
+                    # ————————————————————————————————
                     for field in first_embed.fields:
                         name = field.name.lower() if field.name else ""
                         value = field.value.lower() if field.value else ""
@@ -421,7 +503,9 @@ class MessageCreateListener(commands.Cog):
                             await handle_cb_command_embed(bot=self.bot, message=message)
                             break
 
-                    # 🔹 Check footer for ;cl command
+                    # ————————————————————————————————
+                    # 🔹 Check Footer for ;cl Command
+                    # ————————————————————————————————
                     if first_embed.footer and first_embed.footer.text:
                         footer_text = first_embed.footer.text.lower()
                         if cb_checklist_trigger.lower() in footer_text:
@@ -432,9 +516,9 @@ class MessageCreateListener(commands.Cog):
                             await handle_cb_checklist_message(
                                 bot=self.bot, message=message
                             )
-                # 💜────────────────────────────────────────────
-                #          👥 Clan Members Command Listener
-                # 💜────────────────────────────────────────────
+                # ————————————————————————————————
+                # 👥 Clan Members Command Listener
+                # ————————————————————————————————
                 if first_embed:
                     if (
                         first_embed_description
@@ -448,9 +532,9 @@ class MessageCreateListener(commands.Cog):
                             self.bot,
                             message,
                         )
-                # 💜────────────────────────────────────────────
-                #          🧑‍🌾 Berry Reminder Listener
-                # 💜────────────────────────────────────────────
+                # ————————————————————————————————
+                # 🧑‍🌾 Berry Reminder Listener
+                # ————————————————————————————————
                 if first_embed:
                     if (
                         first_embed_description
@@ -466,9 +550,9 @@ class MessageCreateListener(commands.Cog):
                             message=message,
                         )
 
-                # 💜────────────────────────────────────────────
-                #          🧑‍🌾 Berry Water Listener
-                # 💜────────────────────────────────────────────
+                # ————————————————————————————————
+                # 🧑‍🌾 Berry Water Listener
+                # ————————————————————————————————
                 if message.content:
                     if "Watered" in message.content and "Next stage" in message.content:
                         pretty_log(
@@ -476,9 +560,9 @@ class MessageCreateListener(commands.Cog):
                             "Detected Berry Water message, processing berry water reminders...",
                         )
                         await handle_berry_water_message(bot=self.bot, message=message)
-                # 💜────────────────────────────────────────────
-                #          🧑‍🌾  Mulch Listener
-                # 💜────────────────────────────────────────────
+                # ————————————————————————————————
+                # 🧑‍🌾 Mulch Listener
+                # ————————————————————————————————
                 if message.content:
                     if (
                         "Applied" in message.content
@@ -490,13 +574,42 @@ class MessageCreateListener(commands.Cog):
                             "Detected Mulch message, processing growth mulch reminders...",
                         )
                         await handle_mulch_message(bot=self.bot, message=message)
+                # ————————————————————————————————
+                #   🎣 Catchlist Parser (Compact)
+                # ————————————————————————————————
+                if (
+                    message.author.id == POKEMEOW_APPLICATION_ID
+                    and is_catchlist_compact_embed(first_embed)
+                ):
+                    pretty_log(
+                        "debug",
+                        f"Parsing catchlist embed for message ID {message.id}",
+                        label="CatchlistListener",
+                    )
+                    await parse_catchlist_cl_compact(self.bot, message, message)
 
-                # 💜────────────────────────────────────────────
-                #          ⛄️ Seasonal Listeners
-                # 💜────────────────────────────────────────────
-                # Secret Santa Listener
+                # ————————————————————————————————
+                #   🎣 Catchlist Parser (Non-Compact)
+                # ————————————————————————————————
+                elif (
+                    message.author.id == POKEMEOW_APPLICATION_ID
+                    and is_catchlist_noncompact_embed(first_embed)
+                ):
+                    pretty_log(
+                        "debug",
+                        f"Parsing non-compact catchlist embed for message ID {message.id}",
+                        label="CatchlistListener",
+                    )
+                    await parse_catchlist_cl_noncompact(self.bot, message, message)
+
+                # ————————————————————————————————
+                # ⛄️ Seasonal Listeners
+                # ————————————————————————————————
+                # ————————————————————————————————
+                # 🎅 Secret Santa Listener
+                # ————————————————————————————————
                 if message.content:
-                    # Check if all ss phrases are in the message content
+                    # Match all Secret Santa phrases in the message content.
                     if all(
                         phrase in message.content for phrase in secret_santa_phrases
                     ):
@@ -505,7 +618,9 @@ class MessageCreateListener(commands.Cog):
                             f"🎅 Matched Secret Santa Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await secret_santa_listener(bot=self.bot, message=message)
-                # Secret Santa Timer Listener
+                # ————————————————————————————————
+                # 🎅 Secret Santa Timer Listener
+                # ————————————————————————————————
                 if message.content:
                     if ":x: You may send out another gift on" in message.content:
                         pretty_log(
@@ -513,7 +628,9 @@ class MessageCreateListener(commands.Cog):
                             f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await secret_santa_timer_listener(bot=self.bot, message=message)
+                # ————————————————————————————————
                 # ❄️ Hiker Snow Damage Listener
+                # ————————————————————————————————
                 if (
                     first_embed_description
                     and triggers["hiker"] in first_embed_description
@@ -524,7 +641,9 @@ class MessageCreateListener(commands.Cog):
                     )
                     await hiker_snow_damage_listener(message=message)
 
+                # ————————————————————————————————
                 # 🎃 Halloween Contest Embed Listener
+                # ————————————————————————————————
                 if first_embed:
                     embed_author = first_embed.author.name if first_embed.author else ""
                     if (
@@ -539,7 +658,9 @@ class MessageCreateListener(commands.Cog):
                             bot=self.bot, message=message
                         )
 
-            # 🌊 Waterstate channel processing ---
+            # ————————————————————————————————
+            # 🌊 Waterstate Channel Processing
+            # ————————————————————————————————
             if message.channel.id == WATERSTATE_CHANNEL_ID:
                 await on_waterstate_message(message)
 
@@ -550,8 +671,8 @@ class MessageCreateListener(commands.Cog):
             )
 
 
-# 💜────────────────────────────────────────────
-# [🟣 SETUP] Add Cog to Bot
-# ─────────────────────────────────────────────
+# ————————————————————————————————
+# 🛠️ Setup Function
+# ————————————————————————————————
 async def setup(bot: commands.Bot):
     await bot.add_cog(MessageCreateListener(bot))

@@ -68,11 +68,7 @@ async def extract_faction_ball_from_daily(bot, message: discord.Message):
     debug_log(
         f"Matched faction_team_emoji: {faction_team_emoji}, daily_ball: {daily_ball}"
     )
-    pretty_log(
-        "info",
-        f"Extracted faction ball from daily message in {message.channel.name}: Faction Emoji: {faction_team_emoji}, Ball: {daily_ball}",
-        bot=bot,
-    )
+
     faction = get_faction_by_emoji(faction_team_emoji)
     debug_log(f"Faction resolved from emoji: {faction}")
     if not faction:

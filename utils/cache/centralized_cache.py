@@ -12,6 +12,7 @@ from utils.cache.cache_list import (
     timer_cache,
     webhook_url_cache,
 )
+from utils.cache.catchlist_cache import catchlist_cache, load_catchlist_cache
 from utils.cache.daily_fa_ball_cache import (
     daily_faction_ball_cache,
     load_daily_faction_ball_cache,
@@ -41,6 +42,7 @@ from utils.cache.straymon_member_cache import (
     straymon_member_cache,
 )
 from utils.cache.timers_cache import load_timer_cache
+from utils.cache.user_alert_cache import load_user_alert_cache, user_alerts_cache
 from utils.cache.user_captcha_alert_cache import (
     load_user_captcha_alert_cache,
     user_captcha_alert_cache,
@@ -122,12 +124,18 @@ async def load_all_caches(bot):
 
         # 🌐 Webhook URL Cache
         await load_webhook_url_cache(bot)
-        
+
         # 🎃 Halloween Contest Alert Cache
         # await load_halloween_contest_alert_cache(bot)
 
         # 🎃 Halloween Con Top Cache Disabled for now
         # await load_halloween_con_top_cache(bot)
+
+        # 🐾 Catchlist Cache
+        await load_catchlist_cache(bot)
+
+        # 🦴 User Alerts Cache
+        await load_user_alert_cache(bot)
 
         # 🎀 Unified single-line log with all caches
         pretty_log(
@@ -145,7 +153,8 @@ async def load_all_caches(bot):
                 f"Captcha Alerts: {len(user_captcha_alert_cache)},"
                 f"Faction Ball Alerts: {len(faction_ball_alert_cache)},"
                 f"World Boss Battle Alerts: {len(wb_battle_alert_cache)},"
-                f"Res Fossils Alerts: {len(res_fossils_alert_cache)})"
+                f"Res Fossils Alerts: {len(res_fossils_alert_cache)},"
+                f"User Alerts: {len(user_alerts_cache)},"
                 f"Probation Members: {len(probation_members_cache)},"
                 f"Webhook URLs: {len(webhook_url_cache)}"
                 # f"Halloween Contest Alerts: {len(halloween_contests_alert_cache)},"

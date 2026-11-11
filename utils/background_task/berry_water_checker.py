@@ -19,7 +19,7 @@ from utils.essentials.retry_function import _retry_discord_call
 from utils.loggers.debug_log import debug_log, enable_debug
 from utils.loggers.pretty_logs import pretty_log
 
-enable_debug(f"{__name__}.berry_water_reminder")
+#enable_debug(f"{__name__}.berry_water_reminder")
 
 # If grows_on is within this many seconds, skip the water reminder and let
 # berry_checker handle the harvest notification instead.

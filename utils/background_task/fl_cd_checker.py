@@ -6,15 +6,16 @@ import discord
 
 from config.aesthetic import *
 from config.current_setup import MINCCINO_COLOR, STRAYMONS_GUILD_ID
-from config.straymons_constants import (STRAYMONS__ROLES,
-                                        STRAYMONS__TEXT_CHANNELS)
+from config.straymons_constants import STRAYMONS__ROLES, STRAYMONS__TEXT_CHANNELS
 from utils.database.fl_cd_db_func import remove_feeling_lucky_cd
 from utils.database.fl_reminders_db_func import fetch_fl_reminder_db
-from utils.loggers.pretty_logs import pretty_log
 from utils.essentials.retry_function import _retry_discord_call
-# Default Feeling Lucky channel (if user has no personal channel)
-FEELING_LUCKY_CHANNEL_ID = STRAYMONS__TEXT_CHANNELS.feeling_lucky  # replace with your actual channel ID
+from utils.loggers.pretty_logs import pretty_log
 
+# Default Feeling Lucky channel (if user has no personal channel)
+FEELING_LUCKY_CHANNEL_ID = (
+    STRAYMONS__TEXT_CHANNELS.feeling_lucky
+)  # replace with your actual channel ID
 
 
 # 🐾────────────────────────────────────────────
@@ -116,4 +117,3 @@ async def fl_cd_checker(bot: discord.Client):
         label="🍀 FL CD CHECKER",
         bot=bot,
     )"""
-

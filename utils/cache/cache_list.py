@@ -1,3 +1,19 @@
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+#       🌸 Processed Messages 🌸
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+
+processed_catchlist_sz_catches: set[tuple[int, int | None, str]] = set()
+processed_spawn_messages = set()
+processed_caught_catchlist_messages = set()
+processed_pin_numbers_messages = set()
+
+
+def clear_processed_messages_cache():
+    processed_catchlist_sz_catches.clear()
+    processed_spawn_messages.clear()
+    processed_caught_catchlist_messages.clear()
+
+
 # 🌸_________________________________________________________
 # ⌚ Timer Cache (Global)
 # _________________________________________________________
@@ -37,4 +53,33 @@ battle_timer_users_cache: dict[str, str] = {}
 # battle_timer_users_cache = {
 #    "user_name" : str,
 #    ...
+# }
+
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+#       🌸 Catchlist Cache 🌸
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+catchlist_cache: dict[int, dict] = {}
+# Structure:
+# user_id -> {
+#   "user_name": str,
+#   "catchlist_date": str,
+#   "catchlist_mons": list[dict],
+#   "rank_name": str | None,
+#   "total_exp": int | None,
+#   "exp_needed": int | None
+# }
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+#       🌸 User Alerts Cache 🌸
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+user_alerts_cache: dict[int, dict[str, dict[str, str]]] = {}
+# Structure:
+# {
+#   user_id: {
+#     alert_type: {
+#       "user_name": str,
+#       "notify": str
+#     },
+#     ...
+#   },
+#   ...
 # }

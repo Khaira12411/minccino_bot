@@ -117,7 +117,12 @@ class Emojis_Balls:
     greatball = "<:greatball:1411999846835159081>"
     pokeball = "<:pokeball:1411999795110744145>"
     diveball = "<:diveball:1412001883639517275>"
-
+    safariball = "<:safariball:1569938565490671697>"
+    ancient_ball = "<:ancient_ball:1569938562462519296>"
+    friendball = "<:friendball:1569938558448435321>"
+    loveball = "<:loveball:1569938555952832573>"
+    luxuryball = "<:luxuryball:1569938553868259338>"
+    quickball = "<:quickball:1569938551884349500>"
 
 class Emojis_Factions:
     aqua = "<:aqua:1427123081083617442>"

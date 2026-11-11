@@ -35,7 +35,7 @@ from utils.listener_func.pokemon_caught import processed_caught_messages
 from utils.listener_func.weekly_stats_syncer import processed_weekly_stats_messages
 from utils.loggers.pretty_logs import pretty_log, set_minccino_bot
 from utils.loggers.rate_limit_logger import setup_rate_limit_logging
-
+from utils.cache.cache_list import clear_processed_messages_cache
 # ╭───────────────────────────────╮
 # │   🤎  Suppress Logs  🤍      │
 # ╰───────────────────────────────╯
@@ -234,6 +234,7 @@ async def refresh_all_caches():
     processed_pokemon_spawns.clear()
     processed_faction_ball_alerts.clear()
     processed_weekly_stats_messages.clear()
+    clear_processed_messages_cache()
     # processed_halloween_score_message_ids.clear()
     pretty_log(
         tag="",
