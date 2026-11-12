@@ -46,7 +46,7 @@ class ToggleGroup(commands.Cog):
         name="timer",
         description="Sets or removes your pokemon/battle command timer",
     )
-    @espeon_roles_only()
+    
     async def timer_pokemon_set(
         self,
         interaction: discord.Interaction,
@@ -72,7 +72,7 @@ class ToggleGroup(commands.Cog):
         name="timers",
         description="Opens your timer settings",
     )
-    @espeon_roles_only()
+
     async def timer_pokemon_set(
         self,
         interaction: discord.Interaction,
@@ -119,7 +119,7 @@ class ToggleGroup(commands.Cog):
         name="reminders",
         description="Modifies your reminders' settings",
     )
-    @espeon_roles_only()
+
     async def toggle_reminders(
         self,
         interaction: discord.Interaction,
@@ -141,7 +141,7 @@ class ToggleGroup(commands.Cog):
         name="alerts",
         description="Modifies your alerts' settings",
     )
-    @espeon_roles_only()
+
     async def toggle_alerts(
         self,
         interaction: discord.Interaction,
@@ -167,7 +167,7 @@ class ToggleGroup(commands.Cog):
         name="held-item",
         description="Subscribe or unsubscribe to Pokemon held item alerts",
     )
-    @espeon_roles_only()
+
     async def toggle_held_item(
         self,
         interaction: discord.Interaction,
@@ -190,7 +190,7 @@ class ToggleGroup(commands.Cog):
         name="ball-recommendaton",
         description="Modify your ball recommendation settings",
     )
-    @espeon_roles_only()
+
     async def toggle_ball_recon(
         self,
         interaction: discord.Interaction,
