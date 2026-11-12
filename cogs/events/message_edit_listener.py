@@ -17,7 +17,6 @@ from config.current_setup import (
     STRAYMONS_GUILD_ID,
 )
 from config.straymons_constants import STRAYMONS__TEXT_CHANNELS
-from utils.listener_func import lab_pc_unlock_listener, pin_timer_listener
 from utils.listener_func.battle_won_listener import battle_won_listener
 from utils.listener_func.berry_listener import berry_listener
 from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
@@ -37,6 +36,8 @@ from utils.listener_func.halloween_contest_listener import (
     halloween_contest_score_listener,
 )
 from utils.listener_func.held_item_ping import held_item_ping_handler
+from utils.listener_func.lab_pc_unlock_listener import lab_pc_unlock_listener
+from utils.listener_func.pin_timer_listener import pin_timer_listener
 from utils.listener_func.pokemon_caught import pokemon_caught_listener
 from utils.listener_func.pokemon_pin_numbers_listener import pokemon_pin_numbers_listener
 from utils.listener_func.pokemon_timer import detect_pokemeow_reply
